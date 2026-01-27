@@ -65,16 +65,26 @@ const connectDatabase = async () => {
       if (err.original && err.original.code === '3D000') {
         console.error('   La base de datos no existe. Ejecuta: npm run create-db');
       } else if (err.original && err.original.code === '28P01') {
-        console.error('   Error de autenticación. Verifica usuario y contraseña en .env');
+        console.error('   Error de autenticación. Verifica usuario y contraseña.');
+        console.error('   Si usas DATABASE_URL, verifica que la contraseña en la URL sea correcta.');
+        console.error('   Si usas variables individuales, verifica DB_USER y DB_PASSWORD.');
       } else {
         console.error('   Verifica que PostgreSQL esté corriendo');
       }
     }
     
-    console.error('   Host:', process.env.DB_HOST || 'localhost');
-    console.error('   Puerto:', process.env.DB_PORT || 5432);
-    console.error('   Base de datos:', process.env.DB_NAME || 'sistema_auxiliares');
-    console.error('   Usuario:', process.env.DB_USER || 'postgres');
+    // Mostrar información de debug
+    if (process.env.DATABASE_URL) {
+      // Ocultar contraseña en los logs
+      const dbUrl = process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@');
+      console.error('   DATABASE_URL:', dbUrl);
+    } else {
+      console.error('   Host:', process.env.DB_HOST || 'localhost');
+      console.error('   Puerto:', process.env.DB_PORT || 5432);
+      console.error('   Base de datos:', process.env.DB_NAME || 'sistema_auxiliares');
+      console.error('   Usuario:', process.env.DB_USER || 'postgres');
+      console.error('   Password:', process.env.DB_PASSWORD ? '***configurada***' : 'NO configurada');
+    }
     // No salir del proceso, permitir que el servidor siga corriendo
     // pero las rutas verificarán la conexión
   }
