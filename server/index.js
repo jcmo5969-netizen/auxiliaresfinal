@@ -11,9 +11,28 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const app = express();
 
 // Middleware
-// Configurar CORS para producción
+// Configurar CORS para producción - aceptar múltiples orígenes
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'https://auxiliaresfrontend.onrender.com',
+  'https://sistema-auxiliares.com',
+  'http://localhost:5173',
+  'http://localhost:3000'
+].filter(Boolean); // Eliminar valores undefined/null
+
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Permitir requests sin origen (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Verificar si el origen está en la lista permitida
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      console.warn('⚠️ CORS bloqueado para origen:', origin);
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -112,14 +131,16 @@ const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 const server = app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`🌐 CORS permitiendo orígenes: ${allowedOrigins.join(', ')}`);
 });
 
 // Configurar Socket.IO para chat en tiempo real
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST']
+    origin: allowedOrigins.length > 0 ? allowedOrigins : (process.env.CLIENT_URL || 'http://localhost:5173'),
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
