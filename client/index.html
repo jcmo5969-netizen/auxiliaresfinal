@@ -5,6 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/logo-hospital-quilpue.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sistema de Auxiliares</title>
+    <!-- Script para redirigir rutas sin hash a HashRouter -->
+    <script>
+      // Redirigir rutas sin hash a HashRouter ANTES de que React cargue
+      (function() {
+        var path = window.location.pathname;
+        var search = window.location.search;
+        // Si hay una ruta y no hay hash, redirigir inmediatamente
+        if (path !== '/' && path !== '/index.html' && !window.location.hash) {
+          window.location.replace('#' + path + search);
+          return;
+        }
+        // Si estamos en la raíz sin hash, redirigir a #/
+        if (path === '/' && !window.location.hash && !window.location.search) {
+          window.location.replace('#/');
+        }
+      })();
+    </script>
     <!-- Firebase Messaging Service Worker -->
     <script>
       if ('serviceWorker' in navigator) {

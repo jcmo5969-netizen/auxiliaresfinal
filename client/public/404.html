@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirigiendo...</title>
+  <script>
+    // Redirigir todas las rutas 404 a index.html con hash
+    var path = window.location.pathname;
+    var search = window.location.search;
+    if (path !== '/') {
+      window.location.replace('/#' + path + search);
+    } else {
+      window.location.replace('/#/');
+    }
+  </script>
+</head>
+<body>
+  <p>Redirigiendo...</p>
+</body>
+</html>
+
