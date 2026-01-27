@@ -7,21 +7,45 @@ let notificationPermission = null
 export const solicitarPermisoNotificaciones = async () => {
   if (!('Notification' in window)) {
     console.warn('Este navegador no soporta notificaciones')
-    return false
+    return { activo: false, mensaje: 'Tu navegador no soporta notificaciones' }
   }
 
   if (Notification.permission === 'granted') {
     notificationPermission = 'granted'
-    return true
+    return { activo: true, mensaje: 'Notificaciones activadas' }
   }
 
-  if (Notification.permission !== 'denied') {
+  if (Notification.permission === 'denied') {
+    // Si el permiso está denegado, no se puede solicitar nuevamente automáticamente
+    // El usuario debe habilitarlo manualmente en la configuración del navegador
+    notificationPermission = 'denied'
+    return { 
+      activo: false, 
+      mensaje: 'Permiso denegado. Por favor, habilita las notificaciones en la configuración de tu navegador.',
+      denegado: true
+    }
+  }
+
+  // Si el permiso es 'default', podemos solicitarlo
+  try {
     const permission = await Notification.requestPermission()
     notificationPermission = permission
-    return permission === 'granted'
+    
+    if (permission === 'granted') {
+      return { activo: true, mensaje: 'Notificaciones activadas' }
+    } else if (permission === 'denied') {
+      return { 
+        activo: false, 
+        mensaje: 'Permiso denegado. Por favor, habilita las notificaciones en la configuración de tu navegador.',
+        denegado: true
+      }
+    } else {
+      return { activo: false, mensaje: 'Permiso no concedido' }
+    }
+  } catch (error) {
+    console.error('Error solicitando permiso:', error)
+    return { activo: false, mensaje: 'Error al solicitar permiso de notificaciones' }
   }
-
-  return false
 }
 
 // Enviar notificación local

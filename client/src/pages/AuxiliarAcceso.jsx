@@ -242,10 +242,14 @@ const AuxiliarAcceso = () => {
       } else {
         // Usar notificaciones web nativas como fallback
         try {
-          const activo = await solicitarWeb()
-          setNotificacionesActivas(activo)
-          if (activo) {
+          const resultado = await solicitarWeb()
+          setNotificacionesActivas(resultado.activo)
+          if (resultado.activo) {
             toast.success('Notificaciones web activadas', { icon: '🔔' })
+          } else if (resultado.denegado) {
+            // No mostrar error si el permiso está denegado al cargar
+            // El usuario puede activarlo manualmente con el botón
+            console.log('Permiso de notificaciones denegado, el usuario puede activarlo manualmente')
           }
         } catch (error) {
           console.error('Error configurando notificaciones web:', error)
@@ -342,20 +346,52 @@ const AuxiliarAcceso = () => {
     const usarFirebase = estaFirebaseConfigurado()
     
     if (usarFirebase) {
-      const token = await solicitarPermisoNotificaciones()
-      setNotificacionesActivas(!!token)
-      if (token) {
-        toast.success('Notificaciones push activadas', { icon: '🔔' })
-      } else {
-        toast.error('Permiso de notificaciones denegado', { icon: '⚠️' })
+      try {
+        const token = await solicitarPermisoNotificaciones()
+        setNotificacionesActivas(!!token)
+        if (token) {
+          toast.success('Notificaciones push activadas', { icon: '🔔' })
+        } else {
+          // Verificar si el permiso está denegado
+          if (Notification.permission === 'denied') {
+            toast.error(
+              'Permiso denegado. Ve a Configuración del navegador > Notificaciones para habilitarlo.',
+              { 
+                icon: '⚠️',
+                duration: 6000
+              }
+            )
+          } else {
+            toast.error('No se pudo activar las notificaciones', { icon: '⚠️' })
+          }
+        }
+      } catch (error) {
+        console.error('Error activando notificaciones:', error)
+        toast.error('Error al activar notificaciones', { icon: '⚠️' })
       }
     } else {
-      const activo = await solicitarWeb()
-      setNotificacionesActivas(activo)
-      if (activo) {
-        toast.success('Notificaciones web activadas', { icon: '🔔' })
-      } else {
-        toast.error('Permiso de notificaciones denegado', { icon: '⚠️' })
+      try {
+        const resultado = await solicitarWeb()
+        setNotificacionesActivas(resultado.activo)
+        
+        if (resultado.activo) {
+          toast.success('Notificaciones web activadas', { icon: '🔔' })
+        } else {
+          if (resultado.denegado) {
+            toast.error(
+              resultado.mensaje || 'Permiso denegado. Ve a Configuración del navegador > Notificaciones para habilitarlo.',
+              { 
+                icon: '⚠️',
+                duration: 6000
+              }
+            )
+          } else {
+            toast.error(resultado.mensaje || 'No se pudo activar las notificaciones', { icon: '⚠️' })
+          }
+        }
+      } catch (error) {
+        console.error('Error activando notificaciones:', error)
+        toast.error('Error al activar notificaciones', { icon: '⚠️' })
       }
     }
   }
@@ -462,26 +498,47 @@ const AuxiliarAcceso = () => {
               )}
             </div>
             
-            <button
-              onClick={handleActivarNotificaciones}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${
-                notificacionesActivas 
-                  ? 'bg-green-500/20 hover:bg-green-500/30' 
-                  : 'bg-white/20 hover:bg-white/30'
-              }`}
-            >
-              {notificacionesActivas ? (
-                <>
-                  <Bell className="w-4 h-4" />
-                  <span className="text-xs">Notificaciones ON</span>
-                </>
-              ) : (
-                <>
-                  <BellOff className="w-4 h-4" />
-                  <span className="text-xs">Activar Notificaciones</span>
-                </>
+            <div className="flex items-center gap-2">
+              {Notification.permission === 'denied' && (
+                <div className="text-xs text-primary-100 bg-red-500/20 px-2 py-1 rounded max-w-xs">
+                  Ve a Configuración del navegador para habilitar notificaciones
+                </div>
               )}
-            </button>
+              <button
+                onClick={handleActivarNotificaciones}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${
+                  notificacionesActivas 
+                    ? 'bg-green-500/20 hover:bg-green-500/30' 
+                    : Notification.permission === 'denied'
+                    ? 'bg-red-500/20 hover:bg-red-500/30'
+                    : 'bg-white/20 hover:bg-white/30'
+                }`}
+                title={
+                  Notification.permission === 'denied' 
+                    ? 'Permiso denegado. Ve a Configuración del navegador para habilitarlo.'
+                    : notificacionesActivas
+                    ? 'Notificaciones activadas'
+                    : 'Activar notificaciones'
+                }
+              >
+                {notificacionesActivas ? (
+                  <>
+                    <Bell className="w-4 h-4" />
+                    <span className="text-xs">Notificaciones ON</span>
+                  </>
+                ) : Notification.permission === 'denied' ? (
+                  <>
+                    <BellOff className="w-4 h-4" />
+                    <span className="text-xs">Permiso Denegado</span>
+                  </>
+                ) : (
+                  <>
+                    <BellOff className="w-4 h-4" />
+                    <span className="text-xs">Activar Notificaciones</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>
