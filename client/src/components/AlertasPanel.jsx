@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { AlertTriangle, Bell, X, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -101,7 +101,7 @@ const AlertasPanel = ({ solicitudes = [] }) => {
   const cargarRecordatorios = async () => {
     try {
       // Obtener recordatorios guardados del usuario
-      const res = await axios.get('/api/recordatorios', {
+      const res = await api.get('/api/recordatorios', {
         params: { usuarioId: usuario.id }
       })
       setRecordatorios(res.data || [])

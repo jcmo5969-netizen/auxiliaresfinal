@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { Clock, Plus, X, Trash2, Bell, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -22,7 +22,7 @@ const RecordatoriosModal = ({ onClose }) => {
 
   const cargarRecordatorios = async () => {
     try {
-      const res = await axios.get('/api/recordatorios', {
+      const res = await api.get('/api/recordatorios', {
         params: { usuarioId: usuario.id }
       })
       setRecordatorios(res.data || [])
@@ -76,7 +76,7 @@ const RecordatoriosModal = ({ onClose }) => {
 
   const eliminarRecordatorio = async (id) => {
     try {
-      await axios.delete(`/api/recordatorios/${id}`)
+      await api.delete(`/api/recordatorios/${id}`)
       toast.success('Recordatorio eliminado')
     } catch (error) {
       // Eliminar de localStorage como fallback
