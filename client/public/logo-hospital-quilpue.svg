@@ -1,11 +1,94 @@
-<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-  <!-- Fondo circular -->
-  <circle cx="100" cy="100" r="90" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/>
+<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <defs>
+    <path id="circleTop" d="M 50,150 A 100,100 0 0,1 250,150" fill="none"/>
+    <path id="circleBottom" d="M 250,150 A 100,100 0 0,1 50,150" fill="none"/>
+  </defs>
   
-  <!-- Texto HQ -->
-  <text x="100" y="120" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">HQ</text>
+  <!-- Fondo blanco -->
+  <rect width="300" height="300" fill="white"/>
   
-  <!-- Texto inferior -->
-  <text x="100" y="170" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle">Hospital de Quilpué</text>
+  <!-- Grupo principal centrado -->
+  <g transform="translate(150, 150)">
+    <!-- Foco (lightbulb) con contorno negro -->
+    <g>
+      <!-- Cuerpo del foco (elipse) -->
+      <ellipse cx="0" cy="-20" rx="50" ry="60" fill="none" stroke="black" stroke-width="2.5"/>
+      
+      <!-- Base del foco -->
+      <rect x="-20" y="35" width="40" height="12" fill="black" rx="2"/>
+      <!-- Líneas decorativas de la base -->
+      <line x1="-15" y1="38" x2="-15" y2="47" stroke="white" stroke-width="1.5"/>
+      <line x1="0" y1="38" x2="0" y2="47" stroke="white" stroke-width="1.5"/>
+      <line x1="15" y1="38" x2="15" y2="47" stroke="white" stroke-width="1.5"/>
+      
+      <!-- Figuras humanas dentro del foco (conectadas) -->
+      <!-- Figura naranja (izquierda) -->
+      <g transform="translate(-30, -15)">
+        <circle cx="0" cy="0" r="7" fill="#FF6B35"/>
+        <line x1="0" y1="7" x2="0" y2="22" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="12" x2="-10" y2="18" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="12" x2="10" y2="18" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="22" x2="-8" y2="30" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="22" x2="8" y2="30" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Mano conectada -->
+        <circle cx="8" cy="18" r="3" fill="#FF6B35"/>
+      </g>
+      
+      <!-- Figura amarilla -->
+      <g transform="translate(-8, -20)">
+        <circle cx="0" cy="0" r="7" fill="#FFD23F"/>
+        <line x1="0" y1="7" x2="0" y2="22" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="12" x2="-10" y2="18" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="12" x2="10" y2="18" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="22" x2="-8" y2="30" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="22" x2="8" y2="30" stroke="#FFD23F" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Manos conectadas -->
+        <circle cx="-10" cy="18" r="3" fill="#FFD23F"/>
+        <circle cx="10" cy="18" r="3" fill="#FFD23F"/>
+      </g>
+      
+      <!-- Figura verde -->
+      <g transform="translate(8, -20)">
+        <circle cx="0" cy="0" r="7" fill="#06A77D"/>
+        <line x1="0" y1="7" x2="0" y2="22" stroke="#06A77D" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="12" x2="-10" y2="18" stroke="#06A77D" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="12" x2="10" y2="18" stroke="#06A77D" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="22" x2="-8" y2="30" stroke="#06A77D" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="22" x2="8" y2="30" stroke="#06A77D" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Manos conectadas -->
+        <circle cx="-10" cy="18" r="3" fill="#06A77D"/>
+        <circle cx="10" cy="18" r="3" fill="#06A77D"/>
+      </g>
+      
+      <!-- Figura azul (derecha) -->
+      <g transform="translate(30, -15)">
+        <circle cx="0" cy="0" r="7" fill="#1E88E5"/>
+        <line x1="0" y1="7" x2="0" y2="22" stroke="#1E88E5" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="12" x2="-10" y2="18" stroke="#1E88E5" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="12" x2="10" y2="18" stroke="#1E88E5" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="22" x2="-8" y2="30" stroke="#1E88E5" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="0" y1="22" x2="8" y2="30" stroke="#1E88E5" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Mano conectada -->
+        <circle cx="-10" cy="18" r="3" fill="#1E88E5"/>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Texto alrededor del círculo (arriba) -->
+  <text font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="black">
+    <textPath href="#circleTop" startOffset="50%" text-anchor="middle">
+      U. Innovación e Investigación
+    </textPath>
+  </text>
+  
+  <!-- Puntos separadores -->
+  <circle cx="50" cy="150" r="1.5" fill="black"/>
+  <circle cx="250" cy="150" r="1.5" fill="black"/>
+  
+  <!-- Texto alrededor del círculo (abajo) -->
+  <text font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="black">
+    <textPath href="#circleBottom" startOffset="50%" text-anchor="middle">
+      Hospital de Quilpué
+    </textPath>
+  </text>
 </svg>
-

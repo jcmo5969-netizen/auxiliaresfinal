@@ -14,10 +14,10 @@ const Logo = ({ className = '', size = 'default' }) => {
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
       {/* Logo - Imagen del Hospital de Quilpué */}
-      <div className={`${sizes[size]} mb-4 flex items-center justify-center`}>
+      <div className={`${sizes[size]} mb-2 flex items-center justify-center`}>
         <img 
           src="/logo-hospital-quilpue.svg" 
-          alt="Hospital de Quilpué - U. Innovación e Investigación"
+          alt="U. Innovación e Investigación • Hospital de Quilpué"
           className="w-full h-full object-contain"
           onError={(e) => {
             // Fallback si SVG tampoco existe
@@ -32,16 +32,6 @@ const Logo = ({ className = '', size = 'default' }) => {
         >
           <div className="text-4xl font-bold text-primary-600 dark:text-primary-400">HQ</div>
         </div>
-      </div>
-      
-      {/* Texto del logo */}
-      <div className="text-center">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-          U. Innovación e Investigación
-        </h2>
-        <h3 className="text-base font-medium text-gray-700 dark:text-gray-300">
-          Hospital de Quilpué
-        </h3>
       </div>
     </div>
   )
