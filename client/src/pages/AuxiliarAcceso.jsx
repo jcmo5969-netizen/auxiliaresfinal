@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { 
   CheckCircle, Clock, AlertCircle, MapPin, User, 
@@ -23,7 +23,7 @@ const LoginAuxiliar = ({ onLoginSuccess }) => {
     setCargando(true)
 
     try {
-      const res = await axios.post('/api/auth/login', { email, password })
+      const res = await api.post('/api/auth/login', { email, password })
       const { token, usuario } = res.data
       
       if (usuario.rol !== 'auxiliar') {
@@ -32,9 +32,8 @@ const LoginAuxiliar = ({ onLoginSuccess }) => {
         return
       }
       
-      // Guardar token y actualizar headers sin actualizar AuthContext global
+      // Guardar token
       localStorage.setItem('token', token)
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       // Llamar al callback sin actualizar el contexto global para evitar redirecciones
       onLoginSuccess(token)
       toast.success('Inicio de sesión exitoso')
@@ -132,8 +131,8 @@ const AuxiliarAcceso = () => {
   const cargarSolicitudes = useCallback(async (mostrarNotificacionNueva = false) => {
     try {
       const [resPendientes, resAsignadas] = await Promise.all([
-        axios.get('/api/solicitudes/pendientes'),
-        axios.get('/api/solicitudes/mis-asignadas')
+        api.get('/api/solicitudes/pendientes'),
+        api.get('/api/solicitudes/mis-asignadas')
       ])
       
       const nuevasSolicitudes = resPendientes.data || []
@@ -189,7 +188,6 @@ const AuxiliarAcceso = () => {
     const tokenGuardado = localStorage.getItem('token')
     if (tokenGuardado) {
       setToken(tokenGuardado)
-      axios.defaults.headers.common['Authorization'] = `Bearer ${tokenGuardado}`
       verificarAuth()
     } else {
       setCargando(false)
@@ -198,7 +196,6 @@ const AuxiliarAcceso = () => {
   
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       verificarAuth()
     }
   }, [token])
@@ -273,7 +270,7 @@ const AuxiliarAcceso = () => {
 
   const verificarAuth = async () => {
     try {
-      const res = await axios.get('/api/auth/me')
+      const res = await api.get('/api/auth/me')
       if (res.data.rol === 'auxiliar') {
         setAutenticado(true)
         // Asegurarse de que no se redirija al dashboard
@@ -299,7 +296,7 @@ const AuxiliarAcceso = () => {
         toast.error('ID de solicitud inválido')
         return
       }
-      await axios.put(`/api/solicitudes/${solicitudId}/asignar`)
+      await api.put(`/api/solicitudes/${solicitudId}/asignar`)
       toast.success('Solicitud asignada exitosamente', { icon: '✅' })
       // Recargar inmediatamente
       await cargarSolicitudes(false)
@@ -314,7 +311,7 @@ const AuxiliarAcceso = () => {
         toast.error('ID de solicitud inválido')
         return
       }
-      await axios.put(`/api/solicitudes/${solicitudId}/estado`, { estado: 'completada' })
+      await api.put(`/api/solicitudes/${solicitudId}/estado`, { estado: 'completada' })
       toast.success('Solicitud finalizada exitosamente', { icon: '✅' })
       // Recargar inmediatamente
       await cargarSolicitudes(false)
@@ -393,7 +390,6 @@ const AuxiliarAcceso = () => {
   if (!autenticado) {
     return <LoginAuxiliar onLoginSuccess={(t) => { 
       setToken(t)
-      axios.defaults.headers.common['Authorization'] = `Bearer ${t}`
       setAutenticado(true)
       cargarSolicitudes()
     }} />

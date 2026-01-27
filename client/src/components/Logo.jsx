@@ -20,9 +20,13 @@ const Logo = ({ className = '', size = 'default' }) => {
           alt="Hospital de Quilpué - U. Innovación e Investigación"
           className="w-full h-full object-contain"
           onError={(e) => {
-            // Fallback si la imagen no se encuentra
-            e.target.style.display = 'none'
-            e.target.nextSibling.style.display = 'flex'
+            // Fallback a SVG si PNG no existe
+            if (!e.target.src.includes('.svg')) {
+              e.target.src = '/logo-hospital-quilpue.svg'
+            } else {
+              e.target.style.display = 'none'
+              e.target.nextSibling.style.display = 'flex'
+            }
           }}
         />
         {/* Fallback si no hay imagen */}

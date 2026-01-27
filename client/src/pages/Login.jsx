@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
 import { LogIn, Moon, Sun } from 'lucide-react'
-import axios from 'axios'
+import api from '../utils/api'
 import Logo from '../components/Logo'
 
 const Login = ({ onLoginSuccess }) => {
@@ -39,14 +39,13 @@ const Login = ({ onLoginSuccess }) => {
     try {
       if (onLoginSuccess) {
         // Login directo para auxiliares
-        const res = await axios.post('/api/auth/login', { email, password })
+        const res = await api.post('/api/auth/login', { email, password })
         const { token, usuario } = res.data
         if (usuario.rol !== 'auxiliar') {
           toast.error('Solo los auxiliares pueden acceder desde aquí')
           return
         }
         localStorage.setItem('token', token)
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
         onLoginSuccess(token)
         toast.success('Inicio de sesión exitoso')
       } else {

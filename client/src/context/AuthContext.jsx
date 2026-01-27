@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 
 const AuthContext = createContext()
 
@@ -18,7 +18,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       cargarUsuario()
     } else {
       setCargando(false)
@@ -27,30 +26,27 @@ export const AuthProvider = ({ children }) => {
 
   const cargarUsuario = async () => {
     try {
-      const res = await axios.get('/api/auth/me')
+      const res = await api.get('/api/auth/me')
       console.log('👤 Usuario cargado:', res.data)
       setUsuario(res.data)
     } catch (error) {
       console.error('❌ Error cargando usuario:', error)
       localStorage.removeItem('token')
-      delete axios.defaults.headers.common['Authorization']
     } finally {
       setCargando(false)
     }
   }
 
   const login = async (email, password) => {
-    const res = await axios.post('/api/auth/login', { email, password })
+    const res = await api.post('/api/auth/login', { email, password })
     const { token, usuario } = res.data
     localStorage.setItem('token', token)
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
     setUsuario(usuario)
     return usuario
   }
 
   const logout = () => {
     localStorage.removeItem('token')
-    delete axios.defaults.headers.common['Authorization']
     setUsuario(null)
   }
 

@@ -1,0 +1,11 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo circular -->
+  <circle cx="100" cy="100" r="90" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/>
+  
+  <!-- Texto HQ -->
+  <text x="100" y="120" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">HQ</text>
+  
+  <!-- Texto inferior -->
+  <text x="100" y="170" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle">Hospital de Quilpué</text>
+</svg>
+
