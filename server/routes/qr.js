@@ -11,7 +11,11 @@ router.get('/generar', auth, async (req, res) => {
   try {
     // URL para que los auxiliares escaneen y accedan
     // Usar HashRouter, así que la URL incluye #
-    const urlAcceso = `${process.env.CLIENT_URL || 'http://localhost:5173'}/#/auxiliar/acceso`;
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
+    const urlAcceso = `${clientUrl}/#/auxiliar/acceso`;
+    
+    console.log('📱 Generando QR con URL:', urlAcceso);
+    console.log('📱 CLIENT_URL configurado:', clientUrl);
     
     // Generar QR como imagen base64
     const qrCodeDataURL = await QRCode.toDataURL(urlAcceso, {
@@ -26,7 +30,7 @@ router.get('/generar', auth, async (req, res) => {
       url: urlAcceso
     });
   } catch (error) {
-    console.error(error);
+    console.error('❌ Error generando QR:', error);
     res.status(500).json({ mensaje: 'Error generando QR' });
   }
 });

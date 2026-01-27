@@ -18,11 +18,16 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token')
     // No cargar usuario automáticamente si estamos en /auxiliar/acceso
-    // para evitar redirecciones no deseadas
-    const currentHash = window.location.hash
-    if (token && !currentHash.includes('/auxiliar/acceso')) {
+    // para evitar redirecciones no deseadas y conflictos con la autenticación local
+    const currentHash = window.location.hash || window.location.pathname
+    const isAuxiliarAcceso = currentHash.includes('/auxiliar/acceso') || 
+                            window.location.pathname.includes('/auxiliar/acceso')
+    
+    if (token && !isAuxiliarAcceso) {
       cargarUsuario()
     } else {
+      // Si estamos en /auxiliar/acceso, no cargar usuario automáticamente
+      // para evitar interferencias con la autenticación local del componente
       setCargando(false)
     }
   }, [])

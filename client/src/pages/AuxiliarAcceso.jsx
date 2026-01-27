@@ -184,6 +184,16 @@ const AuxiliarAcceso = () => {
   }, [notificacionesActivas])
 
   useEffect(() => {
+    // Asegurarse de que estamos en la ruta correcta (por si acaso)
+    const currentHash = window.location.hash || ''
+    if (!currentHash.includes('/auxiliar/acceso') && window.location.pathname !== '/auxiliar/acceso') {
+      // Si no estamos en la ruta correcta, redirigir
+      if (!currentHash) {
+        window.location.hash = '/auxiliar/acceso'
+        return
+      }
+    }
+    
     // Verificar si hay token al cargar el componente
     const tokenGuardado = localStorage.getItem('token')
     if (tokenGuardado) {
@@ -276,20 +286,25 @@ const AuxiliarAcceso = () => {
         // El usuario debe permanecer en /auxiliar/acceso
         // No actualizar el AuthContext global para evitar redirecciones
       } else {
-        toast.error('Solo los auxiliares pueden acceder aquí')
+        // Si el usuario no es auxiliar, limpiar token y mostrar login
+        // pero NO redirigir para evitar cerrar otras pestañas
+        console.log('⚠️ Usuario no es auxiliar, limpiando sesión local')
         localStorage.removeItem('token')
         setToken(null)
         setAutenticado(false)
         setCargando(false)
-        // No redirigir, solo mostrar el formulario de login
+        toast.error('Solo los auxiliares pueden acceder aquí')
+        // NO redirigir, solo mostrar el formulario de login en esta pestaña
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error)
+      // Si hay error 401 o cualquier otro, limpiar token localmente
+      // pero NO redirigir para evitar cerrar otras pestañas
       localStorage.removeItem('token')
       setToken(null)
       setAutenticado(false)
       setCargando(false)
-      // No redirigir, solo mostrar el formulario de login
+      // NO redirigir, solo mostrar el formulario de login en esta pestaña
     }
   }
 
@@ -419,8 +434,8 @@ const AuxiliarAcceso = () => {
                 setToken(null)
                 setAutenticado(false)
                 setCargando(false)
-                // Recargar la página para limpiar todo el estado
-                window.location.reload()
+                // NO recargar la página, solo limpiar el estado local
+                // para evitar cerrar otras pestañas
               }}
               className="p-2 hover:bg-primary-700 rounded-lg transition"
               title="Cerrar sesión"

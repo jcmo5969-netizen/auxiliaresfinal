@@ -18,10 +18,17 @@ import ProtectedRoute from './components/ProtectedRoute'
 const HomeRedirect = () => {
   const { usuario, cargando } = useAuth()
   
-  // Si estamos en /auxiliar/acceso, no redirigir automáticamente
-  const currentHash = window.location.hash
-  if (currentHash.includes('/auxiliar/acceso')) {
-    return <Navigate to="/auxiliar/acceso" replace />
+  // Si estamos en /auxiliar/acceso, NO redirigir automáticamente
+  // para evitar interferencias con la autenticación local
+  const currentHash = window.location.hash || ''
+  const currentPath = window.location.pathname || ''
+  const isAuxiliarAcceso = currentHash.includes('/auxiliar/acceso') || 
+                           currentPath.includes('/auxiliar/acceso')
+  
+  if (isAuxiliarAcceso) {
+    // Si ya estamos en /auxiliar/acceso, no hacer nada
+    // para evitar redirecciones que cierren otras pestañas
+    return null
   }
   
   if (cargando) {

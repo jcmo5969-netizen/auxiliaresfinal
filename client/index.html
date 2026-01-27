@@ -11,13 +11,21 @@
       (function() {
         var path = window.location.pathname;
         var search = window.location.search;
+        var hash = window.location.hash;
+        
+        // Si ya hay un hash válido (como /#/auxiliar/acceso), no hacer nada
+        if (hash && hash.length > 1) {
+          return;
+        }
+        
         // Si hay una ruta y no hay hash, redirigir inmediatamente
-        if (path !== '/' && path !== '/index.html' && !window.location.hash) {
+        if (path !== '/' && path !== '/index.html' && !hash) {
           window.location.replace('#' + path + search);
           return;
         }
+        
         // Si estamos en la raíz sin hash, redirigir a #/
-        if (path === '/' && !window.location.hash && !window.location.search) {
+        if (path === '/' && !hash && !search) {
           window.location.replace('#/');
         }
       })();

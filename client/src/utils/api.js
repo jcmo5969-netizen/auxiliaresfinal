@@ -35,8 +35,18 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
+      // No redirigir automáticamente si estamos en /auxiliar/acceso
+      // para permitir que el componente maneje su propia autenticación
+      const currentHash = window.location.hash
+      if (!currentHash.includes('/auxiliar/acceso')) {
+        localStorage.removeItem('token')
+        // Solo redirigir si no estamos en /auxiliar/acceso
+        window.location.href = '/#/login'
+      } else {
+        // Si estamos en /auxiliar/acceso, solo remover el token
+        // pero dejar que el componente maneje la redirección
+        localStorage.removeItem('token')
+      }
     }
     return Promise.reject(error)
   }
