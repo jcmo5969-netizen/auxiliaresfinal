@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { Calendar, X } from 'lucide-react'
 import CalendarioSolicitudes from './CalendarioSolicitudes'
@@ -14,7 +14,7 @@ const CalendarioModal = ({ onClose }) => {
 
   const cargarSolicitudes = async () => {
     try {
-      const res = await axios.get('/api/solicitudes')
+      const res = await api.get('/api/solicitudes')
       setSolicitudes(res.data)
     } catch (error) {
       toast.error('Error cargando solicitudes')

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { ArrowLeft } from 'lucide-react'
 import CalendarioSolicitudes from '../components/CalendarioSolicitudes'
@@ -22,7 +22,7 @@ const CalendarioPage = () => {
 
   const cargarSolicitudes = async () => {
     try {
-      const res = await axios.get('/api/solicitudes')
+      const res = await api.get('/api/solicitudes')
       setSolicitudes(res.data)
     } catch (error) {
       toast.error('Error cargando solicitudes')

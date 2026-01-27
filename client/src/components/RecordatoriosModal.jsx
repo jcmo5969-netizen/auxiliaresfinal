@@ -50,7 +50,7 @@ const RecordatoriosModal = ({ onClose }) => {
       }
 
       try {
-        await axios.post('/api/recordatorios', nuevoRecordatorio)
+        await api.post('/api/recordatorios', nuevoRecordatorio)
         toast.success('Recordatorio creado')
       } catch (error) {
         // Guardar en localStorage como fallback

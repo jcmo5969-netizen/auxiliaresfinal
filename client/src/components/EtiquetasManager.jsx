@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { Tag, Plus, Edit, Trash2, X } from 'lucide-react'
 
@@ -15,7 +15,7 @@ const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChan
 
   const cargarEtiquetas = async () => {
     try {
-      const res = await axios.get('/api/etiquetas')
+      const res = await api.get('/api/etiquetas')
       setEtiquetas(res.data)
     } catch (error) {
       toast.error('Error cargando etiquetas')
@@ -27,7 +27,7 @@ const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChan
   const handleCrearEtiqueta = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('/api/etiquetas', formData)
+      await api.post('/api/etiquetas', formData)
       toast.success('Etiqueta creada')
       setFormData({ nombre: '', color: '#3B82F6' })
       setMostrarForm(false)
@@ -39,7 +39,7 @@ const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChan
 
   const handleAgregarEtiqueta = async (etiquetaId) => {
     try {
-      await axios.post(`/api/etiquetas/${etiquetaId}/solicitud/${solicitudId}`)
+      await api.post(`/api/etiquetas/${etiquetaId}/solicitud/${solicitudId}`)
       toast.success('Etiqueta agregada')
       if (onEtiquetasChange) {
         onEtiquetasChange()
@@ -51,7 +51,7 @@ const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChan
 
   const handleRemoverEtiqueta = async (etiquetaId) => {
     try {
-      await axios.delete(`/api/etiquetas/${etiquetaId}/solicitud/${solicitudId}`)
+      await api.delete(`/api/etiquetas/${etiquetaId}/solicitud/${solicitudId}`)
       toast.success('Etiqueta removida')
       if (onEtiquetasChange) {
         onEtiquetasChange()

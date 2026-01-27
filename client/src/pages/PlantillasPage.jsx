@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { ArrowLeft, FileText, Plus, Edit, Trash2, Copy } from 'lucide-react'
 
@@ -32,8 +32,8 @@ const PlantillasPage = () => {
   const cargarDatos = async () => {
     try {
       const [plantillasRes, serviciosRes] = await Promise.all([
-        axios.get('/api/plantillas'),
-        axios.get('/api/servicios')
+        api.get('/api/plantillas'),
+        api.get('/api/servicios')
       ])
       setPlantillas(plantillasRes.data)
       setServicios(serviciosRes.data)
@@ -49,10 +49,10 @@ const PlantillasPage = () => {
     e.preventDefault()
     try {
       if (editandoId) {
-        await axios.put(`/api/plantillas/${editandoId}`, formData)
+        await api.put(`/api/plantillas/${editandoId}`, formData)
         toast.success('Plantilla actualizada')
       } else {
-        await axios.post('/api/plantillas', formData)
+        await api.post('/api/plantillas', formData)
         toast.success('Plantilla creada')
       }
       setMostrarForm(false)
@@ -86,7 +86,7 @@ const PlantillasPage = () => {
   const handleEliminar = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar esta plantilla?')) return
     try {
-      await axios.delete(`/api/plantillas/${id}`)
+      await api.delete(`/api/plantillas/${id}`)
       toast.success('Plantilla eliminada')
       cargarDatos()
     } catch (error) {

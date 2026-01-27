@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { X, FileText, Plus, Edit, Trash2, Copy } from 'lucide-react'
 
@@ -22,7 +22,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
 
   const cargarPlantillas = async () => {
     try {
-      const res = await axios.get('/api/plantillas')
+      const res = await api.get('/api/plantillas')
       setPlantillas(res.data)
     } catch (error) {
       toast.error('Error cargando plantillas')
@@ -35,10 +35,10 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
     e.preventDefault()
     try {
       if (editandoId) {
-        await axios.put(`/api/plantillas/${editandoId}`, formData)
+        await api.put(`/api/plantillas/${editandoId}`, formData)
         toast.success('Plantilla actualizada')
       } else {
-        await axios.post('/api/plantillas', formData)
+        await api.post('/api/plantillas', formData)
         toast.success('Plantilla creada')
       }
       setMostrarForm(false)
@@ -59,7 +59,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
   const handleEliminar = async (id) => {
     if (!confirm('¿Estás seguro de eliminar esta plantilla?')) return
     try {
-      await axios.delete(`/api/plantillas/${id}`)
+      await api.delete(`/api/plantillas/${id}`)
       toast.success('Plantilla eliminada')
       cargarPlantillas()
     } catch (error) {

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { io } from 'socket.io-client'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { ArrowLeft, MessageSquare, Send, Users } from 'lucide-react'
 
@@ -57,7 +57,7 @@ const ChatPage = () => {
 
   const cargarMensajes = async () => {
     try {
-      const res = await axios.get('/api/chat/general')
+      const res = await api.get('/api/chat/general')
       setMensajes(res.data)
     } catch (error) {
       console.error('Error cargando mensajes:', error)
@@ -71,7 +71,7 @@ const ChatPage = () => {
     if (!nuevoMensaje.trim() || !socket) return
 
     try {
-      await axios.post('/api/chat/general', {
+      await api.post('/api/chat/general', {
         contenido: nuevoMensaje,
         tipo: 'general'
       })

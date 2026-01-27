@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { io } from 'socket.io-client'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { MessageSquare, Send, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -47,7 +47,7 @@ const ChatComponent = ({ solicitudId, onClose }) => {
 
   const cargarMensajes = async () => {
     try {
-      const res = await axios.get('/api/chat/mensajes', {
+      const res = await api.get('/api/chat/mensajes', {
         params: { solicitudId: solicitudId || null }
       })
       setMensajes(res.data)
@@ -70,7 +70,7 @@ const ChatComponent = ({ solicitudId, onClose }) => {
     if (!nuevoMensaje.trim()) return
 
     try {
-      await axios.post('/api/chat/mensajes', {
+      await api.post('/api/chat/mensajes', {
         contenido: nuevoMensaje,
         solicitudId: solicitudId || null
       })

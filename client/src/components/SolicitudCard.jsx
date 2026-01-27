@@ -3,7 +3,7 @@ import {
   MapPin, User, Clock, AlertCircle, CheckCircle, 
   X, Edit, MoreVertical, Calendar, MessageSquare, History, Tag
 } from 'lucide-react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import ComentariosModal from './ComentariosModal'
 import HistorialModal from './HistorialModal'
@@ -59,7 +59,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
   const handleCambiarEstado = async (nuevoEstado) => {
     setCambiandoEstado(true)
     try {
-      await axios.put(`/api/solicitudes/${solicitud.id || solicitud._id}/estado`, { 
+      await api.put(`/api/solicitudes/${solicitud.id || solicitud._id}/estado`, { 
         estado: nuevoEstado 
       })
       toast.success('Estado actualizado')

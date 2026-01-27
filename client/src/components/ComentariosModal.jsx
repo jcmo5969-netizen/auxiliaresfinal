@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { X, Send, MessageSquare, User, Clock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -20,7 +20,7 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
 
   const cargarComentarios = async () => {
     try {
-      const res = await axios.get(`/api/comentarios/solicitud/${solicitudId}`)
+      const res = await api.get(`/api/comentarios/solicitud/${solicitudId}`)
       setComentarios(res.data)
     } catch (error) {
       console.error('Error cargando comentarios:', error)
@@ -35,7 +35,7 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
 
     setEnviando(true)
     try {
-      await axios.post('/api/comentarios', {
+      await api.post('/api/comentarios', {
         solicitudId,
         contenido: nuevoComentario
       })

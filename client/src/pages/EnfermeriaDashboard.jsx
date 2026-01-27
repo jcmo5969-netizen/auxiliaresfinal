@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { 
   LogOut, Plus, Calendar, AlertCircle, CheckCircle, Clock,
@@ -63,8 +63,8 @@ const EnfermeriaDashboard = () => {
   const cargarDatos = async () => {
     try {
       const [resSolicitudes, resServicios] = await Promise.all([
-        axios.get('/api/solicitudes'),
-        axios.get('/api/servicios')
+        api.get('/api/solicitudes'),
+        api.get('/api/servicios')
       ])
       
       setSolicitudes(resSolicitudes.data || [])
@@ -90,7 +90,7 @@ const EnfermeriaDashboard = () => {
         ...datos,
         servicioId: usuario.servicioId || datos.servicioId
       }
-      await axios.post('/api/solicitudes', datosConServicio)
+      await api.post('/api/solicitudes', datosConServicio)
       toast.success('Solicitud creada exitosamente')
       setMostrarModal(false)
       await cargarDatos()

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { X, History, User, Clock, ArrowRight } from 'lucide-react'
 
@@ -13,7 +13,7 @@ const HistorialModal = ({ solicitudId, onClose }) => {
 
   const cargarHistorial = async () => {
     try {
-      const res = await axios.get(`/api/historial/solicitud/${solicitudId}`)
+      const res = await api.get(`/api/historial/solicitud/${solicitudId}`)
       setHistorial(res.data)
     } catch (error) {
       toast.error('Error cargando historial')

@@ -1,6 +1,6 @@
 import { Building2, Plus, Edit, Trash2, Check, X } from 'lucide-react'
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 
 const ServiciosList = ({ servicios, usuario, onUpdate }) => {
@@ -21,10 +21,10 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
 
     try {
       if (editandoId) {
-        await axios.put(`/api/servicios/${editandoId}`, formData)
+        await api.put(`/api/servicios/${editandoId}`, formData)
         toast.success('Servicio actualizado exitosamente')
       } else {
-        await axios.post('/api/servicios', formData)
+        await api.post('/api/servicios', formData)
         toast.success('Servicio creado exitosamente')
       }
       setFormData({ nombre: '', piso: '', descripcion: '' })
@@ -51,7 +51,7 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
     if (!confirm('¿Estás seguro de desactivar este servicio?')) return
     
     try {
-      await axios.delete(`/api/servicios/${id}`)
+      await api.delete(`/api/servicios/${id}`)
       toast.success('Servicio desactivado')
       if (onUpdate) onUpdate()
       else window.location.reload()

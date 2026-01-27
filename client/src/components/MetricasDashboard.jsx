@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { BarChart3, TrendingUp, Clock, Users, Activity, Download, Filter } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
@@ -25,7 +25,7 @@ const MetricasDashboard = () => {
       const fechaInicio = new Date()
       fechaInicio.setDate(fechaInicio.getDate() - parseInt(rangoFecha))
 
-      const res = await axios.get('/api/metricas/dashboard', {
+      const res = await api.get('/api/metricas/dashboard', {
         params: {
           fechaInicio: fechaInicio.toISOString(),
           fechaFin: fechaFin.toISOString()

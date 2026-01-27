@@ -1,6 +1,6 @@
 import { User, Plus, Mail, Shield, UserCheck, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react'
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import AgregarPersonalModal from './AgregarPersonalModal'
 
@@ -9,7 +9,7 @@ const PersonalList = ({ personal, usuario, onPersonalAgregado, servicios = [] })
 
   const handleAgregarPersonal = async (datos) => {
     try {
-      const res = await axios.post('/api/auth/registro', datos)
+      const res = await api.post('/api/auth/registro', datos)
       toast.success(res.data.mensaje || 'Personal agregado exitosamente')
       setMostrarForm(false)
       if (onPersonalAgregado) {

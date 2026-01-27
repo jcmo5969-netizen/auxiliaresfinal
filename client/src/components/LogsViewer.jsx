@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { FileText, Search, Filter, Calendar } from 'lucide-react'
 
@@ -26,7 +26,7 @@ const LogsViewer = () => {
       if (filtros.accion) params.accion = filtros.accion
       if (filtros.entidad) params.entidad = filtros.entidad
 
-      const res = await axios.get('/api/logs', { params })
+      const res = await api.get('/api/logs', { params })
       setLogs(res.data.logs || res.data)
     } catch (error) {
       toast.error('Error cargando logs')

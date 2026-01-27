@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { io } from 'socket.io-client'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { MessageSquare, Send, X, Users } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -70,12 +70,12 @@ const ChatModal = ({ onClose, solicitudId = null }) => {
   const cargarMensajes = async () => {
     try {
       if (solicitudId) {
-        const res = await axios.get('/api/chat/mensajes', {
+        const res = await api.get('/api/chat/mensajes', {
           params: { solicitudId }
         })
         setMensajes(res.data)
       } else {
-        const res = await axios.get('/api/chat/general')
+        const res = await api.get('/api/chat/general')
         setMensajes(res.data)
       }
     } catch (error) {
@@ -92,12 +92,12 @@ const ChatModal = ({ onClose, solicitudId = null }) => {
 
     try {
       if (solicitudId) {
-        await axios.post('/api/chat/mensajes', {
+        await api.post('/api/chat/mensajes', {
           contenido: nuevoMensaje,
           solicitudId
         })
       } else {
-        await axios.post('/api/chat/general', {
+        await api.post('/api/chat/general', {
           contenido: nuevoMensaje,
           tipo: 'general'
         })
