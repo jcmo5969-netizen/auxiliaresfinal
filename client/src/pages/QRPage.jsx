@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { QRCodeSVG } from 'qrcode.react'
 import { ArrowLeft, Download } from 'lucide-react'
@@ -18,10 +18,17 @@ const QRPage = () => {
 
   const cargarQR = async () => {
     try {
-      const res = await axios.get('/api/qr/generar')
+      const res = await api.get('/api/qr/generar')
       setQrData(res.data)
     } catch (error) {
-      toast.error('Error generando QR')
+      console.error('Error generando QR:', error)
+      toast.error(error.response?.data?.mensaje || 'Error generando QR')
+      // Generar QR localmente como fallback
+      const urlAcceso = `${window.location.origin}/auxiliar/acceso`
+      setQrData({
+        qrCode: null,
+        url: urlAcceso
+      })
     } finally {
       setCargando(false)
     }
