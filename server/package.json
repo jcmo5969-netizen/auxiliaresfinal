@@ -1,0 +1,33 @@
+{
+  "name": "sistema-auxiliares-server",
+  "version": "1.0.0",
+  "description": "Backend del sistema de auxiliares",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "create-db": "node scripts/createDatabase.js",
+    "verificar-firebase": "node scripts/verificarFirebase.js",
+    "configurar-firebase": "node scripts/configurarFirebase.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "firebase-admin": "^12.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "multer": "^2.0.2",
+    "pg": "^8.17.2",
+    "pg-hstore": "^2.3.4",
+    "qrcode": "^1.5.4",
+    "sequelize": "^6.37.7",
+    "socket.io": "^4.8.3",
+    "speakeasy": "^2.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

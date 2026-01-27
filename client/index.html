@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Auxiliares</title>
+    <!-- Firebase Messaging Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        // Evitar registro múltiple
+        if (!window._swRegistered) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+              // Verificar si ya está registrado
+              const yaRegistrado = registrations.some(reg => 
+                reg.active && reg.active.scriptURL.includes('firebase-messaging-sw.js')
+              );
+              
+              if (!yaRegistrado) {
+                navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                  .then((registration) => {
+                    console.log('✅ Service Worker registrado:', registration.scope);
+                    window._swRegistered = true;
+                  })
+                  .catch((error) => {
+                    // Solo mostrar error si no es un error de scope duplicado
+                    if (!error.message.includes('already been registered')) {
+                      console.warn('⚠️ Error registrando Service Worker:', error);
+                    }
+                  });
+              } else {
+                console.log('✅ Service Worker ya estaba registrado');
+                window._swRegistered = true;
+              }
+            });
+          });
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+
