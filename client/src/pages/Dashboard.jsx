@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { 
   LogOut, QrCode, Plus, CheckCircle, Clock, AlertCircle,
@@ -112,13 +112,13 @@ const Dashboard = () => {
   const cargarDatos = async () => {
     try {
       const promesas = [
-        axios.get('/api/solicitudes'),
-        axios.get('/api/servicios')
+        api.get('/api/solicitudes'),
+        api.get('/api/servicios')
       ]
       
       // Solo cargar personal si es administrador
       if (usuario?.rol === 'administrador') {
-        promesas.push(axios.get('/api/auxiliares'))
+        promesas.push(api.get('/api/auxiliares'))
       }
       
       const resultados = await Promise.all(promesas)
@@ -143,7 +143,7 @@ const Dashboard = () => {
   const handlePersonalAgregado = async () => {
     if (usuario?.rol === 'administrador') {
       try {
-        const res = await axios.get('/api/auxiliares')
+        const res = await api.get('/api/auxiliares')
         setPersonal(res.data)
       } catch (error) {
         toast.error('Error recargando personal')
@@ -159,7 +159,7 @@ const Dashboard = () => {
 
   const handleNuevaSolicitud = async (datos) => {
     try {
-      await axios.post('/api/solicitudes', datos)
+      await api.post('/api/solicitudes', datos)
       toast.success('Solicitud creada exitosamente')
       setMostrarModal(false)
       // Recargar datos inmediatamente

@@ -3,6 +3,11 @@ import axios from 'axios'
 // Configurar la URL base del API
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
+// Log para debug (solo en desarrollo)
+if (import.meta.env.DEV) {
+  console.log('🔗 API URL configurada:', API_URL || 'NO CONFIGURADA - usando localhost:5000')
+}
+
 // Crear instancia de axios con configuración base
 const api = axios.create({
   baseURL: API_URL,
