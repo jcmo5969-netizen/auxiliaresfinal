@@ -16,17 +16,13 @@ const Logo = ({ className = '', size = 'default' }) => {
       {/* Logo - Imagen del Hospital de Quilpué */}
       <div className={`${sizes[size]} mb-4 flex items-center justify-center`}>
         <img 
-          src="/logo-hospital-quilpue.png" 
+          src="/logo-hospital-quilpue.svg" 
           alt="Hospital de Quilpué - U. Innovación e Investigación"
           className="w-full h-full object-contain"
           onError={(e) => {
-            // Fallback a SVG si PNG no existe
-            if (!e.target.src.includes('.svg')) {
-              e.target.src = '/logo-hospital-quilpue.svg'
-            } else {
-              e.target.style.display = 'none'
-              e.target.nextSibling.style.display = 'flex'
-            }
+            // Fallback si SVG tampoco existe
+            e.target.style.display = 'none'
+            e.target.nextSibling.style.display = 'flex'
           }}
         />
         {/* Fallback si no hay imagen */}

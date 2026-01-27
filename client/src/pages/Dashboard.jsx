@@ -209,16 +209,11 @@ const Dashboard = () => {
               {/* Logo del Hospital */}
               <div className="flex items-center gap-3">
                 <img 
-                  src="/logo-hospital-quilpue.png" 
+                  src="/logo-hospital-quilpue.svg" 
                   alt="Hospital de Quilpué"
                   className="h-12 w-auto object-contain"
                   onError={(e) => {
-                    // Fallback a SVG si PNG no existe
-                    if (!e.target.src.includes('.svg')) {
-                      e.target.src = '/logo-hospital-quilpue.svg'
-                    } else {
-                      e.target.style.display = 'none'
-                    }
+                    e.target.style.display = 'none'
                   }}
                 />
                 <div className="hidden flex-col">
