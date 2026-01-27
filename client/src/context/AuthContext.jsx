@@ -17,7 +17,10 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (token) {
+    // No cargar usuario automáticamente si estamos en /auxiliar/acceso
+    // para evitar redirecciones no deseadas
+    const currentHash = window.location.hash
+    if (token && !currentHash.includes('/auxiliar/acceso')) {
       cargarUsuario()
     } else {
       setCargando(false)

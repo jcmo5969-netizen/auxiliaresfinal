@@ -18,6 +18,12 @@ import ProtectedRoute from './components/ProtectedRoute'
 const HomeRedirect = () => {
   const { usuario, cargando } = useAuth()
   
+  // Si estamos en /auxiliar/acceso, no redirigir automáticamente
+  const currentHash = window.location.hash
+  if (currentHash.includes('/auxiliar/acceso')) {
+    return <Navigate to="/auxiliar/acceso" replace />
+  }
+  
   if (cargando) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -54,7 +60,13 @@ function App() {
                   <QRPage />
                 </ProtectedRoute>
               } />
-            <Route path="/auxiliar/acceso" element={<AuxiliarAcceso />} />
+            <Route 
+              path="/auxiliar/acceso" 
+              element={
+                // No usar ProtectedRoute aquí, AuxiliarAcceso maneja su propia autenticación
+                <AuxiliarAcceso />
+              } 
+            />
             <Route path="/enfermeria/dashboard" element={
               <ProtectedRoute>
                 <EnfermeriaDashboard />

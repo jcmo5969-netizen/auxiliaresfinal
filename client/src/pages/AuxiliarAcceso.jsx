@@ -188,20 +188,18 @@ const AuxiliarAcceso = () => {
     const tokenGuardado = localStorage.getItem('token')
     if (tokenGuardado) {
       setToken(tokenGuardado)
+      // Verificar autenticación inmediatamente
       verificarAuth()
     } else {
       setCargando(false)
+      setAutenticado(false)
     }
   }, [])
   
-  useEffect(() => {
-    if (token) {
-      verificarAuth()
-    }
-  }, [token])
+  // Remover el segundo useEffect que causaba verificaciones duplicadas
 
   useEffect(() => {
-    if (!autenticado) return
+    if (!autenticado || cargando) return
 
     let limpiarListener = null
     let intervalo = null
@@ -273,20 +271,25 @@ const AuxiliarAcceso = () => {
       const res = await api.get('/api/auth/me')
       if (res.data.rol === 'auxiliar') {
         setAutenticado(true)
+        setCargando(false)
         // Asegurarse de que no se redirija al dashboard
         // El usuario debe permanecer en /auxiliar/acceso
+        // No actualizar el AuthContext global para evitar redirecciones
       } else {
         toast.error('Solo los auxiliares pueden acceder aquí')
         localStorage.removeItem('token')
         setToken(null)
-        window.location.href = '/login'
+        setAutenticado(false)
+        setCargando(false)
+        // No redirigir, solo mostrar el formulario de login
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error)
       localStorage.removeItem('token')
       setToken(null)
-    } finally {
+      setAutenticado(false)
       setCargando(false)
+      // No redirigir, solo mostrar el formulario de login
     }
   }
 
@@ -390,8 +393,13 @@ const AuxiliarAcceso = () => {
   if (!autenticado) {
     return <LoginAuxiliar onLoginSuccess={(t) => { 
       setToken(t)
+      localStorage.setItem('token', t)
       setAutenticado(true)
-      cargarSolicitudes()
+      setCargando(false)
+      // Cargar solicitudes después de autenticar
+      setTimeout(() => {
+        cargarSolicitudes(false)
+      }, 100)
     }} />
   }
 
@@ -410,8 +418,12 @@ const AuxiliarAcceso = () => {
                 localStorage.removeItem('token')
                 setToken(null)
                 setAutenticado(false)
+                setCargando(false)
+                // Recargar la página para limpiar todo el estado
+                window.location.reload()
               }}
               className="p-2 hover:bg-primary-700 rounded-lg transition"
+              title="Cerrar sesión"
             >
               <X className="w-6 h-6" />
             </button>
