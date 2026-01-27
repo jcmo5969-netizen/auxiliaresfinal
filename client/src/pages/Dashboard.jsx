@@ -24,6 +24,7 @@ import AlertasPanel from '../components/AlertasPanel'
 import RecordatoriosModal from '../components/RecordatoriosModal'
 import WidgetConfig from '../components/WidgetConfig'
 import EstadisticasTiempoReal from '../components/EstadisticasTiempoReal'
+import Logo from '../components/Logo'
 
 const Dashboard = () => {
   const { usuario, logout } = useAuth()
@@ -205,10 +206,26 @@ const Dashboard = () => {
           {/* Primera fila: Título y usuario */}
           <div className="flex items-center justify-between py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-4">
-              <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-lg">
-                <Building2 className="w-6 h-6 text-white" />
+              {/* Logo del Hospital */}
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/logo-hospital-quilpue.png" 
+                  alt="Hospital de Quilpué"
+                  className="h-12 w-auto object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                  }}
+                />
+                <div className="hidden flex-col">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+                    Dashboard
+                  </h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Sistema de Gestión de Auxiliares
+                  </p>
+                </div>
               </div>
-              <div>
+              <div className="flex flex-col">
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
                   Dashboard
                 </h1>

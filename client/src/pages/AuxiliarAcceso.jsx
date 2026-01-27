@@ -9,6 +9,7 @@ import {
 import { useTheme } from '../context/ThemeContext'
 import { solicitarPermisoNotificaciones, escucharNotificaciones, estaFirebaseConfigurado } from '../utils/firebase'
 import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
+import Logo from '../components/Logo'
 
 // Componente de Login específico para auxiliares
 const LoginAuxiliar = ({ onLoginSuccess }) => {
@@ -63,9 +64,7 @@ const LoginAuxiliar = ({ onLoginSuccess }) => {
         </div>
         
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full mb-4">
-            <LogIn className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-          </div>
+          <Logo size="small" className="mb-4" />
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Acceso Auxiliares</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Inicia sesión para gestionar solicitudes</p>
         </div>

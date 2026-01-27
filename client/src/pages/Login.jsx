@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
 import { LogIn, Moon, Sun } from 'lucide-react'
 import axios from 'axios'
+import Logo from '../components/Logo'
 
 const Login = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('')
@@ -88,9 +89,7 @@ const Login = ({ onLoginSuccess }) => {
         </div>
         
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full mb-4">
-            <LogIn className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-          </div>
+          <Logo size="default" className="mb-6" />
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sistema de Auxiliares</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Inicia sesión para continuar</p>
         </div>
