@@ -10,7 +10,8 @@ const router = express.Router();
 router.get('/generar', auth, async (req, res) => {
   try {
     // URL para que los auxiliares escaneen y accedan
-    const urlAcceso = `${process.env.CLIENT_URL || 'http://localhost:5173'}/auxiliar/acceso`;
+    // Usar HashRouter, así que la URL incluye #
+    const urlAcceso = `${process.env.CLIENT_URL || 'http://localhost:5173'}/#/auxiliar/acceso`;
     
     // Generar QR como imagen base64
     const qrCodeDataURL = await QRCode.toDataURL(urlAcceso, {
