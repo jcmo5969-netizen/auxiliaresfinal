@@ -38,8 +38,8 @@ if (messaging) {
     const notificationTitle = payload.notification?.title || 'Nueva solicitud';
     const notificationOptions = {
       body: payload.notification?.body || 'Tienes una nueva solicitud pendiente',
-      icon: payload.notification?.icon || '/vite.svg',
-      badge: '/vite.svg',
+      icon: payload.notification?.icon || '/logo-hospital-quilpue.png',
+      badge: '/logo-hospital-quilpue.png',
       tag: payload.data?.solicitudId || 'solicitud',
       data: payload.data,
       requireInteraction: payload.data?.prioridad === 'urgente',

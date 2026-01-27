@@ -186,8 +186,8 @@ export const escucharNotificaciones = (callback) => {
       if (Notification.permission === 'granted' && payload.notification) {
         const notification = new Notification(payload.notification.title, {
           body: payload.notification.body,
-          icon: payload.notification.icon || '/vite.svg',
-          badge: '/vite.svg',
+          icon: payload.notification.icon || '/logo-hospital-quilpue.png',
+          badge: '/logo-hospital-quilpue.png',
           tag: payload.data?.solicitudId || 'solicitud',
           requireInteraction: payload.data?.prioridad === 'urgente',
           data: payload.data
