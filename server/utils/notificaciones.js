@@ -6,14 +6,41 @@ const { Op } = require('sequelize');
 let firebaseInitialized = false;
 
 try {
-  const serviceAccount = require('../firebase-service-account.json');
+  let serviceAccount;
+  
+  // Prioridad 1: Variable de entorno (para producción en Render)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      console.log('📦 Usando Firebase desde variable de entorno');
+    } catch (parseError) {
+      console.error('❌ Error parseando FIREBASE_SERVICE_ACCOUNT:', parseError.message);
+      throw parseError;
+    }
+  } 
+  // Prioridad 2: Archivo local (para desarrollo)
+  else {
+    const path = require('path');
+    const serviceAccountPath = path.join(__dirname, '..', 'firebase-service-account.json');
+    const fs = require('fs');
+    
+    if (fs.existsSync(serviceAccountPath)) {
+      serviceAccount = require(serviceAccountPath);
+      console.log('📦 Usando Firebase desde archivo local');
+    } else {
+      throw new Error('No se encontró configuración de Firebase');
+    }
+  }
+  
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
   firebaseInitialized = true;
   console.log('✅ Firebase Admin inicializado');
 } catch (error) {
-  console.warn('⚠️  Firebase no configurado. Las notificaciones push no funcionarán sin el archivo firebase-service-account.json');
+  console.warn('⚠️  Firebase no configurado. Las notificaciones push no funcionarán.');
+  console.warn('   Para desarrollo: Coloca firebase-service-account.json en server/');
+  console.warn('   Para producción: Configura FIREBASE_SERVICE_ACCOUNT como variable de entorno');
 }
 
 const enviarNotificacionPush = async (solicitud) => {
