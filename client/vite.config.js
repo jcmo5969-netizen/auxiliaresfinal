@@ -16,12 +16,18 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['recharts']
+          charts: ['recharts'],
+          socket: ['socket.io-client']
         }
       }
-    }
+    },
+    // Optimizaciones para producción
+    chunkSizeWarningLimit: 1000,
+    assetsInlineLimit: 4096
   },
   define: {
     'process.env': {}
-  }
+  },
+  // Configuración para variables de entorno
+  envPrefix: 'VITE_'
 })
