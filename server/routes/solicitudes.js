@@ -181,9 +181,16 @@ router.post('/', [
       solicitadoPorId: req.usuario.id
     };
 
-    // Si hay fechaProgramada, convertirla a Date
+    // Si hay fechaProgramada, convertirla a Date (validar)
     if (req.body.fechaProgramada) {
-      datosSolicitud.fechaProgramada = new Date(req.body.fechaProgramada);
+      const fecha = new Date(req.body.fechaProgramada);
+      if (!isNaN(fecha.getTime())) {
+        datosSolicitud.fechaProgramada = fecha;
+      } else {
+        datosSolicitud.fechaProgramada = null;
+      }
+    } else {
+      datosSolicitud.fechaProgramada = null;
     }
 
     // Normalizar campos de traslado y prioridad inmediata
