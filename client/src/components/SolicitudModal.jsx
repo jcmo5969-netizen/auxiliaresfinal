@@ -45,9 +45,17 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     })
   }
 
+  const handlePrioridadInmediato = (checked) => {
+    setFormData(prev => ({
+      ...prev,
+      prioridadInmediato: checked,
+      prioridad: checked ? 'urgente' : prev.prioridad
+    }))
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 relative">
+      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 md:p-8 relative shadow-xl">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -56,7 +64,12 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
         </button>
 
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nueva Solicitud</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nueva Solicitud</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Completa los datos mínimos para crear la solicitud.
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -77,10 +90,11 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Servicio
+              Servicio <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.servicio}
@@ -100,11 +114,16 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Tipo de Requerimiento
+              Tipo de Requerimiento <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.tipoRequerimiento}
-              onChange={(e) => setFormData({ ...formData, tipoRequerimiento: e.target.value })}
+              onChange={(e) => setFormData({
+                ...formData,
+                tipoRequerimiento: e.target.value,
+                tipoServicio: e.target.value === 'traslado' ? formData.tipoServicio : '',
+                tipoTraslado: e.target.value === 'traslado' ? formData.tipoTraslado : ''
+              })}
               required
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
@@ -114,8 +133,11 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               <option value="otro">Otro</option>
             </select>
           </div>
+          </div>
 
-          <div>
+          {formData.tipoRequerimiento === 'traslado' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Tipo de Servicio
             </label>
@@ -142,18 +164,11 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               <option value="con_camilla">Con camilla</option>
             </select>
           </div>
+          </div>
+          )}
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <input
-              type="checkbox"
-              checked={formData.prioridadInmediato}
-              onChange={(e) => setFormData({ ...formData, prioridadInmediato: e.target.checked })}
-              className="h-4 w-4"
-            />
-            Prioridad Inmediato
-          </label>
-
-          <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Prioridad
             </label>
@@ -161,6 +176,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               value={formData.prioridad}
               onChange={(e) => setFormData({ ...formData, prioridad: e.target.value })}
               required
+              disabled={formData.prioridadInmediato}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="baja">Baja</option>
@@ -168,6 +184,19 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               <option value="alta">Alta</option>
               <option value="urgente">Urgente</option>
             </select>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={formData.prioridadInmediato}
+                onChange={(e) => handlePrioridadInmediato(e.target.checked)}
+                className="h-4 w-4"
+              />
+              Prioridad Inmediato
+            </label>
+          </div>
           </div>
 
           <div>
@@ -190,6 +219,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Descripción (opcional)
@@ -218,6 +248,21 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Si seleccionas una fecha, la solicitud aparecerá en el calendario y estará disponible para los auxiliares en esa fecha
             </p>
+          </div>
+          </div>
+
+          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300 mb-2">Resumen</h3>
+            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+              <div>Servicio: {formData.servicio ? 'Seleccionado' : 'Pendiente'}</div>
+              <div>Tipo: {formData.tipoRequerimiento}</div>
+              <div>Prioridad: {formData.prioridadInmediato ? 'Inmediato' : formData.prioridad}</div>
+              {formData.tipoRequerimiento === 'traslado' && (
+                <div>Traslado: {formData.tipoTraslado || 'Pendiente'}</div>
+              )}
+              {formData.cama && <div>Cama: {formData.cama}</div>}
+              {formData.fechaProgramada && <div>Fecha: {formData.fechaProgramada}</div>}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">
