@@ -170,6 +170,35 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
           )}
         </div>
 
+        {/* Información adicional */}
+        {(solicitud.tipoServicio || solicitud.tipoTraslado || solicitud.prioridadInmediato) && (
+          <div className="mb-4 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+            {solicitud.tipoServicio && (
+              <div>
+                <span className="font-semibold">Tipo de Servicio:</span>{' '}
+                {solicitud.tipoServicio === 'traslado_pcte' ? 'TRASLADO DE PCTE' : solicitud.tipoServicio}
+              </div>
+            )}
+            {solicitud.tipoTraslado && (
+              <div>
+                <span className="font-semibold">Tipo de Traslado:</span>{' '}
+                {solicitud.tipoTraslado === 'sin_silla_ni_camilla'
+                  ? 'Sin silla ni camilla'
+                  : solicitud.tipoTraslado === 'con_silla'
+                    ? 'Con silla de ruedas'
+                    : solicitud.tipoTraslado === 'con_camilla'
+                      ? 'Con camilla'
+                      : solicitud.tipoTraslado}
+              </div>
+            )}
+            {solicitud.prioridadInmediato && (
+              <div className="text-red-600 dark:text-red-400 font-semibold">
+                Prioridad Inmediato
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Descripción */}
         {solicitud.descripcion && (
           <p className="text-gray-700 dark:text-gray-300 mb-4 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg text-sm">

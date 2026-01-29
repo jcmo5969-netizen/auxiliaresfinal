@@ -7,6 +7,9 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
   const [formData, setFormData] = useState({
     servicio: servicioPredeterminado || '',
     tipoRequerimiento: 'alta',
+    tipoServicio: 'traslado_pcte',
+    tipoTraslado: 'sin_silla_ni_camilla',
+    prioridadInmediato: false,
     descripcion: '',
     prioridad: 'media',
     fechaProgramada: '',
@@ -32,6 +35,9 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     setFormData({
       servicio: servicioPredeterminado || '',
       tipoRequerimiento: 'alta',
+      tipoServicio: 'traslado_pcte',
+      tipoTraslado: 'sin_silla_ni_camilla',
+      prioridadInmediato: false,
       descripcion: '',
       prioridad: 'media',
       fechaProgramada: '',
@@ -108,6 +114,44 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               <option value="otro">Otro</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Tipo de Servicio
+            </label>
+            <select
+              value={formData.tipoServicio}
+              onChange={(e) => setFormData({ ...formData, tipoServicio: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="traslado_pcte">TRASLADO DE PCTE</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Tipo de Traslado
+            </label>
+            <select
+              value={formData.tipoTraslado}
+              onChange={(e) => setFormData({ ...formData, tipoTraslado: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="sin_silla_ni_camilla">Sin silla ni camilla</option>
+              <option value="con_silla">Con silla de ruedas</option>
+              <option value="con_camilla">Con camilla</option>
+            </select>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={formData.prioridadInmediato}
+              onChange={(e) => setFormData({ ...formData, prioridadInmediato: e.target.checked })}
+              className="h-4 w-4"
+            />
+            Prioridad Inmediato
+          </label>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

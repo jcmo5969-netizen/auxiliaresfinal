@@ -25,6 +25,22 @@ const Solicitud = sequelize.define('Solicitud', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  tipoServicio: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'tipo_servicio'
+  },
+  tipoTraslado: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'tipo_traslado'
+  },
+  prioridadInmediato: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'prioridad_inmediato'
+  },
   cama: {
     type: DataTypes.STRING,
     allowNull: true
