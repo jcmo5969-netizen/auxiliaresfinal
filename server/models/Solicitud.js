@@ -25,6 +25,10 @@ const Solicitud = sequelize.define('Solicitud', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  cama: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   prioridad: {
     type: DataTypes.ENUM('baja', 'media', 'alta', 'urgente'),
     defaultValue: 'media'

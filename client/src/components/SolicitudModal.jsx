@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { X, FileText } from 'lucide-react'
+import { X, FileText, Bed } from 'lucide-react'
 import PlantillasModal from './PlantillasModal'
+import CamaModal from './CamaModal'
 
 const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, onSolicitudCreada }) => {
   const [formData, setFormData] = useState({
@@ -8,9 +9,11 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     tipoRequerimiento: 'alta',
     descripcion: '',
     prioridad: 'media',
-    fechaProgramada: ''
+    fechaProgramada: '',
+    cama: ''
   })
   const [mostrarPlantillas, setMostrarPlantillas] = useState(false)
+  const [mostrarCamaModal, setMostrarCamaModal] = useState(false)
 
   // Actualizar servicio si cambia servicioPredeterminado
   useEffect(() => {
@@ -31,7 +34,8 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
       tipoRequerimiento: 'alta',
       descripcion: '',
       prioridad: 'media',
-      fechaProgramada: ''
+      fechaProgramada: '',
+      cama: ''
     })
   }
 
@@ -47,14 +51,24 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nueva Solicitud</h2>
-          <button
-            type="button"
-            onClick={() => setMostrarPlantillas(true)}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-          >
-            <FileText className="w-4 h-4" />
-            Plantillas
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMostrarCamaModal(true)}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              <Bed className="w-4 h-4" />
+              Cama
+            </button>
+            <button
+              type="button"
+              onClick={() => setMostrarPlantillas(true)}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              <FileText className="w-4 h-4" />
+              Plantillas
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,6 +124,26 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               <option value="alta">Alta</option>
               <option value="urgente">Urgente</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Cama (opcional)
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setMostrarCamaModal(true)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                {formData.cama ? 'Editar cama' : 'Agregar cama'}
+              </button>
+              {formData.cama && (
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Cama: {formData.cama}
+                </span>
+              )}
+            </div>
           </div>
 
           <div>
@@ -174,6 +208,13 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             }))
             setMostrarPlantillas(false)
           }}
+        />
+      )}
+      {mostrarCamaModal && (
+        <CamaModal
+          camaActual={formData.cama}
+          onClose={() => setMostrarCamaModal(false)}
+          onGuardar={(cama) => setFormData(prev => ({ ...prev, cama }))}
         />
       )}
     </div>

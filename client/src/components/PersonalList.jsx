@@ -3,9 +3,12 @@ import { useState } from 'react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import AgregarPersonalModal from './AgregarPersonalModal'
+import EditarPersonalModal from './EditarPersonalModal'
 
 const PersonalList = ({ personal, usuario, onPersonalAgregado, servicios = [] }) => {
   const [mostrarForm, setMostrarForm] = useState(false)
+  const [mostrarEditar, setMostrarEditar] = useState(false)
+  const [personaEditando, setPersonaEditando] = useState(null)
 
   const handleAgregarPersonal = async (datos) => {
     try {
@@ -26,6 +29,31 @@ const PersonalList = ({ personal, usuario, onPersonalAgregado, servicios = [] })
       toast.info('Funcionalidad de activar/desactivar próximamente')
     } catch (error) {
       toast.error('Error actualizando estado')
+    }
+  }
+
+  const handleEditarPersonal = async (datos) => {
+    if (!personaEditando) return
+    try {
+      const payload = {
+        nombre: datos.nombre,
+        email: datos.email,
+        rol: datos.rol,
+        servicioId: datos.rol === 'enfermeria' ? datos.servicioId : null,
+        activo: datos.activo
+      }
+      if (datos.password) {
+        payload.password = datos.password
+      }
+      await api.put(`/api/auxiliares/${personaEditando.id || personaEditando._id}`, payload)
+      toast.success('Personal actualizado')
+      setMostrarEditar(false)
+      setPersonaEditando(null)
+      if (onPersonalAgregado) {
+        onPersonalAgregado()
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.mensaje || 'Error actualizando personal')
     }
   }
 
@@ -104,6 +132,18 @@ const PersonalList = ({ personal, usuario, onPersonalAgregado, servicios = [] })
                         ) : (
                           <XCircle className="w-4 h-4 text-red-500" title="Inactivo" />
                         )}
+                        {usuario?.rol === 'administrador' && (
+                          <button
+                            onClick={() => {
+                              setPersonaEditando(persona)
+                              setMostrarEditar(true)
+                            }}
+                            className="p-1.5 rounded-md text-indigo-600 hover:bg-indigo-50 transition"
+                            title="Editar personal"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -122,6 +162,17 @@ const PersonalList = ({ personal, usuario, onPersonalAgregado, servicios = [] })
         <AgregarPersonalModal
           onClose={() => setMostrarForm(false)}
           onSubmit={handleAgregarPersonal}
+          servicios={servicios}
+        />
+      )}
+      {mostrarEditar && usuario?.rol === 'administrador' && (
+        <EditarPersonalModal
+          persona={personaEditando}
+          onClose={() => {
+            setMostrarEditar(false)
+            setPersonaEditando(null)
+          }}
+          onSubmit={handleEditarPersonal}
           servicios={servicios}
         />
       )}

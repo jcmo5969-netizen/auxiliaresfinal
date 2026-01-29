@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { 
   MapPin, User, Clock, AlertCircle, CheckCircle, 
-  X, Edit, MoreVertical, Calendar, MessageSquare, History, Tag
+  X, Edit, MoreVertical, Calendar, MessageSquare, History, Tag, Bed
 } from 'lucide-react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
@@ -96,6 +96,12 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
                   <MapPin className="w-4 h-4" />
                   <span>Piso {solicitud.servicio?.piso || 'N/A'}</span>
                 </div>
+            {solicitud.cama && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <Bed className="w-4 h-4" />
+                <span>Cama {solicitud.cama}</span>
+              </div>
+            )}
               </div>
             </div>
             
