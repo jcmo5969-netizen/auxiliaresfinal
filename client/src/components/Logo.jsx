@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 
 const Logo = ({ className = '', size = 'default' }) => {
   const { isDark } = useTheme()
+  const [logoSrc, setLogoSrc] = useState('/logo-hospital-quilpue.png')
   
   // Tamaños predefinidos
   const sizes = {
@@ -16,13 +18,19 @@ const Logo = ({ className = '', size = 'default' }) => {
       {/* Logo - Imagen del Hospital de Quilpué */}
       <div className={`${sizes[size]} mb-2 flex items-center justify-center`}>
         <img 
-          src="/logo-hospital-quilpue.svg" 
+          src={logoSrc}
           alt="U. Innovación e Investigación • Hospital de Quilpué"
           className="w-full h-full object-contain"
           onError={(e) => {
-            // Fallback si SVG tampoco existe
-            e.target.style.display = 'none'
-            e.target.nextSibling.style.display = 'flex'
+            if (logoSrc !== '/logo-hospital-quilpue.svg') {
+              setLogoSrc('/logo-hospital-quilpue.svg')
+              return
+            }
+            // Fallback si no hay imagen
+            e.currentTarget.style.display = 'none'
+            if (e.currentTarget.nextSibling) {
+              e.currentTarget.nextSibling.style.display = 'flex'
+            }
           }}
         />
         {/* Fallback si no hay imagen */}

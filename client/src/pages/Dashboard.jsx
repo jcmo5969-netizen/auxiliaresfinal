@@ -209,11 +209,15 @@ const Dashboard = () => {
               {/* Logo del Hospital */}
               <div className="flex items-center gap-3">
                 <img 
-                  src="/logo-hospital-quilpue.svg" 
+                  src="/logo-hospital-quilpue.png" 
                   alt="Hospital de Quilpué"
                   className="h-12 w-auto object-contain"
                   onError={(e) => {
-                    e.target.style.display = 'none'
+                    if (e.currentTarget.src.includes('logo-hospital-quilpue.png')) {
+                      e.currentTarget.src = '/logo-hospital-quilpue.svg'
+                      return
+                    }
+                    e.currentTarget.style.display = 'none'
                   }}
                 />
                 <div className="hidden flex-col">
