@@ -186,7 +186,30 @@ router.post('/', [
       datosSolicitud.fechaProgramada = new Date(req.body.fechaProgramada);
     }
 
-    const solicitud = await Solicitud.create(datosSolicitud);
+    // Normalizar campos de traslado y prioridad inmediata
+    if (datosSolicitud.tipoRequerimiento !== 'traslado') {
+      datosSolicitud.tipoServicio = null;
+      datosSolicitud.tipoTraslado = null;
+    }
+    if (datosSolicitud.prioridadInmediato && datosSolicitud.prioridad !== 'urgente') {
+      datosSolicitud.prioridad = 'urgente';
+    }
+
+    const crearSolicitudConRetry = async () => {
+      try {
+        return await Solicitud.create(datosSolicitud);
+      } catch (error) {
+        if (error.name === 'SequelizeDatabaseError' && !error._reintentado) {
+          // Intentar sincronizar la tabla por si faltan columnas nuevas
+          await Solicitud.sync({ alter: true });
+          error._reintentado = true;
+          return await Solicitud.create(datosSolicitud);
+        }
+        throw error;
+      }
+    };
+
+    const solicitud = await crearSolicitudConRetry();
 
     // Agregar etiquetas si se proporcionan
     if (req.body.etiquetas && Array.isArray(req.body.etiquetas)) {
@@ -232,7 +255,10 @@ router.post('/', [
     res.status(201).json(solicitudCompleta);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: 'Error del servidor' });
+    res.status(500).json({ 
+      mensaje: 'Error del servidor',
+      ...(process.env.NODE_ENV === 'development' && { detalle: error.message })
+    });
   }
 });
 
