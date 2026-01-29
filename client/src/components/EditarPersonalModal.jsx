@@ -31,7 +31,7 @@ const EditarPersonalModal = ({ persona, onClose, onSubmit, servicios = [] }) => 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+      <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -40,7 +40,7 @@ const EditarPersonalModal = ({ persona, onClose, onSubmit, servicios = [] }) => 
           <X className="w-6 h-6" />
         </button>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Editar Personal</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">Editar Personal</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -135,7 +135,7 @@ const EditarPersonalModal = ({ persona, onClose, onSubmit, servicios = [] }) => 
             </label>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}

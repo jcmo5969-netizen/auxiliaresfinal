@@ -126,9 +126,9 @@ const EnfermeriaDashboard = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
                 Personal de Enfermería
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -140,7 +140,7 @@ const EnfermeriaDashboard = () => {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button
                 onClick={toggleTheme}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
@@ -154,14 +154,14 @@ const EnfermeriaDashboard = () => {
               </button>
               <button
                 onClick={() => setMostrarModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition shadow-md hover:shadow-lg"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition shadow-md hover:shadow-lg w-full sm:w-auto"
               >
                 <Plus className="w-5 h-5" />
                 Nueva Solicitud
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition w-full sm:w-auto"
               >
                 <LogOut className="w-5 h-5" />
                 Salir
@@ -171,10 +171,10 @@ const EnfermeriaDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">Total</p>
@@ -184,7 +184,7 @@ const EnfermeriaDashboard = () => {
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-yellow-100 text-sm font-medium">Pendientes</p>
@@ -194,7 +194,7 @@ const EnfermeriaDashboard = () => {
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100 text-sm font-medium">En Proceso</p>
@@ -204,7 +204,7 @@ const EnfermeriaDashboard = () => {
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-100 text-sm font-medium">Completadas</p>
@@ -222,7 +222,7 @@ const EnfermeriaDashboard = () => {
             <div className="flex overflow-x-auto">
               <button
                 onClick={() => setPestañaActiva('todas')}
-                className={`flex-1 px-6 py-4 text-sm font-medium transition whitespace-nowrap ${
+                className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium transition whitespace-nowrap ${
                   pestañaActiva === 'todas'
                     ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -232,7 +232,7 @@ const EnfermeriaDashboard = () => {
               </button>
               <button
                 onClick={() => setPestañaActiva('pendientes')}
-                className={`flex-1 px-6 py-4 text-sm font-medium transition whitespace-nowrap ${
+                className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium transition whitespace-nowrap ${
                   pestañaActiva === 'pendientes'
                     ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -242,7 +242,7 @@ const EnfermeriaDashboard = () => {
               </button>
               <button
                 onClick={() => setPestañaActiva('en_proceso')}
-                className={`flex-1 px-6 py-4 text-sm font-medium transition whitespace-nowrap ${
+                className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium transition whitespace-nowrap ${
                   pestañaActiva === 'en_proceso'
                     ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -252,7 +252,7 @@ const EnfermeriaDashboard = () => {
               </button>
               <button
                 onClick={() => setPestañaActiva('completadas')}
-                className={`flex-1 px-6 py-4 text-sm font-medium transition whitespace-nowrap ${
+                className={`flex-1 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium transition whitespace-nowrap ${
                   pestañaActiva === 'completadas'
                     ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -263,7 +263,7 @@ const EnfermeriaDashboard = () => {
             </div>
           </div>
           
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <FiltrosSolicitudes 
               key={pestañaActiva}
               solicitudes={solicitudes.filter(s => {

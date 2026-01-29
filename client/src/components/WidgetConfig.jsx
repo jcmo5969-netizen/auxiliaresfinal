@@ -90,10 +90,10 @@ const WidgetConfig = ({ widgets, onWidgetsChange, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-xl">
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
             <BarChart3 className="w-6 h-6 text-white" />
-            <h2 className="text-2xl font-bold text-white">Configurar Dashboard</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Configurar Dashboard</h2>
           </div>
           <button
             onClick={onClose}
@@ -103,7 +103,7 @@ const WidgetConfig = ({ widgets, onWidgetsChange, onClose }) => {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {/* Widgets Activos */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -121,17 +121,19 @@ const WidgetConfig = ({ widgets, onWidgetsChange, onClose }) => {
                   return (
                     <div
                       key={widget.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
                     >
-                      <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
-                      <Icono className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                      <div className="flex items-center gap-3">
+                        <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
+                        <Icono className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                      </div>
                       <div className="flex-1">
                         <p className="font-medium text-gray-900 dark:text-white">{widget.nombre}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Orden: {widget.orden + 1} • {widget.visible ? 'Visible' : 'Oculto'}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           onClick={() => moverWidget(index, 'up')}
                           disabled={index === 0}
@@ -179,7 +181,7 @@ const WidgetConfig = ({ widgets, onWidgetsChange, onClose }) => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Agregar Widgets
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {widgetsDisponibles.map((widget) => {
                   const Icono = widget.icono
                   return (
@@ -202,10 +204,10 @@ const WidgetConfig = ({ widgets, onWidgetsChange, onClose }) => {
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+        <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition w-full sm:w-auto"
           >
             Guardar y Cerrar
           </button>

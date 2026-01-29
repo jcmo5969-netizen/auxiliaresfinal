@@ -94,10 +94,10 @@ const RecordatoriosModal = ({ onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-xl">
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
             <Bell className="w-6 h-6 text-white" />
-            <h2 className="text-2xl font-bold text-white">Recordatorios</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Recordatorios</h2>
           </div>
           <button
             onClick={onClose}
@@ -107,7 +107,7 @@ const RecordatoriosModal = ({ onClose }) => {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {mostrarForm ? (
             <div className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Nuevo Recordatorio</h3>
@@ -138,7 +138,7 @@ const RecordatoriosModal = ({ onClose }) => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Fecha
@@ -164,7 +164,7 @@ const RecordatoriosModal = ({ onClose }) => {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={guardarRecordatorio}
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
@@ -182,7 +182,7 @@ const RecordatoriosModal = ({ onClose }) => {
                       solicitudId: null
                     })
                   }}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition w-full sm:w-auto"
                 >
                   Cancelar
                 </button>
@@ -191,7 +191,7 @@ const RecordatoriosModal = ({ onClose }) => {
           ) : (
             <button
               onClick={() => setMostrarForm(true)}
-              className="mb-4 flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+              className="mb-4 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition w-full sm:w-auto"
             >
               <Plus className="w-5 h-5" />
               Nuevo Recordatorio
@@ -211,7 +211,7 @@ const RecordatoriosModal = ({ onClose }) => {
                     key={r.id}
                     className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div className="flex-1">
                         <h4 className="font-semibold text-red-900 dark:text-red-200">{r.titulo}</h4>
                         {r.descripcion && (
@@ -246,7 +246,7 @@ const RecordatoriosModal = ({ onClose }) => {
                     key={r.id}
                     className="p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900 dark:text-white">{r.titulo}</h4>
                         {r.descripcion && (

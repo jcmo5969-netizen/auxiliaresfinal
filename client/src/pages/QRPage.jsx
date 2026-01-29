@@ -11,9 +11,16 @@ const QRPage = () => {
   const navigate = useNavigate()
   const [qrData, setQrData] = useState(null)
   const [cargando, setCargando] = useState(true)
+  const [qrSize, setQrSize] = useState(300)
 
   useEffect(() => {
     cargarQR()
+    const updateSize = () => {
+      setQrSize(window.innerWidth < 480 ? 220 : 300)
+    }
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
   }, [])
 
   const cargarQR = async () => {
@@ -53,7 +60,7 @@ const QRPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8">
+      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-6 sm:p-8">
         <button
           onClick={() => navigate('/dashboard')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition"
@@ -63,18 +70,18 @@ const QRPage = () => {
         </button>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Código QR de Acceso</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Código QR de Acceso</h1>
           <p className="text-gray-600">
             Los auxiliares pueden escanear este código para acceder a la plataforma móvil
           </p>
         </div>
 
-        <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-8 mb-6">
+        <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 sm:p-8 mb-6">
           {qrData && (
-            <div className="bg-white p-6 rounded-lg shadow-lg mb-4">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg mb-4">
               <QRCodeSVG
                 value={qrData.url}
-                size={300}
+                size={qrSize}
                 level="M"
                 includeMargin={true}
               />
@@ -83,7 +90,7 @@ const QRPage = () => {
           
           <button
             onClick={descargarQR}
-            className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition w-full sm:w-auto"
           >
             <Download className="w-5 h-5" />
             Descargar QR

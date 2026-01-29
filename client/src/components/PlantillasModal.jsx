@@ -82,10 +82,10 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-xl">
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
             <FileText className="w-6 h-6 text-white" />
-            <h2 className="text-2xl font-bold text-white">Plantillas de Solicitudes</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Plantillas de Solicitudes</h2>
           </div>
           <button
             onClick={onClose}
@@ -95,7 +95,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {mostrarForm ? (
             <form onSubmit={handleSubmit} className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -116,7 +116,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Tipo de Requerimiento
@@ -183,7 +183,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
@@ -203,7 +203,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
                       servicioId: ''
                     })
                   }}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition dark:text-gray-300"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition dark:text-gray-300 w-full sm:w-auto"
                 >
                   Cancelar
                 </button>
@@ -212,7 +212,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
           ) : (
             <button
               onClick={() => setMostrarForm(true)}
-              className="mb-4 flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+              className="mb-4 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition w-full sm:w-auto"
             >
               <Plus className="w-5 h-5" />
               Nueva Plantilla
@@ -229,7 +229,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
               <p className="text-gray-500 dark:text-gray-400">No hay plantillas creadas</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {plantillas.map((plantilla) => (
                 <div
                   key={plantilla.id}

@@ -51,8 +51,8 @@ const NotificacionesDia = ({ solicitudes }) => {
   const urgentes = solicitudesHoy.filter(s => s.prioridad === 'urgente').length
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-slide-in">
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl shadow-2xl p-6 max-w-md w-full border-l-4 border-yellow-400">
+    <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 z-50 animate-slide-in">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl shadow-2xl p-4 sm:p-6 max-w-none sm:max-w-md w-full border-l-4 border-yellow-400">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-lg">
@@ -94,7 +94,7 @@ const NotificacionesDia = ({ solicitudes }) => {
           )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={irACalendario}
             className="flex-1 flex items-center justify-center gap-2 bg-white text-primary-600 px-4 py-2 rounded-lg font-semibold hover:bg-primary-50 transition"
@@ -104,7 +104,7 @@ const NotificacionesDia = ({ solicitudes }) => {
           </button>
           <button
             onClick={cerrarNotificacion}
-            className="px-4 py-2 bg-white/20 rounded-lg font-semibold hover:bg-white/30 transition"
+            className="px-4 py-2 bg-white/20 rounded-lg font-semibold hover:bg-white/30 transition w-full sm:w-auto"
           >
             Cerrar
           </button>

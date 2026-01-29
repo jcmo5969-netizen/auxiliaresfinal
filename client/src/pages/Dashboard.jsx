@@ -204,14 +204,14 @@ const Dashboard = () => {
       <header className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Primera fila: Título y usuario */}
-          <div className="flex items-center justify-between py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-b border-gray-200 dark:border-gray-700 gap-4">
             <div className="flex items-center gap-4">
               {/* Logo del Hospital */}
               <div className="flex items-center gap-3">
                 <img 
                   src="/logo-hospital-quilpue.png" 
                   alt="Hospital de Quilpué"
-                  className="h-12 w-auto object-contain"
+                  className="h-10 sm:h-12 w-auto object-contain"
                   onError={(e) => {
                     if (e.currentTarget.src.includes('logo-hospital-quilpue.png')) {
                       e.currentTarget.src = '/logo-hospital-quilpue.svg'
@@ -230,7 +230,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="flex flex-col">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
                   Dashboard
                 </h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -240,7 +240,7 @@ const Dashboard = () => {
             </div>
             
             {/* Información del usuario */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 justify-between sm:justify-end">
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                   {usuario?.nombre?.charAt(0).toUpperCase() || 'U'}
@@ -377,12 +377,12 @@ const Dashboard = () => {
           {/* Solicitudes */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 overflow-hidden transition-all duration-300 hover:shadow-xl">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800 p-6 shadow-md">
-                <div className="flex items-center justify-between">
+              <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800 p-4 sm:p-6 shadow-md">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <h2 className="text-2xl font-bold text-white">Solicitudes</h2>
                   <button
                     onClick={() => setMostrarModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-300 shadow-md hover:shadow-lg font-medium transform hover:scale-105"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-300 shadow-md hover:shadow-lg font-medium transform hover:scale-105"
                   >
                     <Plus className="w-5 h-5" />
                     Nueva
@@ -426,7 +426,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {pestañaActiva !== 'historicos' && (
                       <FiltrosSolicitudes 
                         key={pestañaActiva} // Forzar recreación del componente al cambiar pestaña

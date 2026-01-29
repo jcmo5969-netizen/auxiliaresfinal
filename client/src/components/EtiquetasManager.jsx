@@ -88,7 +88,7 @@ const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChan
             required
             className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-white dark:bg-gray-800 dark:text-white"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
             <input
               type="color"
               value={formData.color}
@@ -97,7 +97,7 @@ const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChan
             />
             <button
               type="submit"
-              className="flex-1 px-3 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+              className="flex-1 px-3 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition w-full sm:w-auto"
             >
               Crear
             </button>
@@ -107,7 +107,7 @@ const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChan
                 setMostrarForm(false)
                 setFormData({ nombre: '', color: '#3B82F6' })
               }}
-              className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition dark:text-gray-300"
+              className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition dark:text-gray-300 w-full sm:w-auto"
             >
               <X className="w-4 h-4" />
             </button>

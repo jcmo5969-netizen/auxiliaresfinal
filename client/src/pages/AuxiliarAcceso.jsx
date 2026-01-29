@@ -9,7 +9,6 @@ import {
 import { useTheme } from '../context/ThemeContext'
 import { solicitarPermisoNotificaciones, escucharNotificaciones, estaFirebaseConfigurado } from '../utils/firebase'
 import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
-import Logo from '../components/Logo'
 
 // Componente de Login específico para auxiliares
 const LoginAuxiliar = ({ onLoginSuccess }) => {
@@ -46,7 +45,7 @@ const LoginAuxiliar = ({ onLoginSuccess }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-700 dark:from-gray-900 dark:to-gray-800 px-4 transition-colors duration-300">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 transition-colors duration-300">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 transition-colors duration-300">
         {/* Botón de modo oscuro */}
         <div className="flex justify-end mb-4">
           <button
@@ -63,9 +62,12 @@ const LoginAuxiliar = ({ onLoginSuccess }) => {
         </div>
         
         <div className="text-center mb-8">
-          <Logo size="small" className="mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Acceso Auxiliares</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Inicia sesión para gestionar solicitudes</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+            Acceso Auxiliares
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Inicia sesión para gestionar solicitudes
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -459,7 +461,7 @@ const AuxiliarAcceso = () => {
       {/* Header mejorado */}
       <header className="bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-xl sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-5">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
             <div>
               <h1 className="text-2xl font-bold">Solicitudes Disponibles</h1>
               <p className="text-sm text-primary-100">Asigna y gestiona solicitudes en tiempo real</p>
@@ -481,8 +483,8 @@ const AuxiliarAcceso = () => {
           </div>
           
           {/* Barra de estado */}
-          <div className="flex items-center justify-between pt-3 border-t border-primary-500">
-            <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-primary-500">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
               <button
                 onClick={() => cargarSolicitudes(false)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition"
@@ -498,7 +500,7 @@ const AuxiliarAcceso = () => {
               )}
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {Notification.permission === 'denied' && (
                 <div className="text-xs text-primary-100 bg-red-500/20 px-2 py-1 rounded max-w-xs">
                   Ve a Configuración del navegador para habilitar notificaciones
@@ -555,7 +557,7 @@ const AuxiliarAcceso = () => {
               {solicitudesAsignadas.map((solicitud) => (
                 <div
                   key={solicitud.id || solicitud._id}
-                  className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl shadow-lg p-6 border-l-4 border-orange-500"
+                  className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-orange-500"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
@@ -617,7 +619,7 @@ const AuxiliarAcceso = () => {
 
         {/* Solicitudes Pendientes */}
         {solicitudes.length === 0 && solicitudesAsignadas.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 text-center transition-colors duration-300">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 sm:p-12 text-center transition-colors duration-300">
             <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               No hay solicitudes disponibles
@@ -662,7 +664,7 @@ const AuxiliarAcceso = () => {
               {solicitudes.map((solicitud) => (
                 <div
                   key={solicitud.id || solicitud._id}
-                  className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-primary-500 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-primary-500 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">

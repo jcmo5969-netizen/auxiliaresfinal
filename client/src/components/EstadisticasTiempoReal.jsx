@@ -48,8 +48,8 @@ const EstadisticasTiempoReal = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-2 border-primary-200 dark:border-primary-800">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 border-2 border-primary-200 dark:border-primary-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
           <div className="relative">
             <Activity className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -62,7 +62,7 @@ const EstadisticasTiempoReal = () => {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Solicitudes Totales */}
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
           <div className="flex items-center justify-between mb-2">
@@ -105,7 +105,7 @@ const EstadisticasTiempoReal = () => {
       </div>
 
       {/* KPIs Adicionales */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Tiempo Promedio</span>

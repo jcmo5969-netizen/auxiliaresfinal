@@ -82,9 +82,9 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
     <div 
       data-solicitud-id={solicitud.id || solicitud._id}
       className="bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-gray-900/50 hover:shadow-xl dark:hover:shadow-gray-900/70 transition-all duration-300 border-l-4 border-primary-500 dark:border-primary-400 overflow-hidden group transform hover:-translate-y-1">
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">{getTipoIcon(solicitud.tipoRequerimiento)}</span>
@@ -96,12 +96,12 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
                   <MapPin className="w-4 h-4" />
                   <span>Piso {solicitud.servicio?.piso || 'N/A'}</span>
                 </div>
-            {solicitud.cama && (
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
-                <Bed className="w-4 h-4" />
-                <span>Cama {solicitud.cama}</span>
-              </div>
-            )}
+                {solicitud.cama && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <Bed className="w-4 h-4" />
+                    <span>Cama {solicitud.cama}</span>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -236,7 +236,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
         )}
 
         {/* Footer con información */}
-        <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-600 pt-3 border-t dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-gray-600 pt-3 border-t dark:border-gray-700">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-1">
               <User className="w-4 h-4" />
@@ -266,7 +266,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
           </div>
           
           {/* Botones de acción */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setMostrarComentarios(true)}
               className="flex items-center gap-1 px-3 py-1.5 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition text-sm font-medium"

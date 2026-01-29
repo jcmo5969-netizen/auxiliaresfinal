@@ -91,7 +91,7 @@ const FiltrosSolicitudes = ({ solicitudes, onFiltroChange }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         {/* Búsqueda */}
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -110,7 +110,7 @@ const FiltrosSolicitudes = ({ solicitudes, onFiltroChange }) => {
         {/* Botón de filtros */}
         <button
           onClick={() => setMostrarFiltros(!mostrarFiltros)}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-300"
+          className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-300 w-full sm:w-auto"
         >
           <Filter className="w-5 h-5" />
           <span>Filtros</span>
@@ -120,7 +120,7 @@ const FiltrosSolicitudes = ({ solicitudes, onFiltroChange }) => {
         {(busqueda || filtroEstado !== 'todos' || filtroPrioridad !== 'todos' || fechaInicio || fechaFin) && (
           <button
             onClick={limpiarFiltros}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition"
+            className="flex items-center justify-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition w-full sm:w-auto"
           >
             <X className="w-5 h-5" />
             <span>Limpiar</span>
@@ -130,7 +130,7 @@ const FiltrosSolicitudes = ({ solicitudes, onFiltroChange }) => {
 
       {/* Panel de filtros expandible */}
       {mostrarFiltros && (
-        <div className="mt-4 pt-4 border-t dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-4 pt-4 border-t dark:border-gray-700 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Estado

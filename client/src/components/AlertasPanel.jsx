@@ -130,7 +130,7 @@ const AlertasPanel = ({ solicitudes = [] }) => {
   if (!mostrarPanel || alertas.length === 0) return null
 
   return (
-    <div className="fixed top-20 right-4 z-40 max-w-md w-full space-y-2">
+    <div className="fixed top-20 left-4 right-4 sm:left-auto sm:right-4 z-40 max-w-none sm:max-w-md w-full space-y-2">
       {alertas.map((alerta) => {
         const Icono = alerta.icono
         return (

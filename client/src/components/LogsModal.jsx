@@ -6,10 +6,10 @@ const LogsModal = ({ onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white dark:bg-gray-800 rounded-xl max-w-6xl w-full my-8 shadow-xl relative">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 flex items-center justify-between sticky top-0 z-10 rounded-t-xl">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky top-0 z-10 rounded-t-xl">
           <div className="flex items-center gap-3">
             <FileText className="w-6 h-6 text-white" />
-            <h2 className="text-2xl font-bold text-white">Logs de Actividad</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Logs de Actividad</h2>
           </div>
           <button
             onClick={onClose}
@@ -20,7 +20,7 @@ const LogsModal = ({ onClose }) => {
         </div>
 
         {/* Contenido */}
-        <div className="p-6 max-h-[calc(90vh-100px)] overflow-y-auto">
+        <div className="p-4 sm:p-6 max-h-[calc(90vh-100px)] overflow-y-auto">
           <LogsViewer />
         </div>
       </div>

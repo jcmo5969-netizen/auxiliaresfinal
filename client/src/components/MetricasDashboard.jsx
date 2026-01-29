@@ -146,22 +146,22 @@ const MetricasDashboard = () => {
   })()
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
             <BarChart3 className="w-6 h-6 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Métricas y Estadísticas</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Métricas y Estadísticas</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">Análisis detallado del rendimiento</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={rangoFecha}
             onChange={(e) => setRangoFecha(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition w-full sm:w-auto"
           >
             <option value="7">Últimos 7 días</option>
             <option value="30">Últimos 30 días</option>
@@ -172,7 +172,7 @@ const MetricasDashboard = () => {
 
       {/* Métricas principales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 sm:p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm font-medium mb-1">Tiempo Promedio</p>
@@ -187,7 +187,7 @@ const MetricasDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 sm:p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm font-medium mb-1">Completadas</p>
@@ -204,7 +204,7 @@ const MetricasDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 sm:p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100 text-sm font-medium mb-1">En Proceso</p>
@@ -217,7 +217,7 @@ const MetricasDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-4 sm:p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-sm font-medium mb-1">Pendientes</p>
@@ -233,10 +233,10 @@ const MetricasDashboard = () => {
 
       {/* Gráfico de líneas - Solicitudes por día */}
       {datosLinea.length > 0 && (
-        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
-          <div className="flex items-center justify-between mb-4">
+        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-4 sm:p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Solicitudes por Día</h3>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setTipoGrafico('linea')}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
@@ -322,7 +322,7 @@ const MetricasDashboard = () => {
 
       {/* Gráfico de barras - Por Prioridad */}
       {metricas.porPrioridad?.length > 0 && (
-        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-4 sm:p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribución por Prioridad</h3>
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={metricas.porPrioridad}>
@@ -355,7 +355,7 @@ const MetricasDashboard = () => {
 
       {/* Gráfico de pastel - Por Tipo */}
       {metricas.porTipo?.length > 0 && (
-        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-4 sm:p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribución por Tipo de Requerimiento</h3>
           <div className="flex flex-col lg:flex-row items-center gap-6">
             <ResponsiveContainer width="100%" height={350}>
@@ -411,7 +411,7 @@ const MetricasDashboard = () => {
 
       {/* Gráfico combinado - Tiempos de respuesta y completado */}
       {datosTiemposCombinados.length > 0 && (
-        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-4 sm:p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Análisis de Tiempos</h3>
           <ResponsiveContainer width="100%" height={350}>
             <ComposedChart data={datosTiemposCombinados}>
@@ -468,7 +468,7 @@ const MetricasDashboard = () => {
 
       {/* Auxiliares más activos */}
       {metricas.auxiliaresActivos?.length > 0 && (
-        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+        <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-4 sm:p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Auxiliares Más Activos</h3>
           <div className="space-y-3">
             {metricas.auxiliaresActivos.map((item, index) => {
@@ -478,7 +478,7 @@ const MetricasDashboard = () => {
               return (
                 <div 
                   key={item.auxiliar.id} 
-                  className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-center gap-4 flex-1">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white ${
@@ -500,7 +500,7 @@ const MetricasDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right ml-4">
+                  <div className="text-right sm:ml-4">
                     <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                       {item.completadas}
                     </p>

@@ -120,7 +120,7 @@ const PlantillasPage = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate('/dashboard')}
@@ -128,7 +128,7 @@ const PlantillasPage = () => {
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Plantillas de Solicitudes</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Plantillas de Solicitudes</h1>
             </div>
             <button
               onClick={() => {
@@ -142,7 +142,7 @@ const PlantillasPage = () => {
                   servicioId: ''
                 })
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition w-full sm:w-auto"
             >
               <Plus className="w-5 h-5" />
               Nueva Plantilla
@@ -152,10 +152,10 @@ const PlantillasPage = () => {
       </header>
 
       {/* Contenido */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Formulario */}
         {mostrarForm && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               {editandoId ? 'Editar Plantilla' : 'Nueva Plantilla'}
             </h2>
@@ -184,7 +184,7 @@ const PlantillasPage = () => {
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Tipo
@@ -233,10 +233,10 @@ const PlantillasPage = () => {
                   ))}
                 </select>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition w-full sm:w-auto"
                 >
                   {editandoId ? 'Actualizar' : 'Crear'}
                 </button>
@@ -246,7 +246,7 @@ const PlantillasPage = () => {
                     setMostrarForm(false)
                     setEditandoId(null)
                   }}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition w-full sm:w-auto"
                 >
                   Cancelar
                 </button>
@@ -257,7 +257,7 @@ const PlantillasPage = () => {
 
         {/* Lista de Plantillas */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Plantillas Disponibles ({plantillas.length})
             </h2>
@@ -267,7 +267,7 @@ const PlantillasPage = () => {
                 <p>No hay plantillas disponibles. Crea una nueva plantilla.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {plantillas.map((plantilla) => (
                   <div
                     key={plantilla.id}

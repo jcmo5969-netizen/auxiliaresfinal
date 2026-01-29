@@ -95,7 +95,7 @@ const ChatPage = () => {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate('/dashboard')}
@@ -104,7 +104,7 @@ const ChatPage = () => {
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Chat General</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Chat General</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {usuariosConectados.length} usuario(s) conectado(s)
                 </p>
@@ -119,10 +119,10 @@ const ChatPage = () => {
       </header>
 
       {/* Chat Container */}
-      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col">
         <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden flex flex-col">
           {/* Mensajes */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             {mensajes.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                 <MessageSquare className="w-12 h-12 mb-4 opacity-50" />
@@ -160,7 +160,7 @@ const ChatPage = () => {
 
           {/* Input */}
           <form onSubmit={enviarMensaje} className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={nuevoMensaje}
@@ -171,7 +171,7 @@ const ChatPage = () => {
               <button
                 type="submit"
                 disabled={!nuevoMensaje.trim()}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                 <Send className="w-5 h-5" />
                 Enviar

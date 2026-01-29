@@ -71,12 +71,12 @@ const CalendarioSolicitudes = ({ solicitudes }) => {
   const solicitudesHoy = obtenerSolicitudesHoy()
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-2">
           <Calendar className="w-6 h-6 text-primary-600 dark:text-primary-400" />
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Calendario de Solicitudes</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Calendario de Solicitudes</h2>
             {solicitudesHoy.length > 0 && (
               <p className="text-sm text-primary-600 dark:text-primary-400 mt-1">
                 {solicitudesHoy.length} solicitud{solicitudesHoy.length !== 1 ? 'es' : ''} hoy
@@ -91,7 +91,7 @@ const CalendarioSolicitudes = ({ solicitudes }) => {
           >
             <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
-          <span className="text-lg font-semibold text-gray-900 dark:text-white min-w-[200px] text-center">
+          <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white min-w-[180px] sm:min-w-[200px] text-center">
             {meses[mesActual]} {añoActual}
           </span>
           <button
@@ -103,74 +103,78 @@ const CalendarioSolicitudes = ({ solicitudes }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-2 mb-4">
-        {diasSemana.map((dia) => (
-          <div
-            key={dia}
-            className="text-center font-semibold text-gray-600 dark:text-gray-400 py-2"
-          >
-            {dia}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-2">
-        {Array.from({ length: diaInicioSemana }).map((_, index) => (
-          <div key={`empty-${index}`} className="aspect-square"></div>
-        ))}
-        {Array.from({ length: diasEnMes }).map((_, index) => {
-          const dia = index + 1
-          const solicitudesDelDia = obtenerSolicitudesDelDia(dia)
-          const fechaDia = new Date(añoActual, mesActual, dia)
-          const hoy = new Date()
-          hoy.setHours(0, 0, 0, 0)
-          fechaDia.setHours(0, 0, 0, 0)
-          const esHoy = fechaDia.getTime() === hoy.getTime()
-          const tieneUrgentes = solicitudesDelDia.some(s => s.prioridad === 'urgente')
-
-          return (
-            <button
-              key={dia}
-              onClick={() => seleccionarDia(dia)}
-              className={`aspect-square p-2 rounded-lg border-2 transition relative ${
-                esHoy
-                  ? 'border-primary-600 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-300 dark:ring-primary-600'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600'
-              } ${
-                solicitudesDelDia.length > 0 
-                  ? tieneUrgentes 
-                    ? 'bg-red-50 dark:bg-red-900/20' 
-                    : 'bg-blue-50 dark:bg-blue-900/20'
-                  : 'bg-white dark:bg-gray-800'
-              }`}
-            >
-              <div className={`text-sm font-semibold mb-1 ${
-                esHoy ? 'text-primary-700 dark:text-primary-300' : 'text-gray-900 dark:text-white'
-              }`}>
+      <div className="overflow-x-auto">
+        <div className="min-w-[640px]">
+          <div className="grid grid-cols-7 gap-2 mb-4">
+            {diasSemana.map((dia) => (
+              <div
+                key={dia}
+                className="text-center font-semibold text-gray-600 dark:text-gray-400 py-2 text-xs sm:text-sm"
+              >
                 {dia}
               </div>
-              {solicitudesDelDia.length > 0 && (
-                <div className="flex flex-wrap gap-1 items-center">
-                  {solicitudesDelDia.slice(0, 3).map((s) => (
-                    <div
-                      key={s.id}
-                      className={`w-2 h-2 rounded-full ${getPrioridadColor(s.prioridad)}`}
-                      title={`${s.tipoRequerimiento} - ${s.prioridad}`}
-                    ></div>
-                  ))}
-                  {solicitudesDelDia.length > 3 && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
-                      +{solicitudesDelDia.length - 3}
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: diaInicioSemana }).map((_, index) => (
+              <div key={`empty-${index}`} className="aspect-square"></div>
+            ))}
+            {Array.from({ length: diasEnMes }).map((_, index) => {
+              const dia = index + 1
+              const solicitudesDelDia = obtenerSolicitudesDelDia(dia)
+              const fechaDia = new Date(añoActual, mesActual, dia)
+              const hoy = new Date()
+              hoy.setHours(0, 0, 0, 0)
+              fechaDia.setHours(0, 0, 0, 0)
+              const esHoy = fechaDia.getTime() === hoy.getTime()
+              const tieneUrgentes = solicitudesDelDia.some(s => s.prioridad === 'urgente')
+
+              return (
+                <button
+                  key={dia}
+                  onClick={() => seleccionarDia(dia)}
+                  className={`aspect-square p-1 sm:p-2 rounded-lg border-2 transition relative ${
+                    esHoy
+                      ? 'border-primary-600 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-300 dark:ring-primary-600'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600'
+                  } ${
+                    solicitudesDelDia.length > 0 
+                      ? tieneUrgentes 
+                        ? 'bg-red-50 dark:bg-red-900/20' 
+                        : 'bg-blue-50 dark:bg-blue-900/20'
+                      : 'bg-white dark:bg-gray-800'
+                  }`}
+                >
+                  <div className={`text-xs sm:text-sm font-semibold mb-1 ${
+                    esHoy ? 'text-primary-700 dark:text-primary-300' : 'text-gray-900 dark:text-white'
+                  }`}>
+                    {dia}
+                  </div>
+                  {solicitudesDelDia.length > 0 && (
+                    <div className="flex flex-wrap gap-1 items-center">
+                      {solicitudesDelDia.slice(0, 3).map((s) => (
+                        <div
+                          key={s.id}
+                          className={`w-2 h-2 rounded-full ${getPrioridadColor(s.prioridad)}`}
+                          title={`${s.tipoRequerimiento} - ${s.prioridad}`}
+                        ></div>
+                      ))}
+                      {solicitudesDelDia.length > 3 && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
+                          +{solicitudesDelDia.length - 3}
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
-              {esHoy && (
-                <div className="absolute top-1 right-1 w-2 h-2 bg-primary-600 dark:bg-primary-400 rounded-full"></div>
-              )}
-            </button>
-          )
-        })}
+                  {esHoy && (
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-primary-600 dark:bg-primary-400 rounded-full"></div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Solicitudes del día seleccionado */}
@@ -204,7 +208,7 @@ const CalendarioSolicitudes = ({ solicitudes }) => {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       <span>Piso {solicitud.servicio?.piso}</span>

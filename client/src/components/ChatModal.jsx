@@ -113,11 +113,11 @@ const ChatModal = ({ onClose, solicitudId = null }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-xl">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
             <MessageSquare className="w-6 h-6 text-white" />
             <div>
-              <h2 className="text-2xl font-bold text-white">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">
                 {solicitudId ? 'Chat de Solicitud' : 'Chat General'}
               </h2>
               {!solicitudId && usuariosConectados.length > 0 && (
@@ -137,7 +137,7 @@ const ChatModal = ({ onClose, solicitudId = null }) => {
         </div>
 
         {/* Mensajes */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 dark:bg-gray-900/50">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gray-50 dark:bg-gray-900/50">
           {cargando ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent"></div>
@@ -182,7 +182,7 @@ const ChatModal = ({ onClose, solicitudId = null }) => {
 
         {/* Input */}
         <form onSubmit={handleEnviar} className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={nuevoMensaje}
@@ -193,7 +193,7 @@ const ChatModal = ({ onClose, solicitudId = null }) => {
             <button
               type="submit"
               disabled={!nuevoMensaje.trim()}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Send className="w-5 h-5" />
               Enviar

@@ -65,9 +65,9 @@ const HistorialModal = ({ solicitudId, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b dark:border-gray-700">
           <div className="flex items-center gap-2">
             <History className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Historial de Cambios</h2>
@@ -81,7 +81,7 @@ const HistorialModal = ({ solicitudId, onClose }) => {
         </div>
 
         {/* Lista de historial */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {cargando ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-600 border-t-transparent mx-auto"></div>
@@ -96,14 +96,14 @@ const HistorialModal = ({ solicitudId, onClose }) => {
               {historial.map((cambio, index) => (
                 <div
                   key={cambio.id}
-                  className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                  className="flex flex-col sm:flex-row gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                 >
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-row sm:flex-col items-center sm:items-center gap-2 sm:gap-0">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${getAccionColor(cambio.accion)}`}>
                       {getAccionIcon(cambio.accion)}
                     </div>
                     {index < historial.length - 1 && (
-                      <div className="w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-2"></div>
+                      <div className="hidden sm:block w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-2"></div>
                     )}
                   </div>
                   <div className="flex-1">

@@ -24,9 +24,9 @@ router.get('/', auth, async (req, res) => {
       ];
     }
     
-    // Si es personal de enfermería, solo ver solicitudes de su servicio
-    if (req.usuario.rol === 'enfermeria' && req.usuario.servicioId) {
-      where.servicioId = req.usuario.servicioId;
+    // Si es personal de enfermería, solo ver solicitudes creadas por el usuario
+    if (req.usuario.rol === 'enfermeria') {
+      where.solicitadoPorId = req.usuario.id;
     }
 
     const solicitudes = await Solicitud.findAll({

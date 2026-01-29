@@ -68,8 +68,8 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-colors duration-300">
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800 p-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-xl font-bold text-white">Servicios</h2>
           {usuario?.rol === 'administrador' && (
             <button
@@ -77,7 +77,7 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
                 if (mostrarForm) cancelarEdicion()
                 else setMostrarForm(true)
               }}
-              className="p-2 bg-white text-primary-600 rounded-lg hover:bg-primary-50 transition"
+              className="p-2 bg-white text-primary-600 rounded-lg hover:bg-primary-50 transition w-full sm:w-auto"
             >
               {mostrarForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
             </button>
@@ -85,7 +85,7 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
         </div>
       </div>
       
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {mostrarForm && usuario?.rol === 'administrador' && (
           <form onSubmit={handleSubmit} className="mb-6 p-4 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-gray-700 dark:to-gray-800 rounded-lg space-y-3 border border-primary-200 dark:border-gray-600">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
@@ -114,7 +114,7 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
               rows="2"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="submit"
                 className="flex-1 px-3 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition font-medium flex items-center justify-center gap-2"
@@ -125,7 +125,7 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
               <button
                 type="button"
                 onClick={cancelarEdicion}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-300"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-300 w-full sm:w-auto"
               >
                 Cancelar
               </button>
@@ -143,7 +143,7 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
             {servicios.map((servicio) => (
               <div
                 key={servicio.id || servicio._id}
-                className="group flex items-start gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700"
+                className="group flex flex-col sm:flex-row sm:items-start gap-3 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700"
               >
                 <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
                   <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -158,7 +158,7 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
                   )}
                 </div>
                 {usuario?.rol === 'administrador' && (
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleEditar(servicio)}
                       className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition"

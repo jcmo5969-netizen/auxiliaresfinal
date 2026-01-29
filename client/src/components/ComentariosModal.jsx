@@ -60,9 +60,9 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b dark:border-gray-700">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Comentarios</h2>
@@ -76,7 +76,7 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
         </div>
 
         {/* Lista de comentarios */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {cargando ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-600 border-t-transparent mx-auto"></div>
@@ -92,8 +92,8 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
                 key={comentario.id}
                 className={`p-4 rounded-lg ${
                   comentario.usuario?.id === usuario?.id
-                    ? 'bg-primary-50 dark:bg-primary-900/20 ml-8'
-                    : 'bg-gray-50 dark:bg-gray-700/50 mr-8'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 sm:ml-8'
+                    : 'bg-gray-50 dark:bg-gray-700/50 sm:mr-8'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -124,8 +124,8 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
         </div>
 
         {/* Formulario de nuevo comentario */}
-        <form onSubmit={handleEnviar} className="p-6 border-t dark:border-gray-700">
-          <div className="flex gap-2">
+        <form onSubmit={handleEnviar} className="p-4 sm:p-6 border-t dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={nuevoComentario}
@@ -137,7 +137,7 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
             <button
               type="submit"
               disabled={enviando || !nuevoComentario.trim()}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Send className="w-4 h-4" />
               Enviar

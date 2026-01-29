@@ -5,7 +5,6 @@ import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
 import { LogIn, Moon, Sun } from 'lucide-react'
 import api from '../utils/api'
-import Logo from '../components/Logo'
 
 const Login = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('')
@@ -88,9 +87,12 @@ const Login = ({ onLoginSuccess }) => {
         </div>
         
         <div className="text-center mb-8">
-          <Logo size="default" className="mb-6" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sistema de Auxiliares</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Inicia sesión para continuar</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+            Unidad de Innovacion Hospital de Quilpué
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Inicia sesión para continuar
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -133,13 +135,6 @@ const Login = ({ onLoginSuccess }) => {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p className="text-sm text-blue-800 dark:text-blue-300">
-            <strong>Credenciales por defecto:</strong><br />
-            Email: admin@sistema.com<br />
-            Password: admin123
-          </p>
-        </div>
       </div>
     </div>
   )

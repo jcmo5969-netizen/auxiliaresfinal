@@ -53,15 +53,15 @@ const LogsViewer = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div className="flex items-center gap-2">
           <FileText className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Logs de Actividad</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Logs de Actividad</h2>
         </div>
         <button
           onClick={() => setMostrarFiltros(!mostrarFiltros)}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition w-full sm:w-auto"
         >
           <Filter className="w-5 h-5" />
           Filtros
@@ -69,7 +69,7 @@ const LogsViewer = () => {
       </div>
 
       {mostrarFiltros && (
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
@@ -140,7 +140,7 @@ const LogsViewer = () => {
               key={log.id}
               className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
             >
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getAccionColor(log.accion)}`}>

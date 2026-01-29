@@ -24,7 +24,7 @@ const CamaModal = ({ camaActual, onClose, onGuardar }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 relative shadow-xl">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-4 sm:p-6 relative shadow-xl max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -35,7 +35,7 @@ const CamaModal = ({ camaActual, onClose, onGuardar }) => {
 
         <div className="flex items-center gap-2 mb-6">
           <Bed className="w-6 h-6 text-primary-600" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Cama</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Cama</h2>
         </div>
 
         <div className="space-y-4">
@@ -55,7 +55,7 @@ const CamaModal = ({ camaActual, onClose, onGuardar }) => {
             </p>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               type="button"
               onClick={handleLimpiar}
