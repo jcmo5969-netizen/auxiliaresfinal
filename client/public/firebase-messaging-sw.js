@@ -30,20 +30,27 @@ try {
   // Continuar sin messaging si hay error
 }
 
-// Manejar mensajes en segundo plano
+// Manejar mensajes en segundo plano (visibles en pantalla de bloqueo si el usuario lo permite)
 if (messaging) {
   messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Mensaje recibido en segundo plano:', payload);
     
+    const baseUrl = self.location.origin || '';
+    const iconUrl = payload.notification?.icon || (baseUrl + '/logo-hospital-quilpue.svg');
+    const badgeUrl = payload.notification?.badge || (baseUrl + '/logo-hospital-quilpue.svg');
+    
     const notificationTitle = payload.notification?.title || 'Nueva solicitud';
     const notificationOptions = {
       body: payload.notification?.body || 'Tienes una nueva solicitud pendiente',
-      icon: payload.notification?.icon || '/logo-hospital-quilpue.png',
-      badge: '/logo-hospital-quilpue.png',
-      tag: payload.data?.solicitudId || 'solicitud',
-      data: payload.data,
+      icon: iconUrl,
+      badge: badgeUrl,
+      tag: payload.data?.solicitudId ? 'solicitud-' + payload.data.solicitudId : 'solicitud-' + Date.now(),
+      data: payload.data || {},
       requireInteraction: payload.data?.prioridad === 'urgente',
-      vibrate: payload.data?.prioridad === 'urgente' ? [200, 100, 200] : [100]
+      silent: false,
+      vibrate: payload.data?.prioridad === 'urgente' ? [200, 100, 200, 100, 200] : [100, 50, 100],
+      renotify: true,
+      timestamp: Date.now()
     };
 
     return self.registration.showNotification(notificationTitle, notificationOptions);

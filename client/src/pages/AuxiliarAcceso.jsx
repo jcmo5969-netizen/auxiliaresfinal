@@ -501,6 +501,13 @@ const AuxiliarAcceso = () => {
                   Ve a Configuración del navegador para habilitar notificaciones
                 </div>
               )}
+              {notificacionesActivas && typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
+                <div className="text-xs text-primary-100 bg-white/15 px-2 py-1 rounded max-w-xs" title="Para ver en pantalla de bloqueo">
+                  {/iPhone|iPad|iPod/i.test(navigator.userAgent)
+                    ? '📱 iPhone: Añade a Inicio (compartir → Añadir a pantalla de inicio). Luego Ajustes → Notificaciones → Auxiliares → activa Pantalla de bloqueo.'
+                    : '📱 Android: Para ver en pantalla de bloqueo, en Ajustes del móvil → Notificaciones → el navegador o esta app → activa Mostrar en pantalla de bloqueo.'}
+                </div>
+              )}
               <button
                 onClick={handleActivarNotificaciones}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${

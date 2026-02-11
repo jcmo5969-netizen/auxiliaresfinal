@@ -1,0 +1,19 @@
+{
+  "name": "Sistema de Auxiliares - Hospital Quilpué",
+  "short_name": "Auxiliares",
+  "description": "Solicitudes y notificaciones para auxiliares",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/logo-hospital-quilpue.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "productivity"]
+}
