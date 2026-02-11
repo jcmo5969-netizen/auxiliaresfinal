@@ -25,12 +25,24 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     }
   }, [servicioPredeterminado])
 
+  // Sanitizar payload para iOS: no enviar fecha inválida o vacía (evita "Invalid date" en Safari/iPhone)
+  const buildPayload = () => {
+    const { fechaProgramada, ...rest } = formData
+    const payload = { ...rest }
+    if (fechaProgramada && typeof fechaProgramada === 'string') {
+      const d = new Date(fechaProgramada)
+      if (!isNaN(d.getTime())) payload.fechaProgramada = fechaProgramada
+    }
+    return payload
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const payload = buildPayload()
     if (onSolicitudCreada) {
-      await onSolicitudCreada(formData)
+      await onSolicitudCreada(payload)
     } else if (onSubmit) {
-      onSubmit(formData)
+      onSubmit(payload)
     }
     setFormData({
       servicio: servicioPredeterminado || '',
@@ -239,8 +251,11 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             </label>
             <input
               type="date"
-              value={formData.fechaProgramada}
-              onChange={(e) => setFormData({ ...formData, fechaProgramada: e.target.value })}
+              value={formData.fechaProgramada || ''}
+              onChange={(e) => {
+                const v = e.target.value
+                setFormData(prev => ({ ...prev, fechaProgramada: v || '' }))
+              }}
               min={new Date().toISOString().split('T')[0]}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="Selecciona una fecha"

@@ -181,9 +181,10 @@ router.post('/', [
       solicitadoPorId: req.usuario.id
     };
 
-    // Si hay fechaProgramada, convertirla a Date (validar)
-    if (req.body.fechaProgramada) {
-      const fecha = new Date(req.body.fechaProgramada);
+    // Si hay fechaProgramada, convertirla a Date (validar). iOS/Safari puede enviar vacío o "Invalid date".
+    const rawFecha = req.body.fechaProgramada;
+    if (rawFecha && String(rawFecha).trim() !== '' && String(rawFecha) !== 'Invalid date') {
+      const fecha = new Date(rawFecha);
       if (!isNaN(fecha.getTime())) {
         datosSolicitud.fechaProgramada = fecha;
       } else {
