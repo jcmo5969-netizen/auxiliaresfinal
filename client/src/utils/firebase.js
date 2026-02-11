@@ -3,6 +3,7 @@
 
 import { initializeApp } from 'firebase/app'
 import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging'
+import { getItem } from './storage'
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -111,15 +112,28 @@ export const solicitarPermisoNotificaciones = async () => {
         if (token) {
           console.log('✅ Token FCM obtenido:', token.substring(0, 20) + '...')
           
-          // Enviar token al servidor
+          // Enviar token al servidor (usar URL del API, no relativa, para que en producción llegue al backend)
           try {
-            const tokenGuardado = localStorage.getItem('token')
+            const tokenGuardado = getItem('token')
             if (!tokenGuardado) {
               console.warn('No hay token de autenticación, no se puede guardar FCM token')
               return token
             }
-
-            const response = await fetch('/api/auth/fcm-token', {
+            // URL del API: variable de entorno o inferir en Render (frontend.onrender.com -> backend.onrender.com)
+            let apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+            if (!apiBase && typeof window !== 'undefined' && window.location.origin) {
+              const origin = window.location.origin
+              if (origin.includes('-frontend.onrender.com')) {
+                apiBase = origin.replace('-frontend.onrender.com', '-backend.onrender.com')
+              } else if (origin.includes('.onrender.com')) {
+                apiBase = origin.replace('sistema-auxiliares-frontend', 'sistema-auxiliares-backend')
+              } else {
+                apiBase = origin
+              }
+            }
+            if (!apiBase && typeof window === 'undefined') apiBase = 'http://localhost:5000'
+            const url = apiBase ? `${apiBase}/api/auth/fcm-token` : '/api/auth/fcm-token'
+            const response = await fetch(url, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -127,7 +141,6 @@ export const solicitarPermisoNotificaciones = async () => {
               },
               body: JSON.stringify({ fcmToken: token })
             })
-            
             if (response.ok) {
               console.log('✅ Token FCM registrado en el servidor')
             } else {

@@ -26,15 +26,16 @@ services:
       - key: DB_PASSWORD
         sync: false
 
-  # Frontend Service
+  # Frontend Service (si usas dos servicios; si es uno solo, la API y el cliente comparten auxiliaresfinal.onrender.com)
   - type: web
     name: sistema-auxiliares-frontend
     env: static
     buildCommand: cd client && npm install && npm run build
     staticPublishPath: ./client/dist
     envVars:
+      # URL del backend. Un solo servicio: https://auxiliaresfinal.onrender.com
       - key: VITE_API_URL
-        sync: false  # Se configurará con la URL del backend
+        sync: false
 
   # PostgreSQL Database
   - type: pspg

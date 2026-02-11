@@ -68,32 +68,30 @@ const enviarNotificacionPush = async (solicitud) => {
       return;
     }
 
+    const title = `Nueva solicitud - Piso ${solicitud.servicio.piso}`;
+    const body = `Se necesita auxiliar para: ${solicitud.tipoRequerimiento.toUpperCase()}. Servicio: ${solicitud.servicio.nombre}`;
+    // FCM exige que todos los valores en data sean string
+    const data = {
+      solicitudId: String(solicitud.id),
+      tipoRequerimiento: String(solicitud.tipoRequerimiento || ''),
+      piso: String(solicitud.servicio.piso || ''),
+      servicio: String(solicitud.servicio.nombre || ''),
+      prioridad: String(solicitud.prioridad || 'media')
+    };
+
     const mensaje = {
-      notification: {
-        title: `Nueva solicitud - Piso ${solicitud.servicio.piso}`,
-        body: `Se necesita auxiliar para: ${solicitud.tipoRequerimiento.toUpperCase()}. Servicio: ${solicitud.servicio.nombre}`
-      },
-      data: {
-        solicitudId: solicitud.id.toString(),
-        tipoRequerimiento: solicitud.tipoRequerimiento,
-        piso: solicitud.servicio.piso,
-        servicio: solicitud.servicio.nombre,
-        prioridad: solicitud.prioridad || 'media'
-      },
+      notification: { title, body },
+      data,
       android: {
         priority: 'high',
-        notification: {
-          sound: 'default',
-          channelId: 'solicitudes_channel'
-        }
+        notification: { sound: 'default', channelId: 'solicitudes_channel' }
       },
       apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-            badge: 1
-          }
-        }
+        payload: { aps: { sound: 'default', badge: 1 } }
+      },
+      webpush: {
+        headers: { Urgency: 'high' },
+        notification: { title, body }
       }
     };
 

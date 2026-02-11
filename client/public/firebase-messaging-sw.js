@@ -30,34 +30,42 @@ try {
   // Continuar sin messaging si hay error
 }
 
+function mostrarNotificacionEnSW(payload) {
+  var baseUrl = self.location.origin || '';
+  var iconUrl = (payload.notification && payload.notification.icon) || (baseUrl + '/logo-hospital-quilpue.svg');
+  var badgeUrl = (payload.notification && payload.notification.badge) || (baseUrl + '/logo-hospital-quilpue.svg');
+  var title = (payload.notification && payload.notification.title) || (payload.data && payload.data.servicio)
+    ? 'Nueva solicitud - ' + (payload.data.servicio || '')
+    : 'Nueva solicitud';
+  var body = (payload.notification && payload.notification.body) || (payload.data && payload.data.tipoRequerimiento)
+    ? 'Se necesita auxiliar: ' + (payload.data.tipoRequerimiento || '')
+    : 'Tienes una nueva solicitud pendiente';
+  var tag = (payload.data && payload.data.solicitudId) ? ('solicitud-' + payload.data.solicitudId) : ('solicitud-' + Date.now());
+  var options = {
+    body: body,
+    icon: iconUrl,
+    badge: badgeUrl,
+    tag: tag,
+    data: payload.data || {},
+    requireInteraction: payload.data && payload.data.prioridad === 'urgente',
+    silent: false,
+    vibrate: payload.data && payload.data.prioridad === 'urgente' ? [200, 100, 200, 100, 200] : [100, 50, 100],
+    renotify: true,
+    timestamp: Date.now()
+  };
+  return self.registration.showNotification(title, options);
+}
+
 // Manejar mensajes en segundo plano (visibles en pantalla de bloqueo si el usuario lo permite)
 if (messaging) {
-  messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Mensaje recibido en segundo plano:', payload);
-    
-    const baseUrl = self.location.origin || '';
-    const iconUrl = payload.notification?.icon || (baseUrl + '/logo-hospital-quilpue.svg');
-    const badgeUrl = payload.notification?.badge || (baseUrl + '/logo-hospital-quilpue.svg');
-    
-    const notificationTitle = payload.notification?.title || 'Nueva solicitud';
-    const notificationOptions = {
-      body: payload.notification?.body || 'Tienes una nueva solicitud pendiente',
-      icon: iconUrl,
-      badge: badgeUrl,
-      tag: payload.data?.solicitudId ? 'solicitud-' + payload.data.solicitudId : 'solicitud-' + Date.now(),
-      data: payload.data || {},
-      requireInteraction: payload.data?.prioridad === 'urgente',
-      silent: false,
-      vibrate: payload.data?.prioridad === 'urgente' ? [200, 100, 200, 100, 200] : [100, 50, 100],
-      renotify: true,
-      timestamp: Date.now()
-    };
-
-    return self.registration.showNotification(notificationTitle, notificationOptions);
+  messaging.onBackgroundMessage(function(payload) {
+    console.log('[firebase-messaging-sw.js] Mensaje en segundo plano:', payload);
+    return mostrarNotificacionEnSW(payload);
   });
 } else {
   console.warn('[firebase-messaging-sw.js] Messaging no disponible');
 }
+
 
 // Manejar clic en la notificación
 self.addEventListener('notificationclick', (event) => {
