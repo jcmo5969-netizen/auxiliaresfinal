@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
 import { LogIn, Moon, Sun } from 'lucide-react'
 import api from '../utils/api'
+import { setItem } from '../utils/storage'
 
 const Login = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('')
@@ -44,7 +45,7 @@ const Login = ({ onLoginSuccess }) => {
           toast.error('Solo los auxiliares pueden acceder desde aquí')
           return
         }
-        localStorage.setItem('token', token)
+        setItem('token', token)
         onLoginSuccess(token)
         toast.success('Inicio de sesión exitoso')
       } else {

@@ -5,29 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/logo-hospital-quilpue.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sistema de Auxiliares</title>
-    <!-- Script para redirigir rutas sin hash a HashRouter -->
+    <!-- HashRouter: una sola redirección para iOS/Safari (evitar pantalla en blanco) -->
     <script>
-      // Redirigir rutas sin hash a HashRouter ANTES de que React cargue
       (function() {
-        var path = window.location.pathname;
-        var search = window.location.search;
-        var hash = window.location.hash;
-        
-        // Si ya hay un hash válido (como /#/auxiliar/acceso), no hacer nada
-        if (hash && hash.length > 1) {
-          return;
-        }
-        
-        // Si hay una ruta y no hay hash, redirigir inmediatamente
-        if (path !== '/' && path !== '/index.html' && !hash) {
+        var path = window.location.pathname || '/';
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+        // Ya tenemos hash de ruta (ej. #/ o #/auxiliar/acceso) -> no tocar
+        if (hash.length > 1 && hash.indexOf('#/') === 0) return;
+        // Ruta con path (ej. /auxiliar/acceso) sin hash -> ir a #/auxiliar/acceso
+        if (path !== '/' && path !== '/index.html') {
           window.location.replace('#' + path + search);
           return;
         }
-        
-        // Si estamos en la raíz sin hash, redirigir a #/
-        if (path === '/' && !hash && !search) {
-          window.location.replace('#/');
-        }
+        // Raíz sin hash -> ir a #/ para que React arranque
+        if (hash === '' || hash === '#') window.location.replace('#/');
       })();
     </script>
     <!-- Firebase Messaging Service Worker -->
@@ -65,8 +57,20 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:#6b7280;font-size:0.875rem;" id="root-fallback">Cargando…</div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Quitar fallback cuando React monte (por si el módulo tarda o falla en iOS)
+      setTimeout(function() {
+        var r = document.getElementById('root');
+        if (r && r.children.length > 1) {
+          var f = document.getElementById('root-fallback');
+          if (f) f.remove();
+        }
+      }, 8000);
+    </script>
   </body>
 </html>
 

@@ -9,6 +9,7 @@ import {
 import { useTheme } from '../context/ThemeContext'
 import { solicitarPermisoNotificaciones, escucharNotificaciones, estaFirebaseConfigurado } from '../utils/firebase'
 import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
+import { getItem, setItem, removeItem } from '../utils/storage'
 
 // Componente de Login específico para auxiliares
 const LoginAuxiliar = ({ onLoginSuccess }) => {
@@ -31,8 +32,7 @@ const LoginAuxiliar = ({ onLoginSuccess }) => {
         return
       }
       
-      // Guardar token
-      localStorage.setItem('token', token)
+      setItem('token', token)
       // Llamar al callback sin actualizar el contexto global para evitar redirecciones
       onLoginSuccess(token)
       toast.success('Inicio de sesión exitoso')
@@ -125,7 +125,7 @@ const AuxiliarAcceso = () => {
   const [solicitudes, setSolicitudes] = useState([])
   const [solicitudesAsignadas, setSolicitudesAsignadas] = useState([])
   const [cargando, setCargando] = useState(true)
-  const [token, setToken] = useState(localStorage.getItem('token'))
+  const [token, setToken] = useState(() => getItem('token'))
   const [notificacionesActivas, setNotificacionesActivas] = useState(false)
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null)
   const [intervaloActualizacion, setIntervaloActualizacion] = useState(null)
@@ -196,8 +196,7 @@ const AuxiliarAcceso = () => {
       }
     }
     
-    // Verificar si hay token al cargar el componente
-    const tokenGuardado = localStorage.getItem('token')
+    const tokenGuardado = getItem('token')
     if (tokenGuardado) {
       setToken(tokenGuardado)
       // Verificar autenticación inmediatamente
@@ -295,7 +294,7 @@ const AuxiliarAcceso = () => {
         // Si el usuario no es auxiliar, limpiar token y mostrar login
         // pero NO redirigir para evitar cerrar otras pestañas
         console.log('⚠️ Usuario no es auxiliar, limpiando sesión local')
-        localStorage.removeItem('token')
+        removeItem('token')
         setToken(null)
         setAutenticado(false)
         setCargando(false)
@@ -304,9 +303,7 @@ const AuxiliarAcceso = () => {
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error)
-      // Si hay error 401 o cualquier otro, limpiar token localmente
-      // pero NO redirigir para evitar cerrar otras pestañas
-      localStorage.removeItem('token')
+      removeItem('token')
       setToken(null)
       setAutenticado(false)
       setCargando(false)
@@ -446,7 +443,7 @@ const AuxiliarAcceso = () => {
   if (!autenticado) {
     return <LoginAuxiliar onLoginSuccess={(t) => { 
       setToken(t)
-      localStorage.setItem('token', t)
+      setItem('token', t)
       setAutenticado(true)
       setCargando(false)
       // Cargar solicitudes después de autenticar
@@ -468,12 +465,10 @@ const AuxiliarAcceso = () => {
             </div>
             <button
               onClick={() => {
-                localStorage.removeItem('token')
+                removeItem('token')
                 setToken(null)
                 setAutenticado(false)
                 setCargando(false)
-                // NO recargar la página, solo limpiar el estado local
-                // para evitar cerrar otras pestañas
               }}
               className="p-2 hover:bg-primary-700 rounded-lg transition"
               title="Cerrar sesión"

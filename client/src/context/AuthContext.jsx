@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../utils/api'
+import { getItem, setItem, removeItem } from '../utils/storage'
 
 const AuthContext = createContext()
 
@@ -16,18 +17,14 @@ export const AuthProvider = ({ children }) => {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    // No cargar usuario automáticamente si estamos en /auxiliar/acceso
-    // para evitar redirecciones no deseadas y conflictos con la autenticación local
+    const token = getItem('token')
     const currentHash = window.location.hash || window.location.pathname
     const isAuxiliarAcceso = currentHash.includes('/auxiliar/acceso') || 
-                            window.location.pathname.includes('/auxiliar/acceso')
+                            (typeof window.location.pathname === 'string' && window.location.pathname.includes('/auxiliar/acceso'))
     
     if (token && !isAuxiliarAcceso) {
       cargarUsuario()
     } else {
-      // Si estamos en /auxiliar/acceso, no cargar usuario automáticamente
-      // para evitar interferencias con la autenticación local del componente
       setCargando(false)
     }
   }, [])
@@ -35,11 +32,11 @@ export const AuthProvider = ({ children }) => {
   const cargarUsuario = async () => {
     try {
       const res = await api.get('/api/auth/me')
-      console.log('👤 Usuario cargado:', res.data)
+      if (import.meta.env.DEV) console.log('👤 Usuario cargado:', res.data)
       setUsuario(res.data)
     } catch (error) {
-      console.error('❌ Error cargando usuario:', error)
-      localStorage.removeItem('token')
+      if (import.meta.env.DEV) console.error('❌ Error cargando usuario:', error)
+      removeItem('token')
     } finally {
       setCargando(false)
     }
@@ -48,13 +45,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await api.post('/api/auth/login', { email, password })
     const { token, usuario } = res.data
-    localStorage.setItem('token', token)
+    setItem('token', token)
     setUsuario(usuario)
     return usuario
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    removeItem('token')
     setUsuario(null)
   }
 
