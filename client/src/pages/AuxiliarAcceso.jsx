@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { 
   CheckCircle, Clock, AlertCircle, MapPin, User, 
   LogIn, X, Loader, Bell, BellOff, RefreshCw, 
-  TrendingUp, Calendar, Moon, Sun
+  TrendingUp, Calendar, Moon, Sun, HelpCircle
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { solicitarPermisoNotificaciones, escucharNotificaciones, estaFirebaseConfigurado } from '../utils/firebase'
@@ -129,6 +129,7 @@ const AuxiliarAcceso = () => {
   const [notificacionesActivas, setNotificacionesActivas] = useState(false)
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null)
   const [intervaloActualizacion, setIntervaloActualizacion] = useState(null)
+  const [mostrarAyudaPantallaBloqueo, setMostrarAyudaPantallaBloqueo] = useState(false)
 
   const cargarSolicitudes = useCallback(async (mostrarNotificacionNueva = false) => {
     try {
@@ -502,11 +503,15 @@ const AuxiliarAcceso = () => {
                 </div>
               )}
               {notificacionesActivas && typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
-                <div className="text-xs text-primary-100 bg-white/15 px-2 py-1 rounded max-w-xs" title="Para ver en pantalla de bloqueo">
-                  {/iPhone|iPad|iPod/i.test(navigator.userAgent)
-                    ? '📱 iPhone: Añade a Inicio (compartir → Añadir a pantalla de inicio). Luego Ajustes → Notificaciones → Auxiliares → activa Pantalla de bloqueo.'
-                    : '📱 Android: Para ver en pantalla de bloqueo, en Ajustes del móvil → Notificaciones → el navegador o esta app → activa Mostrar en pantalla de bloqueo.'}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setMostrarAyudaPantallaBloqueo(true)}
+                  className="flex items-center gap-1.5 text-xs text-primary-100 bg-white/15 hover:bg-white/25 px-2 py-1.5 rounded transition"
+                  title="Cómo ver notificaciones con el móvil bloqueado"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <span>¿No ves notificaciones al bloquear?</span>
+                </button>
               )}
               <button
                 onClick={handleActivarNotificaciones}
@@ -546,6 +551,44 @@ const AuxiliarAcceso = () => {
           </div>
         </div>
       </header>
+
+      {/* Modal: Cómo ver notificaciones en pantalla de bloqueo */}
+      {mostrarAyudaPantallaBloqueo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setMostrarAyudaPantallaBloqueo(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ver notificaciones con el móvil bloqueado</h3>
+              <button type="button" onClick={() => setMostrarAyudaPantallaBloqueo(false)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              El sistema no puede forzar que aparezcan en la pantalla de bloqueo; depende de los ajustes del teléfono. Sigue estos pasos:
+            </p>
+            {typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent) ? (
+              <ol className="text-sm text-gray-700 dark:text-gray-200 space-y-2 list-decimal list-inside">
+                <li><strong>Añade la app a Inicio</strong>: en Safari, toca el botón compartir (cuadrado con flecha) → &quot;Añadir a la pantalla de inicio&quot;. Abre la app desde ese icono.</li>
+                <li><strong>Ajustes del iPhone</strong> → Notificaciones → busca <strong>&quot;Auxiliares&quot;</strong> (o el nombre de la app).</li>
+                <li>Activa <strong>&quot;Permitir notificaciones&quot;</strong> y <strong>&quot;Pantalla de bloqueo&quot;</strong> (y Centro de notificaciones si quieres).</li>
+                <li>Opcional: activa sonido y avisos para no perderlas.</li>
+              </ol>
+            ) : (
+              <ol className="text-sm text-gray-700 dark:text-gray-200 space-y-2 list-decimal list-inside">
+                <li><strong>Ajustes</strong> (del móvil) → Aplicaciones → <strong>Chrome</strong> (o el navegador que uses).</li>
+                <li>Entra en <strong>Notificaciones</strong> y asegúrate de que estén activadas.</li>
+                <li>Busca la opción <strong>&quot;Mostrar en pantalla de bloqueo&quot;</strong> o &quot;En pantalla de bloqueo&quot; y actívala.</li>
+                <li>En algunos móviles: Ajustes → Notificaciones → Notificaciones en pantalla de bloqueo → activar para Chrome o para esta app.</li>
+              </ol>
+            )}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Si ya lo tienes activado y no ves la notificación al bloquear, revisa que no tengas activado &quot;No molestar&quot; o modo concentración.
+            </p>
+            <button type="button" onClick={() => setMostrarAyudaPantallaBloqueo(false)} className="w-full py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Solicitudes Asignadas (En Proceso) */}

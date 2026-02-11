@@ -87,7 +87,13 @@ const enviarNotificacionPush = async (solicitud) => {
         notification: { sound: 'default', channelId: 'solicitudes_channel' }
       },
       apns: {
-        payload: { aps: { sound: 'default', badge: 1 } }
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+            'interruption-level': 'time-sensitive'
+          }
+        }
       },
       webpush: {
         headers: { Urgency: 'high' },
