@@ -164,7 +164,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
                   <option value="">Todos los servicios</option>
                   {servicios.map((servicio) => (
                     <option key={servicio.id} value={servicio.id}>
-                      {servicio.nombre} - Piso {servicio.piso}
+                      {servicio.nombre}
                     </option>
                   ))}
                 </select>
@@ -242,7 +242,7 @@ const PlantillasModal = ({ onClose, onSeleccionarPlantilla, servicios }) => {
                       </h3>
                       {plantilla.servicio && (
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {plantilla.servicio.nombre} - Piso {plantilla.servicio.piso}
+                          {plantilla.servicio.nombre}
                         </p>
                       )}
                     </div>

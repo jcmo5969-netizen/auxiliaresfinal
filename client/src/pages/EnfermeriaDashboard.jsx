@@ -135,7 +135,7 @@ const EnfermeriaDashboard = () => {
                 Bienvenido, <span className="font-semibold text-gray-900 dark:text-white">{usuario?.nombre}</span>
                 {usuario?.servicio && (
                   <span className="ml-2 px-2 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 rounded-full text-xs font-medium">
-                    {usuario.servicio.nombre} - Piso {usuario.servicio.piso}
+                    {usuario.servicio.nombre}
                   </span>
                 )}
               </p>

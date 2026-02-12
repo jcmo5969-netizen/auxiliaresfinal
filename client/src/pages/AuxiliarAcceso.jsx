@@ -160,7 +160,7 @@ const AuxiliarAcceso = () => {
             const nuevaSolicitud = nuevas[0]
             if (notificacionesActivas) {
               mostrarNotificacion(
-                `Nueva solicitud - Piso ${nuevaSolicitud.servicio?.piso}`,
+                `Nueva solicitud - ${nuevaSolicitud.servicio?.nombre || ''}`,
                 {
                   cuerpo: `${nuevaSolicitud.tipoRequerimiento.toUpperCase()} - ${nuevaSolicitud.servicio?.nombre}`,
                   urgente: nuevaSolicitud.prioridad === 'urgente' || nuevaSolicitud.prioridad === 'alta',
@@ -666,12 +666,12 @@ const AuxiliarAcceso = () => {
                         <span className="text-3xl">{getTipoIcon(solicitud.tipoRequerimiento)}</span>
                         <div>
                           <h3 className="text-xl font-bold text-gray-900">
-                            Piso {solicitud.servicio?.piso} - {solicitud.servicio?.nombre}
+                            {solicitud.servicio?.nombre}
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
                             <MapPin className="w-4 h-4 text-orange-600" />
                             <span className="text-sm text-gray-600">
-                              {solicitud.servicio?.piso || 'N/A'}
+                              {solicitud.servicio?.nombre || 'N/A'}
                             </span>
                           </div>
                         </div>
@@ -773,12 +773,12 @@ const AuxiliarAcceso = () => {
                         <span className="text-3xl">{getTipoIcon(solicitud.tipoRequerimiento)}</span>
                         <div>
                           <h3 className="text-xl font-bold text-gray-900">
-                            Piso {solicitud.servicio?.piso} - {solicitud.servicio?.nombre}
+                            {solicitud.servicio?.nombre}
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
                             <MapPin className="w-4 h-4 text-primary-600" />
                             <span className="text-sm text-gray-600">
-                              {solicitud.servicio?.piso || 'N/A'}
+                              {solicitud.servicio?.nombre || 'N/A'}
                             </span>
                           </div>
                         </div>

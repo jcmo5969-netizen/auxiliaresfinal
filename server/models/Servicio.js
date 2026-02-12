@@ -16,10 +16,7 @@ const Servicio = sequelize.define('Servicio', {
   },
   piso: {
     type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: { msg: 'El piso es requerido' }
-    }
+    allowNull: true
   },
   descripcion: {
     type: DataTypes.TEXT,

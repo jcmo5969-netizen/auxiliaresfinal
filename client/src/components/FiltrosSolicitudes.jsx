@@ -29,7 +29,6 @@ const FiltrosSolicitudes = ({ solicitudes, onFiltroChange }) => {
     if (busqueda) {
       filtradas = filtradas.filter(s => 
         s.servicio?.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-        s.servicio?.piso?.toLowerCase().includes(busqueda.toLowerCase()) ||
         s.tipoRequerimiento?.toLowerCase().includes(busqueda.toLowerCase()) ||
         s.descripcion?.toLowerCase().includes(busqueda.toLowerCase())
       )
@@ -97,7 +96,7 @@ const FiltrosSolicitudes = ({ solicitudes, onFiltroChange }) => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder="Buscar por servicio, piso, tipo..."
+            placeholder="Buscar por servicio, tipo..."
             value={busqueda}
             onChange={(e) => {
               setBusqueda(e.target.value)

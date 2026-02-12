@@ -183,7 +183,7 @@ const CalendarioAuxiliar = ({
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-2xl">{getTipoIcon ? getTipoIcon(solicitud.tipoRequerimiento) : getIcon(solicitud.tipoRequerimiento)}</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
-                      {solicitud.servicio?.nombre} - Piso {solicitud.servicio?.piso}
+                      {solicitud.servicio?.nombre}
                     </span>
                     {solicitud.prioridad === 'urgente' && (
                       <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded text-xs font-semibold">
@@ -193,7 +193,7 @@ const CalendarioAuxiliar = ({
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> Piso {solicitud.servicio?.piso}
+                      <MapPin className="w-3 h-3" /> {solicitud.servicio?.nombre}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />

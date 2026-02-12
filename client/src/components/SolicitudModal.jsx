@@ -118,7 +118,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               {servicios.length > 1 && <option value="">Selecciona un servicio</option>}
               {servicios.map((servicio) => (
                 <option key={servicio.id || servicio._id} value={servicio.id || servicio._id}>
-                  {servicio.nombre} - Piso {servicio.piso}
+                  {servicio.nombre}
                 </option>
               ))}
             </select>

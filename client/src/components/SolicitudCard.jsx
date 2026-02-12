@@ -94,7 +94,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
                 </h3>
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
                   <MapPin className="w-4 h-4" />
-                  <span>Piso {solicitud.servicio?.piso || 'N/A'}</span>
+                  <span>{solicitud.servicio?.nombre || 'N/A'}</span>
                 </div>
                 {solicitud.cama && (
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">

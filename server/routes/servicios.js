@@ -13,7 +13,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const servicios = await Servicio.findAll({
       where: { activo: true },
-      order: [['piso', 'ASC'], ['nombre', 'ASC']]
+      order: [['nombre', 'ASC']]
     });
     res.json(servicios);
   } catch (error) {
@@ -42,8 +42,7 @@ router.get('/:id', auth, async (req, res) => {
 // @desc    Crear un nuevo servicio
 // @access  Private/Admin
 router.post('/', [
-  body('nombre').notEmpty().withMessage('El nombre es requerido'),
-  body('piso').notEmpty().withMessage('El piso es requerido')
+  body('nombre').notEmpty().withMessage('El nombre es requerido')
 ], auth, esAdministrador, async (req, res) => {
   try {
     const errors = validationResult(req);

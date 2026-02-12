@@ -46,7 +46,7 @@ try {
 const enviarNotificacionPush = async (solicitud) => {
   if (!firebaseInitialized) {
     console.log('📱 Notificación simulada (Firebase no configurado):', {
-      titulo: `Nueva solicitud en Piso ${solicitud.servicio?.piso || 'N/A'}`,
+      titulo: `Nueva solicitud - ${solicitud.servicio?.nombre || 'N/A'}`,
       cuerpo: `Se necesita auxiliar para: ${solicitud.tipoRequerimiento}`
     });
     console.log('💡 Para activar notificaciones push reales, configura Firebase siguiendo CONFIGURAR_FIREBASE.md');
@@ -68,13 +68,12 @@ const enviarNotificacionPush = async (solicitud) => {
       return;
     }
 
-    const title = `Nueva solicitud - Piso ${solicitud.servicio.piso}`;
+    const title = `Nueva solicitud - ${solicitud.servicio?.nombre || 'N/A'}`;
     const body = `Se necesita auxiliar para: ${solicitud.tipoRequerimiento.toUpperCase()}. Servicio: ${solicitud.servicio.nombre}`;
     // FCM exige que todos los valores en data sean string
     const data = {
       solicitudId: String(solicitud.id),
       tipoRequerimiento: String(solicitud.tipoRequerimiento || ''),
-      piso: String(solicitud.servicio.piso || ''),
       servicio: String(solicitud.servicio.nombre || ''),
       prioridad: String(solicitud.prioridad || 'media')
     };

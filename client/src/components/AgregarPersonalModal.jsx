@@ -108,7 +108,7 @@ const AgregarPersonalModal = ({ onClose, onSubmit, servicios = [] }) => {
                 <option value="">Seleccione un servicio</option>
                 {servicios.map((servicio) => (
                   <option key={servicio.id} value={servicio.id}>
-                    {servicio.nombre} - Piso {servicio.piso}
+                    {servicio.nombre}
                   </option>
                 ))}
               </select>

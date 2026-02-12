@@ -211,7 +211,7 @@ const CalendarioSolicitudes = ({ solicitudes }) => {
                   <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
-                      <span>Piso {solicitud.servicio?.piso}</span>
+                      <span>{solicitud.servicio?.nombre}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
