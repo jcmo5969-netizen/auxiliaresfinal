@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext'
 import { solicitarPermisoNotificaciones, escucharNotificaciones, estaFirebaseConfigurado } from '../utils/firebase'
 import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
 import { getItem, setItem, removeItem } from '../utils/storage'
+import CalendarioAuxiliar from '../components/CalendarioAuxiliar'
 
 // Componente de Login específico para auxiliares
 const LoginAuxiliar = ({ onLoginSuccess }) => {
@@ -130,6 +131,8 @@ const AuxiliarAcceso = () => {
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null)
   const [intervaloActualizacion, setIntervaloActualizacion] = useState(null)
   const [mostrarAyudaPantallaBloqueo, setMostrarAyudaPantallaBloqueo] = useState(false)
+  const [vistaActiva, setVistaActiva] = useState('lista')
+  const [solicitudesCalendario, setSolicitudesCalendario] = useState([])
 
   const cargarSolicitudes = useCallback(async (mostrarNotificacionNueva = false) => {
     try {
@@ -185,6 +188,21 @@ const AuxiliarAcceso = () => {
       toast.error('Error cargando solicitudes: ' + (error.response?.data?.mensaje || error.message))
     }
   }, [notificacionesActivas])
+
+  const cargarCalendario = useCallback(async () => {
+    try {
+      const res = await api.get('/api/solicitudes/pendientes?incluirFuturas=1')
+      setSolicitudesCalendario(res.data || [])
+    } catch (e) {
+      toast.error('Error cargando calendario')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (vistaActiva === 'calendario' && autenticado) {
+      cargarCalendario()
+    }
+  }, [vistaActiva, autenticado, cargarCalendario])
 
   useEffect(() => {
     // Asegurarse de que estamos en la ruta correcta (por si acaso)
@@ -320,8 +338,8 @@ const AuxiliarAcceso = () => {
       }
       await api.put(`/api/solicitudes/${solicitudId}/asignar`)
       toast.success('Solicitud asignada exitosamente', { icon: '✅' })
-      // Recargar inmediatamente
       await cargarSolicitudes(false)
+      if (vistaActiva === 'calendario') await cargarCalendario()
     } catch (error) {
       toast.error(error.response?.data?.mensaje || 'Error asignando solicitud')
     }
@@ -335,8 +353,8 @@ const AuxiliarAcceso = () => {
       }
       await api.put(`/api/solicitudes/${solicitudId}/estado`, { estado: 'completada' })
       toast.success('Solicitud finalizada exitosamente', { icon: '✅' })
-      // Recargar inmediatamente
       await cargarSolicitudes(false)
+      if (vistaActiva === 'calendario') await cargarCalendario()
     } catch (error) {
       toast.error(error.response?.data?.mensaje || 'Error finalizando solicitud')
     }
@@ -591,6 +609,44 @@ const AuxiliarAcceso = () => {
       )}
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Tabs Lista / Calendario */}
+        <div className="flex gap-2 mb-6">
+          <button
+            type="button"
+            onClick={() => setVistaActiva('lista')}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              vistaActiva === 'lista'
+                ? 'bg-primary-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            Lista
+          </button>
+          <button
+            type="button"
+            onClick={() => setVistaActiva('calendario')}
+            className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+              vistaActiva === 'calendario'
+                ? 'bg-primary-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            Calendario
+          </button>
+        </div>
+
+        {vistaActiva === 'calendario' ? (
+          <CalendarioAuxiliar
+            solicitudesPendientes={solicitudesCalendario}
+            solicitudesAsignadas={solicitudesAsignadas}
+            onAsignar={handleAsignar}
+            onCompletar={handleFinalizar}
+            getTipoIcon={getTipoIcon}
+            getPrioridadColor={getPrioridadColor}
+          />
+        ) : (
+          <>
         {/* Solicitudes Asignadas (En Proceso) */}
         {solicitudesAsignadas.length > 0 && (
           <div className="mb-8">
@@ -775,6 +831,8 @@ const AuxiliarAcceso = () => {
             </div>
           </>
         ) : null}
+          </>
+        )}
       </div>
     </div>
   )

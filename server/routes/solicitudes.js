@@ -24,9 +24,13 @@ router.get('/', auth, async (req, res) => {
       ];
     }
     
-    // Si es personal de enfermería, solo ver solicitudes creadas por el usuario
+    // Si es personal de enfermería, ver solicitudes de su servicio (piso)
     if (req.usuario.rol === 'enfermeria') {
-      where.solicitadoPorId = req.usuario.id;
+      if (req.usuario.servicioId) {
+        where.servicioId = req.usuario.servicioId;
+      } else {
+        where.solicitadoPorId = req.usuario.id;
+      }
     }
 
     const solicitudes = await Solicitud.findAll({
@@ -52,31 +56,32 @@ router.get('/', auth, async (req, res) => {
 // @access  Private
 router.get('/pendientes', auth, async (req, res) => {
   try {
+    const incluirFuturas = req.query.incluirFuturas === '1' || req.query.incluirFuturas === 'true';
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const mañana = new Date(hoy);
     mañana.setDate(mañana.getDate() + 1);
 
+    const wherePendientes = {
+      estado: 'pendiente',
+      [Op.or]: [
+        { asignadoAId: null },
+        { asignadoAId: { [Op.ne]: req.usuario.id } }
+      ]
+    };
+    if (!incluirFuturas) {
+      wherePendientes[Op.and] = [
+        {
+          [Op.or]: [
+            { fechaProgramada: null },
+            { fechaProgramada: { [Op.lte]: mañana } }
+          ]
+        }
+      ];
+    }
+
     const solicitudes = await Solicitud.findAll({
-      where: { 
-        estado: 'pendiente',
-        // Incluir solicitudes sin fecha programada O con fecha programada de hoy o anterior
-        [Op.and]: [
-          { estado: 'pendiente' },
-          {
-            [Op.or]: [
-              { fechaProgramada: null },
-              { fechaProgramada: { [Op.lte]: mañana } }
-            ]
-          },
-          {
-            [Op.or]: [
-              { asignadoAId: null },
-              { asignadoAId: { [Op.ne]: req.usuario.id } }
-            ]
-          }
-        ]
-      },
+      where: wherePendientes,
       include: [
         { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
         { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] }
