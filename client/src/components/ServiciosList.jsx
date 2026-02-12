@@ -150,9 +150,6 @@ const ServiciosList = ({ servicios, usuario, onUpdate }) => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-gray-900 dark:text-white truncate">{servicio.nombre}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
-                    <span className="font-medium">Piso {servicio.piso}</span>
-                  </p>
                   {servicio.descripcion && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">{servicio.descripcion}</p>
                   )}

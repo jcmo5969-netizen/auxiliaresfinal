@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
-import { BarChart3, TrendingUp, Clock, Users, Activity, Download, Filter } from 'lucide-react'
+import { BarChart3, TrendingUp, Clock, Users, Activity, Download, Filter, Award } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
@@ -11,6 +11,7 @@ import {
 const MetricasDashboard = () => {
   const { isDark } = useTheme()
   const [metricas, setMetricas] = useState(null)
+  const [kpisAuxiliares, setKpisAuxiliares] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [rangoFecha, setRangoFecha] = useState('30') // días
   const [tipoGrafico, setTipoGrafico] = useState('linea') // linea, area, barra
@@ -25,13 +26,18 @@ const MetricasDashboard = () => {
       const fechaInicio = new Date()
       fechaInicio.setDate(fechaInicio.getDate() - parseInt(rangoFecha))
 
-      const res = await api.get('/api/metricas/dashboard', {
-        params: {
-          fechaInicio: fechaInicio.toISOString(),
-          fechaFin: fechaFin.toISOString()
-        }
+      const resMetricas = await api.get('/api/metricas/dashboard', {
+        params: { fechaInicio: fechaInicio.toISOString(), fechaFin: fechaFin.toISOString() }
       })
-      setMetricas(res.data)
+      setMetricas(resMetricas.data)
+      try {
+        const resKpis = await api.get('/api/metricas/kpis-auxiliares', {
+          params: { fechaInicio: fechaInicio.toISOString(), fechaFin: fechaFin.toISOString() }
+        })
+        setKpisAuxiliares(resKpis.data)
+      } catch (_) {
+        setKpisAuxiliares({ kpis: [] })
+      }
     } catch (error) {
       toast.error('Error cargando métricas')
       console.error(error)
@@ -511,6 +517,52 @@ const MetricasDashboard = () => {
                 </div>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {/* KPIs por auxiliar: aceptadas, completadas, tiempo en finalizar */}
+      {kpisAuxiliares?.kpis?.length > 0 && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800/50">
+          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+            <Award className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <h3 className="font-semibold text-gray-900 dark:text-white">KPIs por auxiliar</h3>
+            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+              (rendimiento en el período seleccionado)
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Auxiliar</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Aceptadas</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Completadas</th>
+                  <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Tiempo promedio</th>
+                </tr>
+              </thead>
+              <tbody>
+                {kpisAuxiliares.kpis.map((kpi) => (
+                  <tr key={kpi.auxiliar.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                    <td className="py-3 px-4">
+                      <p className="font-medium text-gray-900 dark:text-white">{kpi.auxiliar.nombre}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{kpi.auxiliar.email}</p>
+                    </td>
+                    <td className="text-right py-3 px-4 text-gray-700 dark:text-gray-300">
+                      {kpi.solicitudesAceptadas}
+                    </td>
+                    <td className="text-right py-3 px-4 text-gray-700 dark:text-gray-300">
+                      {kpi.solicitudesCompletadas}
+                    </td>
+                    <td className="text-right py-3 px-4 text-gray-700 dark:text-gray-300">
+                      {kpi.tiempoPromedioMinutos != null
+                        ? formatearTiempo(kpi.tiempoPromedioMinutos)
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

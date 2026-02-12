@@ -253,5 +253,68 @@ router.get('/dashboard', auth, esAdministrador, async (req, res) => {
   }
 });
 
+// @route   GET /api/metricas/kpis-auxiliares
+// @desc    KPIs por auxiliar: solicitudes aceptadas, completadas y tiempo promedio en finalizar
+// @access  Private (Admin)
+router.get('/kpis-auxiliares', auth, esAdministrador, async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin } = req.query;
+    const fechaInicioDate = fechaInicio ? new Date(fechaInicio) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const fechaFinDate = fechaFin ? new Date(fechaFin) : new Date();
+
+    const auxiliares = await Usuario.findAll({
+      where: { rol: 'auxiliar', activo: true },
+      attributes: ['id', 'nombre', 'email'],
+      order: [['nombre', 'ASC']]
+    });
+
+    const kpis = await Promise.all(auxiliares.map(async (aux) => {
+      const aceptadas = await Solicitud.count({
+        where: {
+          asignadoAId: aux.id,
+          fechaAsignacion: { [Op.between]: [fechaInicioDate, fechaFinDate] }
+        }
+      });
+
+      const completadasData = await Solicitud.findAll({
+        where: {
+          asignadoAId: aux.id,
+          estado: 'completada',
+          fechaCompletada: { [Op.ne]: null, [Op.between]: [fechaInicioDate, fechaFinDate] }
+        },
+        attributes: [
+          [Sequelize.fn('COUNT', Sequelize.literal('"solicitudes"."id"')), 'total'],
+          [Sequelize.fn('AVG', Sequelize.literal('"solicitudes"."tiempo_completado"')), 'tiempoPromedio']
+        ],
+        raw: true
+      });
+
+      const completadas = completadasData[0] ? parseInt(completadasData[0].total) || 0 : 0;
+      const tiempoPromedio = completadasData[0] && completadasData[0].tiempoPromedio != null
+        ? Math.round(parseFloat(completadasData[0].tiempoPromedio))
+        : null;
+
+      return {
+        auxiliar: { id: aux.id, nombre: aux.nombre, email: aux.email },
+        solicitudesAceptadas: aceptadas,
+        solicitudesCompletadas: completadas,
+        tiempoPromedioMinutos: tiempoPromedio
+      };
+    }));
+
+    res.json({
+      fechaInicio: fechaInicioDate.toISOString(),
+      fechaFin: fechaFinDate.toISOString(),
+      kpis: kpis.sort((a, b) => (b.solicitudesCompletadas - a.solicitudesCompletadas) || (b.solicitudesAceptadas - a.solicitudesAceptadas))
+    });
+  } catch (error) {
+    console.error('Error en /api/metricas/kpis-auxiliares:', error);
+    res.status(500).json({
+      mensaje: 'Error del servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;
 
