@@ -10,7 +10,8 @@ const servicios = [
   { nombre: 'Urgencia Infantil', piso: 'N/A' },
   { nombre: 'CMA', piso: 'N/A' },
   { nombre: 'Maternidad/ginecologia', piso: 'N/A' },
-  { nombre: 'Pabellon', piso: 'N/A' }
+  { nombre: 'Pabellon', piso: 'N/A' },
+  { nombre: 'GESCAS', piso: 'N/A' }
 ];
 
 async function seedServicios() {
