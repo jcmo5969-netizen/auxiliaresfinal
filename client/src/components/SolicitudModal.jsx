@@ -9,6 +9,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     tipoRequerimiento: 'alta',
     tipoServicio: 'traslado_pcte',
     tipoTraslado: 'sin_silla_ni_camilla',
+    destinoGescas: '',
     prioridadInmediato: false,
     descripcion: '',
     prioridad: 'media',
@@ -49,6 +50,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
       tipoRequerimiento: 'alta',
       tipoServicio: 'traslado_pcte',
       tipoTraslado: 'sin_silla_ni_camilla',
+      destinoGescas: '',
       prioridadInmediato: false,
       descripcion: '',
       prioridad: 'media',
@@ -134,7 +136,8 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
                 ...formData,
                 tipoRequerimiento: e.target.value,
                 tipoServicio: e.target.value === 'traslado' ? formData.tipoServicio : '',
-                tipoTraslado: e.target.value === 'traslado' ? formData.tipoTraslado : ''
+                tipoTraslado: e.target.value === 'traslado' ? formData.tipoTraslado : '',
+                destinoGescas: e.target.value === 'gescas' ? formData.destinoGescas : ''
               })}
               required
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -142,6 +145,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               <option value="alta">Alta</option>
               <option value="traslado">Traslado</option>
               <option value="pabellon">Pabellón</option>
+              <option value="gescas">GESCAS (rescate de camillas)</option>
               <option value="otro">Otro</option>
             </select>
           </div>
@@ -177,6 +181,21 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             </select>
           </div>
           </div>
+          )}
+
+          {formData.tipoRequerimiento === 'gescas' && (
+            <div className="bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Destino GESCAS
+              </label>
+              <input
+                type="text"
+                value={formData.destinoGescas || ''}
+                onChange={(e) => setFormData({ ...formData, destinoGescas: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Ej: UCI, Pabellón 3..."
+              />
+            </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -270,10 +289,13 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300 mb-2">Resumen</h3>
             <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
               <div>Servicio: {formData.servicio ? 'Seleccionado' : 'Pendiente'}</div>
-              <div>Tipo: {formData.tipoRequerimiento}</div>
+              <div>Tipo: {formData.tipoRequerimiento === 'gescas' ? 'GESCAS' : formData.tipoRequerimiento}</div>
               <div>Prioridad: {formData.prioridadInmediato ? 'Inmediato' : formData.prioridad}</div>
               {formData.tipoRequerimiento === 'traslado' && (
                 <div>Traslado: {formData.tipoTraslado || 'Pendiente'}</div>
+              )}
+              {formData.tipoRequerimiento === 'gescas' && formData.destinoGescas && (
+                <div>Destino GESCAS: {formData.destinoGescas}</div>
               )}
               {formData.cama && <div>Cama: {formData.cama}</div>}
               {formData.fechaProgramada && <div>Fecha: {formData.fechaProgramada}</div>}
@@ -307,6 +329,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               ...prev,
               servicio: datos.servicio || prev.servicio,
               tipoRequerimiento: datos.tipoRequerimiento,
+              destinoGescas: datos.tipoRequerimiento === 'gescas' ? (datos.destinoGescas || '') : '',
               prioridad: datos.prioridad,
               descripcion: datos.descripcion || prev.descripcion
             }))

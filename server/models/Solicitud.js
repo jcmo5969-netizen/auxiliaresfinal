@@ -17,9 +17,14 @@ const Solicitud = sequelize.define('Solicitud', {
     field: 'servicio_id'
   },
   tipoRequerimiento: {
-    type: DataTypes.ENUM('alta', 'traslado', 'pabellon', 'otro'),
+    type: DataTypes.ENUM('alta', 'traslado', 'pabellon', 'otro', 'gescas'),
     allowNull: false,
     field: 'tipo_requerimiento'
+  },
+  destinoGescas: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'destino_gescas'
   },
   descripcion: {
     type: DataTypes.TEXT,

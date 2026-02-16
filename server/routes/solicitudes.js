@@ -152,7 +152,7 @@ router.get('/:id', auth, async (req, res) => {
 // @desc    Crear una nueva solicitud
 // @access  Private
 router.post('/', [
-  body('tipoRequerimiento').isIn(['alta', 'traslado', 'pabellon', 'otro']).withMessage('Tipo de requerimiento inválido')
+  body('tipoRequerimiento').isIn(['alta', 'traslado', 'pabellon', 'otro', 'gescas']).withMessage('Tipo de requerimiento inválido')
 ], auth, async (req, res) => {
   try {
     // Aceptar tanto 'servicio' como 'servicioId' del frontend
@@ -203,6 +203,9 @@ router.post('/', [
     if (datosSolicitud.tipoRequerimiento !== 'traslado') {
       datosSolicitud.tipoServicio = null;
       datosSolicitud.tipoTraslado = null;
+    }
+    if (datosSolicitud.tipoRequerimiento !== 'gescas') {
+      datosSolicitud.destinoGescas = null;
     }
     if (datosSolicitud.prioridadInmediato && datosSolicitud.prioridad !== 'urgente') {
       datosSolicitud.prioridad = 'urgente';

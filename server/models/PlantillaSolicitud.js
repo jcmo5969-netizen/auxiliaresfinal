@@ -19,7 +19,7 @@ const PlantillaSolicitud = sequelize.define('PlantillaSolicitud', {
     allowNull: true
   },
   tipoRequerimiento: {
-    type: DataTypes.ENUM('alta', 'traslado', 'pabellon', 'otro'),
+    type: DataTypes.ENUM('alta', 'traslado', 'pabellon', 'otro', 'gescas'),
     allowNull: false,
     field: 'tipo_requerimiento'
   },
