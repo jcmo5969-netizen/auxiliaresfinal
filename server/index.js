@@ -77,6 +77,10 @@ const connectDatabase = async () => {
     // Inicializar usuario admin
     const initializeAdmin = require('./utils/initializeAdmin');
     await initializeAdmin();
+
+    // Asegurar servicios por defecto (incl. GESCAS) para Render y entornos sin seed manual
+    const seedServiciosOnStartup = require('./utils/seedServiciosOnStartup');
+    await seedServiciosOnStartup();
   } catch (err) {
     console.error('❌ Error conectando a PostgreSQL:', err.message);
     
