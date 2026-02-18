@@ -25,6 +25,7 @@ import RecordatoriosModal from '../components/RecordatoriosModal'
 import WidgetConfig from '../components/WidgetConfig'
 import EstadisticasTiempoReal from '../components/EstadisticasTiempoReal'
 import Logo from '../components/Logo'
+import RelojVentana from '../components/RelojVentana'
 
 const Dashboard = () => {
   const { usuario, logout } = useAuth()
@@ -239,6 +240,11 @@ const Dashboard = () => {
               </div>
             </div>
             
+            {/* Ventana de hora adelantada (1h 3min) */}
+            <div className="hidden md:block">
+              <RelojVentana className="min-w-[140px]" soloHora={false} />
+            </div>
+
             {/* Información del usuario */}
             <div className="flex items-center gap-3 justify-between sm:justify-end">
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg">

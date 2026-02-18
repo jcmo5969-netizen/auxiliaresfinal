@@ -72,6 +72,26 @@ const AlertasPanel = ({ solicitudes = [] }) => {
       })
     }
 
+    // Avisos: auxiliares en proceso con pacientes prioritarios
+    const enProcesoPrioritarias = solicitudes.filter(s =>
+      s.estado === 'en_proceso' &&
+      (s.prioridad === 'urgente' || s.prioridad === 'alta' || s.prioridadInmediato)
+    )
+    if (enProcesoPrioritarias.length > 0) {
+      nuevasAlertas.push({
+        id: 'en-proceso-prioritarios',
+        tipo: 'info',
+        titulo: 'Auxiliar en proceso con paciente prioritario',
+        mensaje: `${enProcesoPrioritarias.length} solicitud${enProcesoPrioritarias.length > 1 ? 'es' : ''} prioritaria${enProcesoPrioritarias.length > 1 ? 's' : ''} en proceso. ${enProcesoPrioritarias.map(s => s.asignadoA?.nombre).filter(Boolean).length ? 'Auxiliar asignado en traslado.' : ''}`,
+        icono: CheckCircle,
+        color: 'blue',
+        acciones: enProcesoPrioritarias.slice(0, 3).map(s => ({
+          id: s.id,
+          texto: `${s.servicio?.nombre || 'N/A'} – ${s.asignadoA?.nombre || 'Sin asignar'}`
+        }))
+      })
+    }
+
     // Alertas por solicitudes en proceso sin actividad (>4 horas)
     const sinActividad = solicitudes.filter(s => {
       if (s.estado !== 'en_proceso') return false

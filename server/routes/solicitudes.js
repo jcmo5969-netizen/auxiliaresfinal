@@ -3,7 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { Solicitud, Servicio, Usuario, Etiqueta, SolicitudEtiqueta } = require('../models');
 const { auth } = require('../middleware/auth');
 const { enviarNotificacionPush } = require('../utils/notificaciones');
-const { registrarCreacion, registrarCambioEstado, registrarAsignacion, registrarActualizacion } = require('../utils/historial');
+const { registrarCreacion, registrarCambioEstado, registrarAsignacion, registrarCambio } = require('../utils/historial');
 const { registrarActividad } = require('../utils/logger');
 const { Op } = require('sequelize');
 
@@ -386,6 +386,86 @@ router.put('/:id/estado', [
         { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false }
       ]
     });
+
+    res.json(solicitudCompleta);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error del servidor' });
+  }
+});
+
+// @route   PUT /api/solicitudes/:id
+// @desc    Modificar datos de una solicitud (servicio, prioridad, descripción, etc.)
+// @access  Private (administrador o auxiliar asignado)
+router.put('/:id', [
+  body('tipoRequerimiento').optional().isIn(['alta', 'traslado', 'pabellon', 'otro', 'gescas']),
+  body('prioridad').optional().isIn(['baja', 'media', 'alta', 'urgente'])
+], auth, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errores: errors.array() });
+    }
+
+    const solicitud = await Solicitud.findByPk(req.params.id);
+    if (!solicitud) {
+      return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
+    }
+
+    const puedeModificar =
+      req.usuario.rol === 'administrador' ||
+      (req.usuario.rol === 'auxiliar' && solicitud.asignadoAId === req.usuario.id);
+
+    if (!puedeModificar) {
+      return res.status(403).json({ mensaje: 'No tienes permiso para modificar esta solicitud' });
+    }
+
+    const updateData = {};
+    const servicioId = req.body.servicioId ?? req.body.servicio;
+    if (servicioId !== undefined) updateData.servicioId = servicioId ? Number(servicioId) : null;
+    if (req.body.tipoRequerimiento !== undefined) updateData.tipoRequerimiento = req.body.tipoRequerimiento;
+    if (req.body.destinoGescas !== undefined) updateData.destinoGescas = req.body.destinoGescas || null;
+    if (req.body.descripcion !== undefined) updateData.descripcion = req.body.descripcion || null;
+    if (req.body.tipoServicio !== undefined) updateData.tipoServicio = req.body.tipoServicio || null;
+    if (req.body.tipoTraslado !== undefined) updateData.tipoTraslado = req.body.tipoTraslado || null;
+    if (req.body.prioridadInmediato !== undefined) {
+      updateData.prioridadInmediato = Boolean(req.body.prioridadInmediato);
+      if (updateData.prioridadInmediato) updateData.prioridad = 'urgente';
+    }
+    if (req.body.cama !== undefined) updateData.cama = req.body.cama || null;
+    if (req.body.prioridad !== undefined) updateData.prioridad = req.body.prioridad;
+    if (req.body.fechaProgramada !== undefined) {
+      updateData.fechaProgramada = (req.body.fechaProgramada && String(req.body.fechaProgramada).trim()) ? new Date(req.body.fechaProgramada) : null;
+    }
+
+    if (updateData.tipoRequerimiento && updateData.tipoRequerimiento !== 'traslado') {
+      updateData.tipoServicio = null;
+      updateData.tipoTraslado = null;
+    }
+    if (updateData.tipoRequerimiento && updateData.tipoRequerimiento !== 'gescas') {
+      updateData.destinoGescas = null;
+    }
+
+    await solicitud.update(updateData);
+
+    const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {
+      include: [
+        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
+        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
+        { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false },
+        { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
+      ]
+    });
+
+    await registrarCambio(
+      solicitud.id,
+      req.usuario.id,
+      'actualizar',
+      null,
+      null,
+      null,
+      `Solicitud modificada: ${Object.keys(updateData).join(', ')}`
+    );
 
     res.json(solicitudCompleta);
   } catch (error) {

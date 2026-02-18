@@ -105,11 +105,15 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
                       <span className="font-semibold text-gray-900 dark:text-white">
                         {comentario.usuario?.nombre || 'Usuario'}
                       </span>
-                      {comentario.usuario?.rol === 'administrador' && (
-                        <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 rounded text-xs font-medium">
-                          Admin
-                        </span>
-                      )}
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
+                        {comentario.usuario?.rol === 'administrador'
+                          ? 'Administrador'
+                          : comentario.usuario?.rol === 'auxiliar'
+                            ? 'Auxiliar'
+                            : comentario.usuario?.rol === 'enfermeria'
+                              ? 'Enfermería'
+                              : comentario.usuario?.rol || 'Usuario'}
+                      </span>
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 mb-2">{comentario.contenido}</p>
                     <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">

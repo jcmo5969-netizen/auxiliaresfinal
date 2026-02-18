@@ -8,12 +8,14 @@ import toast from 'react-hot-toast'
 import ComentariosModal from './ComentariosModal'
 import HistorialModal from './HistorialModal'
 import EtiquetasManager from './EtiquetasManager'
+import EditarSolicitudModal from './EditarSolicitudModal'
 
-const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
+const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   const [mostrarMenu, setMostrarMenu] = useState(false)
   const [cambiandoEstado, setCambiandoEstado] = useState(false)
   const [mostrarComentarios, setMostrarComentarios] = useState(false)
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
+  const [mostrarEditarSolicitud, setMostrarEditarSolicitud] = useState(false)
 
   const getEstadoColor = (estado) => {
     const colores = {
@@ -170,6 +172,13 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
                         Cancelar
                       </button>
                     )}
+                    <button
+                      onClick={() => { setMostrarMenu(false); setMostrarEditarSolicitud(true) }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 transition-colors border-t dark:border-gray-600"
+                    >
+                      <Edit className="w-4 h-4 inline mr-2" />
+                      Modificar solicitud
+                    </button>
                   </div>
                 </>
               )}
@@ -305,6 +314,14 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios }) => {
         <HistorialModal
           solicitudId={solicitud.id || solicitud._id}
           onClose={() => setMostrarHistorial(false)}
+        />
+      )}
+      {mostrarEditarSolicitud && (
+        <EditarSolicitudModal
+          solicitud={solicitud}
+          servicios={servicios}
+          onClose={() => setMostrarEditarSolicitud(false)}
+          onGuardado={onUpdate}
         />
       )}
     </div>
