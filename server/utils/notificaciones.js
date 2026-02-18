@@ -116,4 +116,75 @@ const enviarNotificacionPush = async (solicitud) => {
   }
 };
 
-module.exports = { enviarNotificacionPush };
+/**
+ * Enviar notificación de nuevo comentario al auxiliar asignado y al solicitante (para que reciban alarma en el celular).
+ * No se notifica al autor del comentario.
+ */
+const enviarNotificacionNuevoComentario = async (solicitudId, autorNombre, contenido, autorId) => {
+  if (!firebaseInitialized) {
+    console.log('📱 Notificación comentario simulada (Firebase no configurado)');
+    return;
+  }
+
+  try {
+    const { Solicitud, Usuario } = require('../models');
+    const solicitud = await Solicitud.findByPk(solicitudId, {
+      include: [
+        { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'fcmToken'] },
+        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'fcmToken'] }
+      ]
+    });
+    if (!solicitud) return;
+
+    const idsIncluidos = new Set();
+    const destinatarios = [];
+    const agregar = (u) => {
+      if (u?.fcmToken && u.id !== autorId && !idsIncluidos.has(u.id)) {
+        idsIncluidos.add(u.id);
+        destinatarios.push(u);
+      }
+    };
+    if (solicitud.asignadoA) agregar(solicitud.asignadoA);
+    if (solicitud.solicitadoPor) agregar(solicitud.solicitadoPor);
+
+    // Personal de enfermería del mismo servicio (reciben alarma en el celular)
+    const enfermeriaServicio = await Usuario.findAll({
+      where: { rol: 'enfermeria', servicioId: solicitud.servicioId, fcmToken: { [Op.ne]: null } },
+      attributes: ['id', 'nombre', 'fcmToken']
+    });
+    enfermeriaServicio.forEach(agregar);
+
+    const tokens = destinatarios.map(d => d.fcmToken).filter(Boolean);
+    if (tokens.length === 0) return;
+
+    const titulo = 'Nuevo comentario en solicitud';
+    const cuerpo = `${autorNombre}: ${(contenido || '').slice(0, 80)}${(contenido && contenido.length > 80) ? '…' : ''}`;
+    const mensaje = {
+      notification: { title: titulo, body: cuerpo },
+      data: {
+        solicitudId: String(solicitudId),
+        tipo: 'comentario'
+      },
+      android: {
+        priority: 'high',
+        notification: { sound: 'default', channelId: 'solicitudes_channel' }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1,
+            'interruption-level': 'time-sensitive'
+          }
+        }
+      }
+    };
+
+    const response = await admin.messaging().sendEachForMulticast({ tokens, ...mensaje });
+    console.log(`✅ Notificaciones de comentario enviadas: ${response.successCount}/${tokens.length}`);
+  } catch (error) {
+    console.error('Error enviando notificación de comentario:', error);
+  }
+};
+
+module.exports = { enviarNotificacionPush, enviarNotificacionNuevoComentario };

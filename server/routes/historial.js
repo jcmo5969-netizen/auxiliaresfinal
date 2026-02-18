@@ -15,11 +15,12 @@ router.get('/solicitud/:id', auth, async (req, res) => {
       return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
     }
 
-    // Verificar permisos
-    const puedeVer = 
+    // Verificar permisos: admin, solicitante, asignado o enfermería del mismo servicio
+    const puedeVer =
       req.usuario.rol === 'administrador' ||
       solicitud.solicitadoPorId === req.usuario.id ||
-      solicitud.asignadoAId === req.usuario.id;
+      solicitud.asignadoAId === req.usuario.id ||
+      (req.usuario.rol === 'enfermeria' && solicitud.servicioId === req.usuario.servicioId);
 
     if (!puedeVer) {
       return res.status(403).json({ mensaje: 'No tienes permiso para ver el historial de esta solicitud' });

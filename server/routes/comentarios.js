@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Comentario, Solicitud, Usuario } = require('../models');
 const { auth } = require('../middleware/auth');
-const { Op } = require('sequelize');
+const { enviarNotificacionNuevoComentario } = require('../utils/notificaciones');
 
 const router = express.Router();
 
@@ -45,11 +45,12 @@ router.post('/', [
       return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
     }
 
-    // Verificar permisos: solo puede comentar si es admin, solicitante o asignado
-    const puedeComentar = 
+    // Verificar permisos: admin, solicitante, asignado o enfermería del mismo servicio
+    const puedeComentar =
       req.usuario.rol === 'administrador' ||
       solicitud.solicitadoPorId === req.usuario.id ||
-      solicitud.asignadoAId === req.usuario.id;
+      solicitud.asignadoAId === req.usuario.id ||
+      (req.usuario.rol === 'enfermeria' && solicitud.servicioId === req.usuario.servicioId);
 
     if (!puedeComentar) {
       return res.status(403).json({ mensaje: 'No tienes permiso para comentar en esta solicitud' });
@@ -67,6 +68,14 @@ router.post('/', [
         { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'email', 'rol'] }
       ]
     });
+
+    // Notificación al auxiliar asignado y al solicitante (alarma en el celular)
+    enviarNotificacionNuevoComentario(
+      req.body.solicitudId,
+      req.usuario.nombre || 'Usuario',
+      req.body.contenido,
+      req.usuario.id
+    ).catch(err => console.error('Error enviando notificación comentario:', err));
 
     res.status(201).json(comentarioCompleto);
   } catch (error) {

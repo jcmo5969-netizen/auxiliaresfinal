@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { 
   MapPin, User, Clock, AlertCircle, CheckCircle, 
-  X, Edit, MoreVertical, Calendar, MessageSquare, History, Tag, Bed
+  X, Edit, MoreVertical, Calendar, MessageSquare, History, Tag, Bed, FileText
 } from 'lucide-react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
@@ -9,6 +9,7 @@ import ComentariosModal from './ComentariosModal'
 import HistorialModal from './HistorialModal'
 import EtiquetasManager from './EtiquetasManager'
 import EditarSolicitudModal from './EditarSolicitudModal'
+import VentanaInformacionSolicitud from './VentanaInformacionSolicitud'
 
 const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   const [mostrarMenu, setMostrarMenu] = useState(false)
@@ -16,6 +17,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   const [mostrarComentarios, setMostrarComentarios] = useState(false)
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
   const [mostrarEditarSolicitud, setMostrarEditarSolicitud] = useState(false)
+  const [mostrarVentanaInfo, setMostrarVentanaInfo] = useState(false)
 
   const getEstadoColor = (estado) => {
     const colores = {
@@ -284,6 +286,14 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
           {/* Botones de acción */}
           <div className="flex flex-wrap items-center gap-2">
             <button
+              onClick={() => setMostrarVentanaInfo(true)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 dark:hover:bg-primary-600 rounded-lg transition text-sm font-medium"
+              title="Ver toda la información"
+            >
+              <FileText className="w-4 h-4" />
+              Ver toda la información
+            </button>
+            <button
               onClick={() => setMostrarComentarios(true)}
               className="flex items-center gap-1 px-3 py-1.5 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition text-sm font-medium"
               title="Ver comentarios"
@@ -322,6 +332,13 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
           servicios={servicios}
           onClose={() => setMostrarEditarSolicitud(false)}
           onGuardado={onUpdate}
+        />
+      )}
+      {mostrarVentanaInfo && (
+        <VentanaInformacionSolicitud
+          solicitud={solicitud}
+          onClose={() => setMostrarVentanaInfo(false)}
+          onComentarioEnviado={onUpdate}
         />
       )}
     </div>
