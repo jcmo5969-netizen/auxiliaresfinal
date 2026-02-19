@@ -398,7 +398,7 @@ router.put('/:id/estado', [
 
 // @route   PUT /api/solicitudes/:id
 // @desc    Modificar datos de una solicitud (servicio, prioridad, descripción, etc.)
-// @access  Private (administrador o auxiliar asignado)
+// @access  Private (solo administrador o personal de enfermería)
 router.put('/:id', [
   body('tipoRequerimiento').optional().isIn(['alta', 'traslado', 'pabellon', 'otro', 'gescas']),
   body('prioridad').optional().isIn(['baja', 'media', 'alta', 'urgente'])
@@ -416,7 +416,7 @@ router.put('/:id', [
 
     const puedeModificar =
       req.usuario.rol === 'administrador' ||
-      (req.usuario.rol === 'auxiliar' && solicitud.asignadoAId === req.usuario.id);
+      req.usuario.rol === 'enfermeria';
 
     if (!puedeModificar) {
       return res.status(403).json({ mensaje: 'No tienes permiso para modificar esta solicitud' });

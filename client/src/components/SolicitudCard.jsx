@@ -85,8 +85,12 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
     }
   }
 
-  const puedeEditar = usuario?.rol === 'administrador' || 
+  // Solo administrador y enfermería pueden modificar los datos de la solicitud
+  const puedeEditar = usuario?.rol === 'administrador' || usuario?.rol === 'enfermeria'
+  // Administrador y auxiliar asignado pueden cambiar estado (asignada, en proceso, completar, cancelar)
+  const puedeCambiarEstado = usuario?.rol === 'administrador' ||
     (usuario?.rol === 'auxiliar' && solicitud.asignadoAId === usuario?.id)
+  const mostrarBotonMenu = puedeEditar || puedeCambiarEstado
 
   return (
     <div 
@@ -125,7 +129,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
             <span className={`px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap ${getPrioridadColor(solicitud.prioridad)}`}>
               {solicitud.prioridad.toUpperCase()}
             </span>
-            {puedeEditar && (
+            {mostrarBotonMenu && (
               <div className="relative">
                 <button
                   onClick={() => setMostrarMenu(!mostrarMenu)}
@@ -141,45 +145,51 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
                     onClick={() => setMostrarMenu(false)}
                   />
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900/50 border dark:border-gray-700 z-20 overflow-hidden">
-                    {solicitud.estado === 'pendiente' && (
+                    {puedeCambiarEstado && (
+                      <>
+                        {solicitud.estado === 'pendiente' && (
+                          <button
+                            onClick={() => handleCambiarEstado('asignada')}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors"
+                          >
+                            Marcar como Asignada
+                          </button>
+                        )}
+                        {solicitud.estado === 'asignada' && (
+                          <button
+                            onClick={() => handleCambiarEstado('en_proceso')}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400 transition-colors"
+                          >
+                            En Proceso
+                          </button>
+                        )}
+                        {(solicitud.estado === 'en_proceso' || solicitud.estado === 'asignada') && (
+                          <button
+                            onClick={() => handleCambiarEstado('completada')}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 transition-colors"
+                          >
+                            Completar
+                          </button>
+                        )}
+                        {solicitud.estado !== 'cancelada' && solicitud.estado !== 'completada' && (
+                          <button
+                            onClick={() => handleCambiarEstado('cancelada')}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {puedeEditar && (
                       <button
-                        onClick={() => handleCambiarEstado('asignada')}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors"
+                        onClick={() => { setMostrarMenu(false); setMostrarEditarSolicitud(true) }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 transition-colors ${puedeCambiarEstado ? 'border-t dark:border-gray-600' : ''}`}
                       >
-                        Marcar como Asignada
+                        <Edit className="w-4 h-4 inline mr-2" />
+                        Modificar solicitud
                       </button>
                     )}
-                    {solicitud.estado === 'asignada' && (
-                      <button
-                        onClick={() => handleCambiarEstado('en_proceso')}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400 transition-colors"
-                      >
-                        En Proceso
-                      </button>
-                    )}
-                    {(solicitud.estado === 'en_proceso' || solicitud.estado === 'asignada') && (
-                      <button
-                        onClick={() => handleCambiarEstado('completada')}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 transition-colors"
-                      >
-                        Completar
-                      </button>
-                    )}
-                    {solicitud.estado !== 'cancelada' && solicitud.estado !== 'completada' && (
-                      <button
-                        onClick={() => handleCambiarEstado('cancelada')}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                    )}
-                    <button
-                      onClick={() => { setMostrarMenu(false); setMostrarEditarSolicitud(true) }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 transition-colors border-t dark:border-gray-600"
-                    >
-                      <Edit className="w-4 h-4 inline mr-2" />
-                      Modificar solicitud
-                    </button>
                   </div>
                 </>
               )}
@@ -273,6 +283,16 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
               <FileText className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Ver todo</span>
             </button>
+            {puedeEditar && (
+              <button
+                onClick={() => setMostrarEditarSolicitud(true)}
+                className="flex items-center gap-1 px-2 py-1 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded text-xs font-medium"
+                title="Modificar solicitud"
+              >
+                <Edit className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Modificar</span>
+              </button>
+            )}
             <button
               onClick={() => setMostrarComentarios(true)}
               className="flex items-center gap-1 px-2 py-1 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded text-xs"
