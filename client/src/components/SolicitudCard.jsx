@@ -54,11 +54,16 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   const formatearFecha = (fecha) => {
     if (!fecha) return 'N/A'
     return new Date(fecha).toLocaleString('es-ES', {
+      timeZone: 'America/Santiago',
       day: '2-digit',
       month: 'short',
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+  const formatearFechaProgramada = (fecha) => {
+    if (!fecha) return ''
+    return new Date(fecha).toLocaleDateString('es-ES', { timeZone: 'America/Santiago', day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
   const handleCambiarEstado = async (nuevoEstado) => {
@@ -86,54 +91,48 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   return (
     <div 
       data-solicitud-id={solicitud.id || solicitud._id}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-md dark:shadow-gray-900/50 hover:shadow-xl dark:hover:shadow-gray-900/70 transition-all duration-300 border-l-4 border-primary-500 dark:border-primary-400 overflow-hidden group transform hover:-translate-y-1">
-      <div className="p-4 sm:p-5">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">{getTipoIcon(solicitud.tipoRequerimiento)}</span>
-              <div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+      className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/40 hover:shadow-md dark:hover:shadow-gray-900/50 transition-all border-l-4 border-primary-500 dark:border-primary-400 overflow-hidden">
+      <div className="p-3 sm:p-3">
+        {/* Header compacto: servicio + cama + estado + prioridad */}
+        <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="text-lg flex-shrink-0">{getTipoIcon(solicitud.tipoRequerimiento)}</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 flex-wrap">
+                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="font-semibold text-gray-900 dark:text-white text-sm truncate">
                   {solicitud.servicio?.nombre || 'Servicio no disponible'}
-                </h3>
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{solicitud.servicio?.nombre || 'N/A'}</span>
-                </div>
+                </span>
                 {solicitud.cama && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    <Bed className="w-4 h-4" />
-                    <span>Cama {solicitud.cama}</span>
-                  </div>
-                )}
-                {solicitud.tipoRequerimiento === 'gescas' && (solicitud.destinoGescas || solicitud.destino_gescas) && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>Destino GESCAS: {solicitud.destinoGescas || solicitud.destino_gescas}</span>
-                  </div>
+                  <>
+                    <span className="text-gray-400 dark:text-gray-500">·</span>
+                    <Bed className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="text-xs">Cama {solicitud.cama}</span>
+                  </>
                 )}
               </div>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getEstadoColor(solicitud.estado)}`}>
-                {solicitud.estado.replace('_', ' ').toUpperCase()}
-              </span>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPrioridadColor(solicitud.prioridad)}`}>
-                {solicitud.prioridad.toUpperCase()}
-              </span>
+              {solicitud.tipoRequerimiento === 'gescas' && (solicitud.destinoGescas || solicitud.destino_gescas) && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                  Destino: {solicitud.destinoGescas || solicitud.destino_gescas}
+                </p>
+              )}
             </div>
           </div>
-
-          {puedeEditar && (
-            <div className="relative">
-              <button
-                onClick={() => setMostrarMenu(!mostrarMenu)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-              >
-                <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap ${getEstadoColor(solicitud.estado)}`}>
+              {solicitud.estado.replace('_', ' ').toUpperCase()}
+            </span>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap ${getPrioridadColor(solicitud.prioridad)}`}>
+              {solicitud.prioridad.toUpperCase()}
+            </span>
+            {puedeEditar && (
+              <div className="relative">
+                <button
+                  onClick={() => setMostrarMenu(!mostrarMenu)}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                >
+                  <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                </button>
               
               {mostrarMenu && (
                 <>
@@ -184,53 +183,42 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
                   </div>
                 </>
               )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Información adicional */}
         {(solicitud.tipoServicio || solicitud.tipoTraslado || solicitud.prioridadInmediato) && (
-          <div className="mb-4 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+          <div className="mb-2 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
             {solicitud.tipoServicio && (
-              <div>
-                <span className="font-semibold">Tipo de Servicio:</span>{' '}
-                {solicitud.tipoServicio === 'traslado_pcte' ? 'TRASLADO DE PCTE' : solicitud.tipoServicio}
-              </div>
+              <div>{solicitud.tipoServicio === 'traslado_pcte' ? 'TRASLADO DE PCTE' : solicitud.tipoServicio}</div>
             )}
             {solicitud.tipoTraslado && (
               <div>
-                <span className="font-semibold">Tipo de Traslado:</span>{' '}
-                {solicitud.tipoTraslado === 'sin_silla_ni_camilla'
-                  ? 'Sin silla ni camilla'
-                  : solicitud.tipoTraslado === 'con_silla'
-                    ? 'Con silla de ruedas'
-                    : solicitud.tipoTraslado === 'con_camilla'
-                      ? 'Con camilla'
-                      : solicitud.tipoTraslado}
+                {solicitud.tipoTraslado === 'sin_silla_ni_camilla' ? 'Sin silla ni camilla' : solicitud.tipoTraslado === 'con_silla' ? 'Con silla' : solicitud.tipoTraslado === 'con_camilla' ? 'Con camilla' : solicitud.tipoTraslado}
               </div>
             )}
             {solicitud.prioridadInmediato && (
-              <div className="text-red-600 dark:text-red-400 font-semibold">
-                Prioridad Inmediato
-              </div>
+              <div className="text-red-600 dark:text-red-400 font-semibold">Prioridad Inmediato</div>
             )}
           </div>
         )}
 
         {/* Descripción */}
         {solicitud.descripcion && (
-          <p className="text-gray-700 dark:text-gray-300 mb-4 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg text-sm">
+          <p className="text-gray-700 dark:text-gray-300 mb-2 bg-gray-50 dark:bg-gray-700/50 p-2 rounded text-xs line-clamp-2">
             {solicitud.descripcion}
           </p>
         )}
 
         {/* Etiquetas */}
         {solicitud.etiquetas && solicitud.etiquetas.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-1.5 mb-2">
             {solicitud.etiquetas.map((etiqueta) => (
               <span
                 key={etiqueta.id || etiqueta._id}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-white"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
                 style={{ backgroundColor: etiqueta.color }}
               >
                 <Tag className="w-3 h-3" />
@@ -242,7 +230,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
 
         {/* Gestión de Etiquetas (solo para administradores) */}
         {usuario?.rol === 'administrador' && (
-          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div className="mb-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
             <EtiquetasManager
               solicitudId={solicitud.id || solicitud._id}
               etiquetasActuales={solicitud.etiquetas || []}
@@ -253,61 +241,48 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
           </div>
         )}
 
-        {/* Footer con información */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-gray-600 pt-3 border-t dark:border-gray-700">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-1">
-              <User className="w-4 h-4" />
-              <span className="dark:text-gray-300">{solicitud.solicitadoPor?.nombre || 'N/A'}</span>
-            </div>
+        {/* Footer compacto */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-600 dark:text-gray-400 pt-2 border-t dark:border-gray-700">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="flex items-center gap-1">
+              <User className="w-3.5 h-3.5" />
+              {solicitud.solicitadoPor?.nombre || 'N/A'}
+            </span>
             {solicitud.asignadoA && (
-              <div className="flex items-center gap-1">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-green-700 dark:text-green-400">{solicitud.asignadoA.nombre}</span>
-              </div>
+              <span className="flex items-center gap-1 text-green-700 dark:text-green-400">
+                <CheckCircle className="w-3.5 h-3.5" />
+                {solicitud.asignadoA.nombre}
+              </span>
             )}
-            <div className="flex items-center gap-1">
-              {solicitud.fechaProgramada ? (
-                <>
-                  <Calendar className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                  <span className="text-primary-600 dark:text-primary-400 font-semibold">
-                    Programada: {new Date(solicitud.fechaProgramada).toLocaleDateString('es-ES')}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Calendar className="w-4 h-4" />
-                  <span className="dark:text-gray-300">{formatearFecha(solicitud.createdAt)}</span>
-                </>
-              )}
-            </div>
+            <span className="flex items-center gap-1 text-primary-600 dark:text-primary-400 font-medium">
+              <Calendar className="w-3.5 h-3.5" />
+              {solicitud.fechaProgramada
+                ? `Programada: ${formatearFechaProgramada(solicitud.fechaProgramada)}`
+                : formatearFecha(solicitud.createdAt)}
+            </span>
           </div>
-          
-          {/* Botones de acción */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => setMostrarVentanaInfo(true)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 dark:hover:bg-primary-600 rounded-lg transition text-sm font-medium"
+              className="flex items-center gap-1 px-2 py-1 bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 rounded text-xs font-medium"
               title="Ver toda la información"
             >
-              <FileText className="w-4 h-4" />
-              Ver toda la información
+              <FileText className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Ver todo</span>
             </button>
             <button
               onClick={() => setMostrarComentarios(true)}
-              className="flex items-center gap-1 px-3 py-1.5 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition text-sm font-medium"
-              title="Ver comentarios"
+              className="flex items-center gap-1 px-2 py-1 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded text-xs"
+              title="Comentarios"
             >
-              <MessageSquare className="w-4 h-4" />
-              Comentarios
+              <MessageSquare className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setMostrarHistorial(true)}
-              className="flex items-center gap-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-sm font-medium"
-              title="Ver historial"
+              className="flex items-center gap-1 px-2 py-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-xs"
+              title="Historial"
             >
-              <History className="w-4 h-4" />
-              Historial
+              <History className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
