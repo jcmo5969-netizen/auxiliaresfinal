@@ -189,8 +189,11 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
         </div>
 
         {/* Información adicional */}
-        {(solicitud.tipoServicio || solicitud.tipoTraslado || solicitud.prioridadInmediato) && (
+        {(solicitud.tipoServicio || solicitud.tipoTraslado || solicitud.prioridadInmediato || solicitud.precaucionesEstandar) && (
           <div className="mb-2 space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
+            {solicitud.precaucionesEstandar && (
+              <div>Precauciones estándar: Sí{solicitud.tipoPrecaucion || solicitud.tipo_precaucion ? ` – ${solicitud.tipoPrecaucion || solicitud.tipo_precaucion}` : ''}</div>
+            )}
             {solicitud.tipoServicio && (
               <div>{solicitud.tipoServicio === 'traslado_pcte' ? 'TRASLADO DE PCTE' : solicitud.tipoServicio}</div>
             )}

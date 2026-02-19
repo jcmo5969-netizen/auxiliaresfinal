@@ -59,24 +59,40 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="comentarios-titulo"
+    >
+      {/* Clic fuera cierra el modal */}
+      <div
+        className="absolute inset-0"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] min-h-[280px] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Comentarios</h2>
+            <h2 id="comentarios-titulo" className="text-xl font-bold text-gray-900 dark:text-white">Comentarios</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+            aria-label="Cerrar"
           >
             <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
         </div>
 
-        {/* Lista de comentarios */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        {/* Lista de comentarios - área con scroll y altura mínima para que siempre se vea contenido */}
+        <div className="flex-1 min-h-[180px] overflow-y-auto p-4 sm:p-6 space-y-4">
           {cargando ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-600 border-t-transparent mx-auto"></div>
@@ -128,7 +144,7 @@ const ComentariosModal = ({ solicitudId, onClose }) => {
         </div>
 
         {/* Formulario de nuevo comentario */}
-        <form onSubmit={handleEnviar} className="p-4 sm:p-6 border-t dark:border-gray-700">
+        <form onSubmit={handleEnviar} className="p-4 sm:p-6 border-t dark:border-gray-700 flex-shrink-0">
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"

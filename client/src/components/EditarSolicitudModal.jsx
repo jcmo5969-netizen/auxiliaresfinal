@@ -15,7 +15,9 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
     descripcion: '',
     prioridad: 'media',
     fechaProgramada: '',
-    cama: ''
+    cama: '',
+    precaucionesEstandar: false,
+    tipoPrecaucion: ''
   })
   const [guardando, setGuardando] = useState(false)
   const [mostrarCamaModal, setMostrarCamaModal] = useState(false)
@@ -37,7 +39,9 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
       descripcion: solicitud.descripcion || '',
       prioridad: solicitud.prioridad || 'media',
       fechaProgramada: fechaStr,
-      cama: solicitud.cama || ''
+      cama: solicitud.cama || '',
+      precaucionesEstandar: Boolean(solicitud.precaucionesEstandar),
+      tipoPrecaucion: solicitud.tipoPrecaucion || solicitud.tipo_precaucion || ''
     })
   }, [solicitud])
 
@@ -59,7 +63,9 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
       prioridadInmediato: formData.prioridadInmediato,
       descripcion: formData.descripcion || null,
       prioridad: formData.prioridad,
-      cama: formData.cama || null
+      cama: formData.cama || null,
+      precaucionesEstandar: formData.precaucionesEstandar,
+      tipoPrecaucion: formData.precaucionesEstandar ? (formData.tipoPrecaucion || null) : null
     }
     if (formData.fechaProgramada) {
       const d = new Date(formData.fechaProgramada)
@@ -225,6 +231,35 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
                 Prioridad Inmediato
               </label>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Precauciones estándar</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="precaucionesEstandarEdit" checked={formData.precaucionesEstandar === true} onChange={() => setFormData(prev => ({ ...prev, precaucionesEstandar: true }))} className="h-4 w-4" />
+                  Sí
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="precaucionesEstandarEdit" checked={formData.precaucionesEstandar === false} onChange={() => setFormData(prev => ({ ...prev, precaucionesEstandar: false, tipoPrecaucion: '' }))} className="h-4 w-4" />
+                  No
+                </label>
+              </div>
+            </div>
+            {formData.precaucionesEstandar && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de precaución</label>
+                <select value={formData.tipoPrecaucion} onChange={(e) => setFormData(prev => ({ ...prev, tipoPrecaucion: e.target.value }))} className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <option value="">Seleccione tipo</option>
+                  <option value="contacto">Contacto</option>
+                  <option value="gotas">Gotas</option>
+                  <option value="aereas">Aéreas</option>
+                  <option value="combinadas">Combinadas</option>
+                  <option value="otra">Otra</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div>

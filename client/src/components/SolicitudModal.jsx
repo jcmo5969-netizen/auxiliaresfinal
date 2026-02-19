@@ -14,7 +14,9 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     descripcion: '',
     prioridad: 'media',
     fechaProgramada: '',
-    cama: ''
+    cama: '',
+    precaucionesEstandar: false,
+    tipoPrecaucion: ''
   })
   const [mostrarPlantillas, setMostrarPlantillas] = useState(false)
   const [mostrarCamaModal, setMostrarCamaModal] = useState(false)
@@ -55,7 +57,9 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
       descripcion: '',
       prioridad: 'media',
       fechaProgramada: '',
-      cama: ''
+      cama: '',
+      precaucionesEstandar: false,
+      tipoPrecaucion: ''
     })
   }
 
@@ -230,6 +234,56 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
           </div>
           </div>
 
+          {/* Precauciones estándar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Precauciones estándar
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="precaucionesEstandar"
+                    checked={formData.precaucionesEstandar === true}
+                    onChange={() => setFormData(prev => ({ ...prev, precaucionesEstandar: true }))}
+                    className="h-4 w-4"
+                  />
+                  Sí
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="precaucionesEstandar"
+                    checked={formData.precaucionesEstandar === false}
+                    onChange={() => setFormData(prev => ({ ...prev, precaucionesEstandar: false, tipoPrecaucion: '' }))}
+                    className="h-4 w-4"
+                  />
+                  No
+                </label>
+              </div>
+            </div>
+            {formData.precaucionesEstandar && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tipo de precaución
+                </label>
+                <select
+                  value={formData.tipoPrecaucion}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tipoPrecaucion: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Seleccione tipo</option>
+                  <option value="contacto">Contacto</option>
+                  <option value="gotas">Gotas</option>
+                  <option value="aereas">Aéreas</option>
+                  <option value="combinadas">Combinadas</option>
+                  <option value="otra">Otra</option>
+                </select>
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Cama (opcional)
@@ -299,6 +353,9 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               )}
               {formData.cama && <div>Cama: {formData.cama}</div>}
               {formData.fechaProgramada && <div>Fecha: {formData.fechaProgramada}</div>}
+              {formData.precaucionesEstandar && (
+                <div>Precauciones: Sí{formData.tipoPrecaucion ? ` – ${formData.tipoPrecaucion}` : ''}</div>
+              )}
             </div>
           </div>
 

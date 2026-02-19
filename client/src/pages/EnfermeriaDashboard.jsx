@@ -6,20 +6,22 @@ import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { 
   LogOut, Plus, Calendar, AlertCircle, CheckCircle, Clock,
-  Building2, User, MapPin, MessageSquare, History, Moon, Sun
+  Building2, User, MapPin, MessageSquare, History, Moon, Sun, UserCircle
 } from 'lucide-react'
 import SolicitudModal from '../components/SolicitudModal'
 import SolicitudCard from '../components/SolicitudCard'
 import FiltrosSolicitudes from '../components/FiltrosSolicitudes'
+import MiPerfilModal from '../components/MiPerfilModal'
 
 const EnfermeriaDashboard = () => {
-  const { usuario, logout } = useAuth()
+  const { usuario, logout, refreshUsuario } = useAuth()
   const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [solicitudes, setSolicitudes] = useState([])
   const [solicitudesFiltradas, setSolicitudesFiltradas] = useState([])
   const [servicios, setServicios] = useState([])
   const [mostrarModal, setMostrarModal] = useState(false)
+  const [mostrarMiPerfil, setMostrarMiPerfil] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [pestañaActiva, setPestañaActiva] = useState('todas') // todas, pendientes, en_proceso, completadas
 
@@ -141,6 +143,14 @@ const EnfermeriaDashboard = () => {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => setMostrarMiPerfil(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition w-full sm:w-auto"
+                title="Modificar mi perfil"
+              >
+                <UserCircle className="w-5 h-5" />
+                Modificar mi perfil
+              </button>
               <button
                 onClick={toggleTheme}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
@@ -313,6 +323,15 @@ const EnfermeriaDashboard = () => {
           onSolicitudCreada={handleNuevaSolicitud}
           servicios={servicios.filter(s => s.id === usuario?.servicioId)}
           servicioPredeterminado={usuario?.servicioId}
+        />
+      )}
+
+      {/* Modal modificar mi perfil (enfermería) */}
+      {mostrarMiPerfil && usuario && (
+        <MiPerfilModal
+          usuario={usuario}
+          onClose={() => setMostrarMiPerfil(false)}
+          onGuardado={() => refreshUsuario?.()}
         />
       )}
     </div>

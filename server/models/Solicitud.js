@@ -100,6 +100,17 @@ const Solicitud = sequelize.define('Solicitud', {
     type: DataTypes.DATE,
     allowNull: true,
     field: 'fecha_programada'
+  },
+  precaucionesEstandar: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'precauciones_estandar'
+  },
+  tipoPrecaucion: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'tipo_precaucion'
   }
 }, {
   tableName: 'solicitudes',

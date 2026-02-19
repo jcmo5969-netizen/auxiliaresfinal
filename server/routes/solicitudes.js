@@ -210,6 +210,8 @@ router.post('/', [
     if (datosSolicitud.prioridadInmediato && datosSolicitud.prioridad !== 'urgente') {
       datosSolicitud.prioridad = 'urgente';
     }
+    datosSolicitud.precaucionesEstandar = Boolean(req.body.precaucionesEstandar);
+    datosSolicitud.tipoPrecaucion = req.body.tipoPrecaucion && String(req.body.tipoPrecaucion).trim() ? String(req.body.tipoPrecaucion).trim() : null;
 
     const crearSolicitudConRetry = async () => {
       try {
@@ -437,6 +439,8 @@ router.put('/:id', [
     if (req.body.fechaProgramada !== undefined) {
       updateData.fechaProgramada = (req.body.fechaProgramada && String(req.body.fechaProgramada).trim()) ? new Date(req.body.fechaProgramada) : null;
     }
+    if (req.body.precaucionesEstandar !== undefined) updateData.precaucionesEstandar = Boolean(req.body.precaucionesEstandar);
+    if (req.body.tipoPrecaucion !== undefined) updateData.tipoPrecaucion = req.body.tipoPrecaucion || null;
 
     if (updateData.tipoRequerimiento && updateData.tipoRequerimiento !== 'traslado') {
       updateData.tipoServicio = null;

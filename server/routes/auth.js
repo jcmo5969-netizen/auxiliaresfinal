@@ -177,6 +177,52 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// @route   PUT /api/auth/me
+// @desc    Actualizar perfil del usuario actual (nombre, email, contraseña)
+// @access  Private
+router.put('/me', auth, [
+  body('nombre').optional().trim().notEmpty().withMessage('El nombre no puede estar vacío'),
+  body('email').optional().isEmail().withMessage('Email inválido'),
+  body('password').optional().isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errores: errors.array() });
+    }
+
+    const { nombre, email, password } = req.body;
+    const usuario = await Usuario.findByPk(req.usuario.id);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    const updateData = {};
+    if (nombre !== undefined) updateData.nombre = nombre.trim();
+    if (email !== undefined) {
+      const emailNorm = email.toLowerCase();
+      if (emailNorm !== usuario.email) {
+        const enUso = await Usuario.findOne({ where: { email: emailNorm } });
+        if (enUso) return res.status(400).json({ mensaje: 'El email ya está en uso' });
+        updateData.email = emailNorm;
+      }
+    }
+    if (password && password.length >= 6) updateData.password = password;
+
+    await usuario.update(updateData);
+
+    const { Servicio } = require('../models');
+    const usuarioData = await Usuario.findByPk(usuario.id, {
+      attributes: { exclude: ['password'] },
+      include: [{ model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'], required: false }]
+    });
+    res.json(usuarioData);
+  } catch (error) {
+    console.error('Error en PUT /me:', error);
+    res.status(500).json({ mensaje: 'Error del servidor' });
+  }
+});
+
 // @route   POST /api/auth/fcm-token
 // @desc    Guardar FCM token para notificaciones push
 // @access  Private
