@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Component } from 'react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { 
@@ -11,6 +11,34 @@ import { useTheme } from '../context/ThemeContext'
 import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
 import { getItem, setItem, removeItem } from '../utils/storage'
 import CalendarioAuxiliar from '../components/CalendarioAuxiliar'
+
+// ErrorBoundary interno: si falla la vista tras el login (p. ej. en iPhone), mostrar solo "Cerrar sesión"
+class AuxiliarVistaErrorBoundary extends Component {
+  state = { hasError: false }
+  static getDerivedStateFromError = () => ({ hasError: true })
+  componentDidCatch(err, info) {
+    console.error('AuxiliarVistaErrorBoundary:', err, info)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
+          <p className="text-gray-700 dark:text-gray-300 text-center mb-4">
+            No se pudo cargar la vista. Cierra sesión e intenta de nuevo.
+          </p>
+          <button
+            type="button"
+            onClick={this.props.onCerrarSesion}
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 // Componente de Login específico para auxiliares
 const LoginAuxiliar = ({ onLoginSuccess }) => {
@@ -133,6 +161,8 @@ const AuxiliarAcceso = () => {
   const [mostrarAyudaPantallaBloqueo, setMostrarAyudaPantallaBloqueo] = useState(false)
   const [vistaActiva, setVistaActiva] = useState('lista')
   const [solicitudesCalendario, setSolicitudesCalendario] = useState([])
+  // En iOS Safari, Notification puede no existir o fallar; usar helper seguro
+  const permisoNotificaciones = typeof Notification !== 'undefined' ? Notification.permission : 'default'
 
   const cargarSolicitudes = useCallback(async (mostrarNotificacionNueva = false) => {
     try {
@@ -281,11 +311,11 @@ const AuxiliarAcceso = () => {
     }
 
     // Cargar solicitudes iniciales (sin mostrar notificación de nueva)
-    cargarSolicitudes(false)
+    cargarSolicitudes(false).catch(() => {})
     
-    // Configurar notificaciones
-    configurarNotificaciones()
-    
+    // Configurar notificaciones (nunca dejar rechazo sin capturar; en iPhone puede fallar)
+    configurarNotificaciones().catch(() => {})
+
     // Configurar actualización automática cada 3 segundos para actualizaciones casi instantáneas
     // Solo actualizar si la pestaña está visible
     intervalo = setInterval(() => {
@@ -379,7 +409,7 @@ const AuxiliarAcceso = () => {
           toast.success('Notificaciones push activadas', { icon: '🔔' })
         } else {
           // Verificar si el permiso está denegado
-          if (Notification.permission === 'denied') {
+          if (permisoNotificaciones === 'denied') {
             toast.error(
               'Permiso denegado. Ve a Configuración del navegador > Notificaciones para habilitarlo.',
               { 
@@ -471,16 +501,23 @@ const AuxiliarAcceso = () => {
     return <LoginAuxiliar onLoginSuccess={(t) => { 
       setToken(t)
       setItem('token', t)
-      setAutenticado(true)
       setCargando(false)
-      // Cargar solicitudes después de autenticar
+      setAutenticado(true)
       setTimeout(() => {
-        cargarSolicitudes(false)
+        cargarSolicitudes(false).catch(() => {})
       }, 100)
     }} />
   }
 
+  const cerrarSesion = () => {
+    removeItem('token')
+    setToken(null)
+    setAutenticado(false)
+    setCargando(false)
+  }
+
   return (
+    <AuxiliarVistaErrorBoundary onCerrarSesion={cerrarSesion}>
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 pb-8">
       {/* Header mejorado */}
       <header className="bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-xl sticky top-0 z-10">
@@ -523,7 +560,7 @@ const AuxiliarAcceso = () => {
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              {Notification.permission === 'denied' && (
+              {permisoNotificaciones === 'denied' && (
                 <div className="text-xs text-primary-100 bg-red-500/20 px-2 py-1 rounded max-w-xs">
                   Ve a Configuración del navegador para habilitar notificaciones
                 </div>
@@ -544,12 +581,12 @@ const AuxiliarAcceso = () => {
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${
                   notificacionesActivas 
                     ? 'bg-green-500/20 hover:bg-green-500/30' 
-                    : Notification.permission === 'denied'
+                    : permisoNotificaciones === 'denied'
                     ? 'bg-red-500/20 hover:bg-red-500/30'
                     : 'bg-white/20 hover:bg-white/30'
                 }`}
                 title={
-                  Notification.permission === 'denied' 
+                  permisoNotificaciones === 'denied' 
                     ? 'Permiso denegado. Ve a Configuración del navegador para habilitarlo.'
                     : notificacionesActivas
                     ? 'Notificaciones activadas'
@@ -561,7 +598,7 @@ const AuxiliarAcceso = () => {
                     <Bell className="w-4 h-4" />
                     <span className="text-xs">Notificaciones ON</span>
                   </>
-                ) : Notification.permission === 'denied' ? (
+                ) : permisoNotificaciones === 'denied' ? (
                   <>
                     <BellOff className="w-4 h-4" />
                     <span className="text-xs">Permiso Denegado</span>
@@ -843,6 +880,7 @@ const AuxiliarAcceso = () => {
         )}
       </div>
     </div>
+    </AuxiliarVistaErrorBoundary>
   )
 }
 
