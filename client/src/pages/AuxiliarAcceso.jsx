@@ -7,7 +7,7 @@ import {
   TrendingUp, Calendar, Moon, Sun, HelpCircle
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
-import { solicitarPermisoNotificaciones, escucharNotificaciones, estaFirebaseConfigurado } from '../utils/firebase'
+// Firebase se carga solo cuando hace falta (evita errores en iPhone/Safari al cargar la página)
 import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
 import { getItem, setItem, removeItem } from '../utils/storage'
 import CalendarioAuxiliar from '../components/CalendarioAuxiliar'
@@ -234,41 +234,44 @@ const AuxiliarAcceso = () => {
     let limpiarListener = null
     let intervalo = null
 
-    // Configurar notificaciones
+    // Configurar notificaciones (Firebase se carga solo aquí para no romper iPhone/Safari al abrir la página)
     const configurarNotificaciones = async () => {
-      const usarFirebase = estaFirebaseConfigurado()
-      
+      let usarFirebase = false
+      try {
+        const firebaseMod = await import('../utils/firebase')
+        usarFirebase = firebaseMod.estaFirebaseConfigurado && firebaseMod.estaFirebaseConfigurado()
+      } catch (_) {
+        // En iPhone/Safari el módulo Firebase puede fallar al cargar; usar solo notificaciones web
+      }
+
       if (usarFirebase) {
-        // Usar Firebase Cloud Messaging
         try {
-          const token = await solicitarPermisoNotificaciones()
+          const firebaseMod = await import('../utils/firebase')
+          const token = await firebaseMod.solicitarPermisoNotificaciones?.()
           if (token) {
             setNotificacionesActivas(true)
             toast.success('Notificaciones push activadas', { icon: '🔔' })
           }
-          
-          // Escuchar notificaciones de Firebase (solo una vez)
-          limpiarListener = escucharNotificaciones((payload) => {
+          limpiarListener = firebaseMod.escucharNotificaciones?.((payload) => {
             toast.success(`Nueva solicitud: ${payload.notification?.title || 'Nueva solicitud'}`, {
               icon: '🔔',
               duration: 5000
             })
-            // Cargar solicitudes sin mostrar notificación adicional
             cargarSolicitudes(false)
-          })
+          }) || null
         } catch (error) {
-          console.error('Error configurando Firebase:', error)
+          console.warn('Firebase no disponible, usando notificaciones web:', error?.message)
+          usarFirebase = false
         }
-      } else {
-        // Usar notificaciones web nativas como fallback
+      }
+
+      if (!usarFirebase) {
         try {
           const resultado = await solicitarWeb()
           setNotificacionesActivas(resultado.activo)
           if (resultado.activo) {
             toast.success('Notificaciones web activadas', { icon: '🔔' })
           } else if (resultado.denegado) {
-            // No mostrar error si el permiso está denegado al cargar
-            // El usuario puede activarlo manualmente con el botón
             console.log('Permiso de notificaciones denegado, el usuario puede activarlo manualmente')
           }
         } catch (error) {
@@ -361,11 +364,16 @@ const AuxiliarAcceso = () => {
   }
 
   const handleActivarNotificaciones = async () => {
-    const usarFirebase = estaFirebaseConfigurado()
-    
+    let usarFirebase = false
+    try {
+      const mod = await import('../utils/firebase')
+      usarFirebase = mod.estaFirebaseConfigurado?.() ?? false
+    } catch (_) {}
+
     if (usarFirebase) {
       try {
-        const token = await solicitarPermisoNotificaciones()
+        const mod = await import('../utils/firebase')
+        const token = await mod.solicitarPermisoNotificaciones?.()
         setNotificacionesActivas(!!token)
         if (token) {
           toast.success('Notificaciones push activadas', { icon: '🔔' })

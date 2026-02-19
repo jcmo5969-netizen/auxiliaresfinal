@@ -16,11 +16,15 @@ export class ErrorBoundary extends Component {
   }
 
   irAlInicio = () => {
-    // Ir a la raíz de la app con hash para que cargue bien (evita quedar en blanco tras recargar)
-    const base = (typeof window !== 'undefined' && window.location.origin) || ''
-    const path = (typeof window !== 'undefined' && window.location.pathname) || '/'
-    const url = base + (path === '/' ? '' : path) + '#/'
-    if (typeof window !== 'undefined') window.location.href = url
+    if (typeof window === 'undefined') return
+    const origin = window.location.origin || ''
+    const path = window.location.pathname || '/'
+    const hash = window.location.hash || ''
+    // Si estaba en la página de auxiliares, ir a #/auxiliar/acceso para que pueda entrar de nuevo
+    const estabaEnAuxiliar = hash.includes('/auxiliar/acceso') || path.includes('/auxiliar/acceso')
+    const nuevoHash = estabaEnAuxiliar ? '#/auxiliar/acceso' : '#/'
+    const url = origin + (path === '/' ? '' : path) + nuevoHash
+    window.location.href = url
   }
 
   render() {
@@ -51,7 +55,7 @@ export class ErrorBoundary extends Component {
             Algo salió mal
           </h1>
           <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: 24, textAlign: 'center' }}>
-            Usa &quot;Ir al inicio&quot; para volver a la aplicación.
+            Si estabas en la página de auxiliares, &quot;Ir al inicio&quot; te lleva de nuevo allí. Si no, prueba a recargar después.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 280 }}>
             <button
