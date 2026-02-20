@@ -22,8 +22,10 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
   const [guardando, setGuardando] = useState(false)
   const [mostrarCamaModal, setMostrarCamaModal] = useState(false)
 
+  // Solo inicializar cuando abre el modal (por id), para no borrar lo que escribe el usuario al re-renderizar
+  const solicitudId = solicitud?.id ?? solicitud?._id
   useEffect(() => {
-    if (!solicitud) return
+    if (!solicitud || solicitudId == null) return
     const servicioId = solicitud.servicioId ?? solicitud.servicio?.id
     const fp = solicitud.fechaProgramada
     const fechaStr = fp
@@ -43,7 +45,9 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
       precaucionesEstandar: Boolean(solicitud.precaucionesEstandar),
       tipoPrecaucion: solicitud.tipoPrecaucion || solicitud.tipo_precaucion || ''
     })
-  }, [solicitud])
+    // Solo re-sincronizar cuando cambia la solicitud (por id), no en cada re-render del padre
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [solicitudId])
 
   const handlePrioridadInmediato = (checked) => {
     setFormData(prev => ({
@@ -235,7 +239,7 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Precauciones estándar</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Precauciones adicionales</label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input type="radio" name="precaucionesEstandarEdit" checked={formData.precaucionesEstandar === true} onChange={() => setFormData(prev => ({ ...prev, precaucionesEstandar: true }))} className="h-4 w-4" />

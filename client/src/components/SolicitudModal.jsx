@@ -234,11 +234,11 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
           </div>
           </div>
 
-          {/* Precauciones estándar */}
+          {/* Precauciones adicionales */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Precauciones estándar
+                Precauciones adicionales
               </label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -354,7 +354,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               {formData.cama && <div>Cama: {formData.cama}</div>}
               {formData.fechaProgramada && <div>Fecha: {formData.fechaProgramada}</div>}
               {formData.precaucionesEstandar && (
-                <div>Precauciones: Sí{formData.tipoPrecaucion ? ` – ${formData.tipoPrecaucion}` : ''}</div>
+                <div>Precauciones adicionales: Sí{formData.tipoPrecaucion ? ` – ${formData.tipoPrecaucion}` : ''}</div>
               )}
             </div>
           </div>

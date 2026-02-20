@@ -155,7 +155,7 @@ const VentanaInformacionSolicitud = ({ solicitud, onClose, onComentarioEnviado }
               )}
               {solicitud.precaucionesEstandar && (
                 <div className="text-gray-600 dark:text-gray-300">
-                  Precauciones estándar: Sí{solicitud.tipoPrecaucion || solicitud.tipo_precaucion ? ` – ${solicitud.tipoPrecaucion || solicitud.tipo_precaucion}` : ''}
+                  Precauciones adicionales: Sí{solicitud.tipoPrecaucion || solicitud.tipo_precaucion ? ` – ${solicitud.tipoPrecaucion || solicitud.tipo_precaucion}` : ''}
                 </div>
               )}
               {solicitud.descripcion && (
