@@ -389,12 +389,24 @@ router.put('/:id/estado', [
     }
     
     await solicitud.update(updateData);
-    
+
     if (estadoAnterior !== req.body.estado) {
       const descripcionAdicional = req.body.estado === 'cancelada' && updateData.motivoCancelacion
         ? `Motivo: ${updateData.motivoCancelacion}`
         : null;
       await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, req.body.estado, descripcionAdicional);
+    }
+
+    // Al completar una solicitud, actualizar estadísticas en tiempo real (auxiliares activos/disponibles)
+    if (req.body.estado === 'completada') {
+      try {
+        const io = req.app.get('io');
+        const { calcularEstadisticas } = require('../utils/estadisticas');
+        const estadisticas = await calcularEstadisticas();
+        if (io) io.to('estadisticas').emit('estadisticas-actualizadas', estadisticas);
+      } catch (e) {
+        console.error('Error emitiendo estadísticas al completar:', e);
+      }
     }
 
     const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {

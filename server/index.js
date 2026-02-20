@@ -171,8 +171,8 @@ io.on('connection', (socket) => {
   // Suscribirse a estadísticas en tiempo real
   socket.on('suscribir-estadisticas', async () => {
     socket.join('estadisticas');
-    // Enviar estadísticas iniciales
     try {
+      const { calcularEstadisticas } = require('./utils/estadisticas');
       const estadisticas = await calcularEstadisticas();
       socket.emit('estadisticas-actualizadas', estadisticas);
     } catch (error) {
@@ -185,90 +185,16 @@ io.on('connection', (socket) => {
   });
 });
 
-// Función para calcular estadísticas en tiempo real
-async function calcularEstadisticas() {
-  try {
-    const { Op } = require('sequelize');
-    const totalSolicitudes = await Solicitud.count();
-    const pendientes = await Solicitud.count({ where: { estado: 'pendiente' } });
-    const enProceso = await Solicitud.count({ where: { estado: 'en_proceso' } });
-    
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const completadasHoy = await Solicitud.count({
-      where: {
-        estado: 'completada',
-        fechaCompletada: {
-          [Op.gte]: hoy
-        }
-      }
-    });
-
-    // Tiempo promedio
-    const solicitudesCompletadas = await Solicitud.findAll({
-      where: {
-        estado: 'completada',
-        fechaAsignacion: { [Op.ne]: null },
-        fechaCompletada: { [Op.ne]: null }
-      },
-      attributes: [
-        [require('sequelize').fn('AVG', 
-          require('sequelize').literal(`EXTRACT(EPOCH FROM ("fecha_completada" - "fecha_asignacion")) / 60`)
-        ), 'tiempoPromedio']
-      ],
-      raw: true
-    });
-
-    const tiempoPromedio = solicitudesCompletadas[0]?.tiempoPromedio || 0;
-
-    // Auxiliares activos (con solicitudes asignadas)
-    const auxiliaresActivos = await Usuario.count({
-      include: [{
-        model: Solicitud,
-        as: 'solicitudesAsignadas',
-        where: { estado: { [Op.in]: ['en_proceso', 'asignada'] } },
-        required: true
-      }],
-      distinct: true
-    });
-
-    // Tasa de completación
-    const tasaCompletacion = totalSolicitudes > 0 
-      ? (completadasHoy / totalSolicitudes) * 100 
-      : 0;
-
-    return {
-      solicitudesTotales: totalSolicitudes,
-      pendientes,
-      enProceso,
-      completadasHoy,
-      tiempoPromedio: Math.round(tiempoPromedio),
-      auxiliaresActivos,
-      tasaCompletacion: Math.round(tasaCompletacion * 10) / 10
-    };
-  } catch (error) {
-    console.error('Error calculando estadísticas:', error);
-    return {
-      solicitudesTotales: 0,
-      pendientes: 0,
-      enProceso: 0,
-      completadasHoy: 0,
-      tiempoPromedio: 0,
-      auxiliaresActivos: 0,
-      tasaCompletacion: 0
-    };
-  }
-}
-
 // Emitir estadísticas actualizadas cada 30 segundos
 setInterval(async () => {
   try {
+    const { calcularEstadisticas } = require('./utils/estadisticas');
     const estadisticas = await calcularEstadisticas();
     io.to('estadisticas').emit('estadisticas-actualizadas', estadisticas);
   } catch (error) {
     console.error('Error actualizando estadísticas:', error);
   }
-}, 30000); // Cada 30 segundos
+}, 30000);
 
 // Exportar io para usar en otras rutas
 app.set('io', io);

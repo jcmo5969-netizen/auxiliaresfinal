@@ -118,12 +118,17 @@ const EstadisticasTiempoReal = () => {
 
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Auxiliares Activos</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {typeof estadisticas.auxiliaresDisponibles === 'number' ? 'Auxiliares disponibles' : 'Auxiliares activos'}
+            </span>
             <Users className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           </div>
           <p className="text-xl font-bold text-gray-900 dark:text-white">
-            {estadisticas.auxiliaresActivos}
+            {typeof estadisticas.auxiliaresDisponibles === 'number' ? estadisticas.auxiliaresDisponibles : estadisticas.auxiliaresActivos}
           </p>
+          {typeof estadisticas.auxiliaresDisponibles === 'number' && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">para recibir requerimientos</p>
+          )}
         </div>
 
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">

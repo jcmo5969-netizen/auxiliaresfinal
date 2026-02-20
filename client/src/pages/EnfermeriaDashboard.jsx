@@ -12,6 +12,7 @@ import SolicitudModal from '../components/SolicitudModal'
 import SolicitudCard from '../components/SolicitudCard'
 import FiltrosSolicitudes from '../components/FiltrosSolicitudes'
 import MiPerfilModal from '../components/MiPerfilModal'
+import EstadisticasTiempoReal from '../components/EstadisticasTiempoReal'
 
 const EnfermeriaDashboard = () => {
   const { usuario, logout, refreshUsuario } = useAuth()
@@ -223,6 +224,11 @@ const EnfermeriaDashboard = () => {
               <CheckCircle className="w-10 h-10 text-green-200" />
             </div>
           </div>
+        </div>
+
+        {/* KPI Auxiliares disponibles (actualizado al completar solicitudes) */}
+        <div className="mb-6 sm:mb-8">
+          <EstadisticasTiempoReal />
         </div>
 
         {/* Contenedor principal */}
