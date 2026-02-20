@@ -37,8 +37,12 @@ const registrarCreacion = async (solicitud, usuarioId) => {
 
 /**
  * Registrar cambio de estado
+ * @param {string} [descripcionAdicional] - Opcional, ej. motivo de cancelación
  */
-const registrarCambioEstado = async (solicitudId, usuarioId, estadoAnterior, estadoNuevo) => {
+const registrarCambioEstado = async (solicitudId, usuarioId, estadoAnterior, estadoNuevo, descripcionAdicional = null) => {
+  const descripcion = descripcionAdicional
+    ? `Estado cambiado de "${estadoAnterior}" a "${estadoNuevo}". ${descripcionAdicional}`
+    : `Estado cambiado de "${estadoAnterior}" a "${estadoNuevo}"`;
   await registrarCambio(
     solicitudId,
     usuarioId,
@@ -46,7 +50,7 @@ const registrarCambioEstado = async (solicitudId, usuarioId, estadoAnterior, est
     'estado',
     estadoAnterior,
     estadoNuevo,
-    `Estado cambiado de "${estadoAnterior}" a "${estadoNuevo}"`
+    descripcion
   );
 };
 

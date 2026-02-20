@@ -131,6 +131,12 @@ const VentanaInformacionSolicitud = ({ solicitud, onClose, onComentarioEnviado }
                   {String(solicitud.prioridad || '')}
                 </span>
               </div>
+              {solicitud.estado === 'cancelada' && (solicitud.motivoCancelacion || solicitud.motivo_cancelacion) && (
+                <div className="p-2 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">Motivo de cancelación</p>
+                  <p className="text-sm text-red-700 dark:text-red-300">{solicitud.motivoCancelacion || solicitud.motivo_cancelacion}</p>
+                </div>
+              )}
               <div className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
                 <User className="w-4 h-4" />
                 <span>Solicitado por: {solicitud.solicitadoPor?.nombre || 'N/A'}</span>

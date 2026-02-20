@@ -340,10 +340,11 @@ router.put('/:id/asignar', auth, async (req, res) => {
 });
 
 // @route   PUT /api/solicitudes/:id/estado
-// @desc    Actualizar estado de una solicitud
+// @desc    Actualizar estado de una solicitud (opcional: motivoCancelacion si estado es cancelada)
 // @access  Private
 router.put('/:id/estado', [
-  body('estado').isIn(['pendiente', 'asignada', 'en_proceso', 'completada', 'cancelada'])
+  body('estado').isIn(['pendiente', 'asignada', 'en_proceso', 'completada', 'cancelada']),
+  body('motivoCancelacion').optional().trim()
 ], auth, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -361,24 +362,36 @@ router.put('/:id/estado', [
       return res.status(403).json({ mensaje: 'No tienes permiso para actualizar esta solicitud' });
     }
 
+    if (req.body.estado === 'cancelada') {
+      const motivo = req.body.motivoCancelacion && String(req.body.motivoCancelacion).trim();
+      if (!motivo) {
+        return res.status(400).json({ mensaje: 'Debe indicar el motivo de la cancelación' });
+      }
+    }
+
     const estadoAnterior = solicitud.estado;
     const updateData = { estado: req.body.estado };
     if (req.body.estado === 'completada') {
       const fechaCompletada = new Date();
       updateData.fechaCompletada = fechaCompletada;
-      
-      // Calcular tiempo total de completado (desde asignación hasta completado)
       if (solicitud.fechaAsignacion) {
-        const tiempoCompletado = Math.round((fechaCompletada - new Date(solicitud.fechaAsignacion)) / 60000); // minutos
+        const tiempoCompletado = Math.round((fechaCompletada - new Date(solicitud.fechaAsignacion)) / 60000);
         updateData.tiempoCompletado = tiempoCompletado;
       }
+    }
+    if (req.body.estado === 'cancelada') {
+      updateData.motivoCancelacion = (req.body.motivoCancelacion && String(req.body.motivoCancelacion).trim()) || null;
+    } else {
+      updateData.motivoCancelacion = null; // limpiar si se reactiva
     }
     
     await solicitud.update(updateData);
     
-    // Registrar cambio de estado en historial
     if (estadoAnterior !== req.body.estado) {
-      await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, req.body.estado);
+      const descripcionAdicional = req.body.estado === 'cancelada' && updateData.motivoCancelacion
+        ? `Motivo: ${updateData.motivoCancelacion}`
+        : null;
+      await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, req.body.estado, descripcionAdicional);
     }
 
     const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {

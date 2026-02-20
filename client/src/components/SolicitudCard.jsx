@@ -10,6 +10,7 @@ import HistorialModal from './HistorialModal'
 import EtiquetasManager from './EtiquetasManager'
 import EditarSolicitudModal from './EditarSolicitudModal'
 import VentanaInformacionSolicitud from './VentanaInformacionSolicitud'
+import CancelarSolicitudModal from './CancelarSolicitudModal'
 
 const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   const [mostrarMenu, setMostrarMenu] = useState(false)
@@ -18,6 +19,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
   const [mostrarEditarSolicitud, setMostrarEditarSolicitud] = useState(false)
   const [mostrarVentanaInfo, setMostrarVentanaInfo] = useState(false)
+  const [mostrarCancelarModal, setMostrarCancelarModal] = useState(false)
 
   const getEstadoColor = (estado) => {
     const colores = {
@@ -173,7 +175,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
                         )}
                         {solicitud.estado !== 'cancelada' && solicitud.estado !== 'completada' && (
                           <button
-                            onClick={() => handleCambiarEstado('cancelada')}
+                            onClick={() => { setMostrarMenu(false); setMostrarCancelarModal(true) }}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
                           >
                             Cancelar
@@ -219,6 +221,11 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
         )}
 
         {/* Descripción */}
+        {solicitud.estado === 'cancelada' && (solicitud.motivoCancelacion || solicitud.motivo_cancelacion) && (
+          <p className="text-red-700 dark:text-red-300 mb-2 bg-red-50 dark:bg-red-900/20 p-2 rounded text-xs">
+            <span className="font-medium">Motivo de cancelación:</span> {solicitud.motivoCancelacion || solicitud.motivo_cancelacion}
+          </p>
+        )}
         {solicitud.descripcion && (
           <p className="text-gray-700 dark:text-gray-300 mb-2 bg-gray-50 dark:bg-gray-700/50 p-2 rounded text-xs line-clamp-2">
             {solicitud.descripcion}
@@ -337,6 +344,13 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
           solicitud={solicitud}
           onClose={() => setMostrarVentanaInfo(false)}
           onComentarioEnviado={onUpdate}
+        />
+      )}
+      {mostrarCancelarModal && (
+        <CancelarSolicitudModal
+          solicitud={solicitud}
+          onClose={() => setMostrarCancelarModal(false)}
+          onCancelada={onUpdate}
         />
       )}
     </div>

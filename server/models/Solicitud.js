@@ -111,6 +111,11 @@ const Solicitud = sequelize.define('Solicitud', {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'tipo_precaucion'
+  },
+  motivoCancelacion: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'motivo_cancelacion'
   }
 }, {
   tableName: 'solicitudes',
