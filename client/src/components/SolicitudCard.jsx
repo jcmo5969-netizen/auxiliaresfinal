@@ -183,6 +183,15 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
                         )}
                       </>
                     )}
+                    {/* Solo enfermería (no auxiliar): opción Cancelar con motivo */}
+                    {(puedeEditar && !puedeCambiarEstado && solicitud.estado !== 'cancelada' && solicitud.estado !== 'completada') && (
+                      <button
+                        onClick={() => { setMostrarMenu(false); setMostrarCancelarModal(true) }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors border-t dark:border-gray-600"
+                      >
+                        Cancelar solicitud
+                      </button>
+                    )}
                     {puedeEditar && (
                       <button
                         onClick={() => { setMostrarMenu(false); setMostrarEditarSolicitud(true) }}
