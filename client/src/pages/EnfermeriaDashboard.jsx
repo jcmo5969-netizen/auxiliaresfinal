@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { 
-  LogOut, Plus, Calendar, AlertCircle, CheckCircle, Clock,
+  LogOut, Plus, AlertCircle,
   Building2, User, MapPin, MessageSquare, History, Moon, Sun, UserCircle
 } from 'lucide-react'
 import SolicitudModal from '../components/SolicitudModal'
@@ -183,52 +183,12 @@ const EnfermeriaDashboard = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">Total</p>
-                <p className="text-3xl font-bold mt-1">{stats.total}</p>
-              </div>
-              <Calendar className="w-10 h-10 text-blue-200" />
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-yellow-100 text-sm font-medium">Pendientes</p>
-                <p className="text-3xl font-bold mt-1">{stats.pendientes}</p>
-              </div>
-              <Clock className="w-10 h-10 text-yellow-200" />
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm font-medium">En Proceso</p>
-                <p className="text-3xl font-bold mt-1">{stats.enProceso}</p>
-              </div>
-              <AlertCircle className="w-10 h-10 text-purple-200" />
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-medium">Completadas</p>
-                <p className="text-3xl font-bold mt-1">{stats.completadas}</p>
-              </div>
-              <CheckCircle className="w-10 h-10 text-green-200" />
-            </div>
-          </div>
-        </div>
-
-        {/* KPI Auxiliares disponibles (actualizado al completar solicitudes) */}
+        {/* Estadísticas solo del servicio del usuario (no total hospital) */}
         <div className="mb-6 sm:mb-8">
-          <EstadisticasTiempoReal />
+          <EstadisticasTiempoReal
+            solicitudes={solicitudes}
+            nombreServicio={usuario?.servicio?.nombre || servicios.find(s => s.id === usuario?.servicioId)?.nombre}
+          />
         </div>
 
         {/* Contenedor principal */}
