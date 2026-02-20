@@ -186,10 +186,13 @@ router.post('/', [
       solicitadoPorId: req.usuario.id
     };
 
-    // Si hay fechaProgramada, convertirla a Date (validar). iOS/Safari puede enviar vacío o "Invalid date".
+    // Si hay fechaProgramada, convertirla a Date. "YYYY-MM-DD" como medianoche UTC se ve día anterior en Chile; usar mediodía UTC.
     const rawFecha = req.body.fechaProgramada;
     if (rawFecha && String(rawFecha).trim() !== '' && String(rawFecha) !== 'Invalid date') {
-      const fecha = new Date(rawFecha);
+      const str = String(rawFecha).trim();
+      const fecha = /^\d{4}-\d{2}-\d{2}$/.test(str)
+        ? new Date(str + 'T12:00:00.000Z')  // mediodía UTC = mismo día en cualquier zona
+        : new Date(str);
       if (!isNaN(fecha.getTime())) {
         datosSolicitud.fechaProgramada = fecha;
       } else {
@@ -450,7 +453,13 @@ router.put('/:id', [
     if (req.body.cama !== undefined) updateData.cama = req.body.cama || null;
     if (req.body.prioridad !== undefined) updateData.prioridad = req.body.prioridad;
     if (req.body.fechaProgramada !== undefined) {
-      updateData.fechaProgramada = (req.body.fechaProgramada && String(req.body.fechaProgramada).trim()) ? new Date(req.body.fechaProgramada) : null;
+      const raw = req.body.fechaProgramada && String(req.body.fechaProgramada).trim();
+      if (raw) {
+        const fecha = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(raw + 'T12:00:00.000Z') : new Date(raw);
+        updateData.fechaProgramada = !isNaN(fecha.getTime()) ? fecha : null;
+      } else {
+        updateData.fechaProgramada = null;
+      }
     }
     if (req.body.precaucionesEstandar !== undefined) updateData.precaucionesEstandar = Boolean(req.body.precaucionesEstandar);
     if (req.body.tipoPrecaucion !== undefined) updateData.tipoPrecaucion = req.body.tipoPrecaucion || null;

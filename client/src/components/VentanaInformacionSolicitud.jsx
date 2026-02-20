@@ -150,7 +150,7 @@ const VentanaInformacionSolicitud = ({ solicitud, onClose, onComentarioEnviado }
               {(solicitud.fechaProgramada || solicitud.createdAt) && (
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
                   <Calendar className="w-4 h-4" />
-                  <span>{solicitud.fechaProgramada ? `Programada: ${new Date(solicitud.fechaProgramada).toLocaleDateString('es-ES', { timeZone: ZONA })}` : formatearFecha(solicitud.createdAt)}</span>
+                  <span>{solicitud.fechaProgramada ? `Programada: ${new Date(solicitud.fechaProgramada).toLocaleDateString('es-ES', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' })}` : formatearFecha(solicitud.createdAt)}</span>
                 </div>
               )}
               {solicitud.cama && (

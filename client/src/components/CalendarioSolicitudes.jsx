@@ -26,28 +26,29 @@ const CalendarioSolicitudes = ({ solicitudes }) => {
     setFechaActual(new Date(añoActual, mesActual + direccion, 1))
   }
 
+  const getFechaSolicitud = (s) => {
+    if (s.fechaProgramada) {
+      const d = new Date(s.fechaProgramada)
+      return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+    }
+    return new Date(s.createdAt)
+  }
+
   const obtenerSolicitudesDelDia = (dia) => {
     const fecha = new Date(añoActual, mesActual, dia)
     fecha.setHours(0, 0, 0, 0)
     return solicitudes.filter(s => {
-      // Usar fechaProgramada si existe, sino usar createdAt
-      const fechaSolicitud = s.fechaProgramada 
-        ? new Date(s.fechaProgramada)
-        : new Date(s.createdAt)
+      const fechaSolicitud = getFechaSolicitud(s)
       fechaSolicitud.setHours(0, 0, 0, 0)
       return fechaSolicitud.getTime() === fecha.getTime()
     })
   }
 
-  // Obtener solicitudes del día actual
   const obtenerSolicitudesHoy = () => {
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0)
     return solicitudes.filter(s => {
-      // Usar fechaProgramada si existe, sino usar createdAt
-      const fechaSolicitud = s.fechaProgramada 
-        ? new Date(s.fechaProgramada)
-        : new Date(s.createdAt)
+      const fechaSolicitud = getFechaSolicitud(s)
       fechaSolicitud.setHours(0, 0, 0, 0)
       return fechaSolicitud.getTime() === hoy.getTime()
     })

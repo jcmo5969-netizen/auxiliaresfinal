@@ -28,7 +28,10 @@ const CalendarioAuxiliar = ({
   ]
 
   const getFechaSolicitud = (s) => {
-    if (s.fechaProgramada) return new Date(s.fechaProgramada)
+    if (s.fechaProgramada) {
+      const d = new Date(s.fechaProgramada)
+      return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+    }
     return new Date(s.createdAt)
   }
 

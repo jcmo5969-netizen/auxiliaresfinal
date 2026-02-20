@@ -65,7 +65,9 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   }
   const formatearFechaProgramada = (fecha) => {
     if (!fecha) return ''
-    return new Date(fecha).toLocaleDateString('es-ES', { timeZone: 'America/Santiago', day: '2-digit', month: '2-digit', year: 'numeric' })
+    const d = new Date(fecha)
+    // Usar UTC para evitar que medianoche UTC se muestre como día anterior en Chile
+    return d.toLocaleDateString('es-ES', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
   const handleCambiarEstado = async (nuevoEstado) => {

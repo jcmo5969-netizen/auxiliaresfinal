@@ -28,9 +28,16 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
     if (!solicitud || solicitudId == null) return
     const servicioId = solicitud.servicioId ?? solicitud.servicio?.id
     const fp = solicitud.fechaProgramada
-    const fechaStr = fp
-      ? (typeof fp === 'string' ? fp : new Date(fp).toISOString().slice(0, 10))
-      : ''
+    let fechaStr = ''
+    if (fp) {
+      const d = typeof fp === 'string' ? new Date(fp) : fp
+      if (d && !isNaN(d.getTime())) {
+        const y = d.getUTCFullYear()
+        const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+        const day = String(d.getUTCDate()).padStart(2, '0')
+        fechaStr = `${y}-${m}-${day}`
+      }
+    }
     setFormData({
       servicio: String(servicioId || ''),
       tipoRequerimiento: solicitud.tipoRequerimiento || 'alta',

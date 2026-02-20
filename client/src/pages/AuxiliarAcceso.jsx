@@ -851,7 +851,7 @@ const AuxiliarAcceso = () => {
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4 text-primary-600" />
                             <span className="text-primary-600 font-semibold">
-                              Programada: {new Date(solicitud.fechaProgramada).toLocaleDateString('es-ES')}
+                              Programada: {new Date(solicitud.fechaProgramada).toLocaleDateString('es-ES', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' })}
                             </span>
                           </div>
                         ) : solicitud.createdAt && (
