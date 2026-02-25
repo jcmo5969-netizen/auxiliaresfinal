@@ -15,7 +15,7 @@ let sequelize;
 
 if (process.env.DATABASE_URL) {
   // Usar DATABASE_URL completa (más confiable en Render)
-  // Render siempre requiere SSL para PostgreSQL
+  // Render sine requiere SSL para PostgreSQL
   console.log('📦 Usando DATABASE_URL para conexión');
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',

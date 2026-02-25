@@ -83,7 +83,12 @@ const enviarNotificacionPush = async (solicitud) => {
       data,
       android: {
         priority: 'high',
-        notification: { sound: 'default', channelId: 'solicitudes_channel' }
+        notification: {
+          sound: 'default',
+          channelId: 'solicitudes_channel',
+          defaultVibrateTimings: true,
+          priority: 'max'
+        }
       },
       apns: {
         payload: {
@@ -95,8 +100,9 @@ const enviarNotificacionPush = async (solicitud) => {
         }
       },
       webpush: {
-        headers: { Urgency: 'high' },
-        notification: { title, body }
+        headers: { Urgency: 'high', TTL: '86400' },
+        notification: { title, body },
+        fcm_options: { link: '/' }
       }
     };
 

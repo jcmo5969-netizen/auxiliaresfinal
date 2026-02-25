@@ -637,10 +637,10 @@ const AuxiliarAcceso = () => {
               </ol>
             ) : (
               <ol className="text-sm text-gray-700 dark:text-gray-200 space-y-2 list-decimal list-inside">
-                <li><strong>Ajustes</strong> (del móvil) → Aplicaciones → <strong>Chrome</strong> (o el navegador que uses).</li>
+                <li><strong>Instala la app</strong>: en Chrome, menú (⋮) → &quot;Añadir a la pantalla de inicio&quot; (o &quot;Instalar app&quot;). Abre la app desde el icono. Así las notificaciones suelen mostrarse mejor con pantalla bloqueada.</li>
+                <li><strong>Ajustes del móvil</strong> → Aplicaciones → <strong>Chrome</strong> (o la app &quot;Auxiliares&quot; si la instalaste).</li>
                 <li>Entra en <strong>Notificaciones</strong> y asegúrate de que estén activadas.</li>
-                <li>Busca la opción <strong>&quot;Mostrar en pantalla de bloqueo&quot;</strong> o &quot;En pantalla de bloqueo&quot; y actívala.</li>
-                <li>En algunos móviles: Ajustes → Notificaciones → Notificaciones en pantalla de bloqueo → activar para Chrome o para esta app.</li>
+                <li>Activa <strong>&quot;Mostrar en pantalla de bloqueo&quot;</strong> (o &quot;En pantalla de bloqueo&quot;). En algunos móviles: Ajustes → Notificaciones → Notificaciones en pantalla de bloqueo → activar para Chrome o para esta app.</li>
               </ol>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
-import { BarChart3, TrendingUp, Clock, Users, Activity, Download, Filter, Award } from 'lucide-react'
+import { BarChart3, TrendingUp, Clock, Users, Activity, Download, Filter, Award, X, UserCheck } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
@@ -15,6 +15,7 @@ const MetricasDashboard = () => {
   const [cargando, setCargando] = useState(true)
   const [rangoFecha, setRangoFecha] = useState('30') // días
   const [tipoGrafico, setTipoGrafico] = useState('linea') // linea, area, barra
+  const [mostrarModalAuxiliares, setMostrarModalAuxiliares] = useState(false)
 
   useEffect(() => {
     cargarMetricas()
@@ -473,11 +474,26 @@ const MetricasDashboard = () => {
       )}
 
       {/* Auxiliares más activos */}
-      {metricas.auxiliaresActivos?.length > 0 && (
+      {(metricas.auxiliaresActivos?.length > 0 || kpisAuxiliares?.kpis?.length > 0) && (
         <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-4 sm:p-6 border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Auxiliares Más Activos</h3>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Auxiliares Más Activos</h3>
+            <button
+              type="button"
+              onClick={() => setMostrarModalAuxiliares(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition"
+            >
+              <UserCheck className="w-4 h-4" />
+              Ver detalle por auxiliar
+            </button>
+          </div>
           <div className="space-y-3">
-            {metricas.auxiliaresActivos.map((item, index) => {
+            {(metricas.auxiliaresActivos || []).length === 0 && kpisAuxiliares?.kpis?.length > 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                Usa el botón anterior para ver cuántas solicitudes ha completado cada auxiliar en el período seleccionado.
+              </p>
+            )}
+            {(metricas.auxiliaresActivos || []).map((item, index) => {
               const porcentaje = metricas.generales.completadas > 0 
                 ? Math.round((item.completadas / metricas.generales.completadas) * 100)
                 : 0
@@ -563,6 +579,110 @@ const MetricasDashboard = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Detalle por auxiliar (solicitudes completadas por auxiliar) */}
+      {mostrarModalAuxiliares && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setMostrarModalAuxiliares(false)}
+        >
+          <div
+            className={`rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col ${
+              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Solicitudes completadas por auxiliar
+              </h3>
+              <button
+                type="button"
+                onClick={() => setMostrarModalAuxiliares(false)}
+                className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 flex-1">
+              {kpisAuxiliares?.kpis?.length > 0 ? (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-600">
+                      <th className="text-left py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Auxiliar</th>
+                      <th className="text-right py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Completadas</th>
+                      <th className="text-right py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Aceptadas</th>
+                      <th className="text-right py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Tiempo promedio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kpisAuxiliares.kpis.map((kpi) => (
+                      <tr
+                        key={kpi.auxiliar.id}
+                        className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/30"
+                      >
+                        <td className="py-3 px-2">
+                          <p className="font-medium text-gray-900 dark:text-white">{kpi.auxiliar.nombre}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{kpi.auxiliar.email}</p>
+                        </td>
+                        <td className="text-right py-3 px-2 font-semibold text-primary-600 dark:text-primary-400">
+                          {kpi.solicitudesCompletadas}
+                        </td>
+                        <td className="text-right py-3 px-2 text-gray-700 dark:text-gray-300">
+                          {kpi.solicitudesAceptadas}
+                        </td>
+                        <td className="text-right py-3 px-2 text-gray-700 dark:text-gray-300">
+                          {kpi.tiempoPromedioMinutos != null
+                            ? formatearTiempo(kpi.tiempoPromedioMinutos)
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : metricas.auxiliaresActivos?.length > 0 ? (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-600">
+                      <th className="text-left py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Auxiliar</th>
+                      <th className="text-right py-3 px-2 font-semibold text-gray-700 dark:text-gray-300">Solicitudes completadas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metricas.auxiliaresActivos.map((item) => (
+                      <tr
+                        key={item.auxiliar.id}
+                        className="border-b border-gray-100 dark:border-gray-700/50"
+                      >
+                        <td className="py-3 px-2">
+                          <p className="font-medium text-gray-900 dark:text-white">{item.auxiliar.nombre}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.auxiliar.email}</p>
+                        </td>
+                        <td className="text-right py-3 px-2 font-semibold text-primary-600 dark:text-primary-400">
+                          {item.completadas}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                  No hay datos de auxiliares en el período seleccionado.
+                </p>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setMostrarModalAuxiliares(false)}
+                className="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}
