@@ -167,12 +167,20 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
                           </button>
                         )}
                         {(solicitud.estado === 'en_proceso' || solicitud.estado === 'asignada') && (
-                          <button
-                            onClick={() => handleCambiarEstado('completada')}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 transition-colors"
-                          >
-                            Completar
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleCambiarEstado('completada')}
+                              className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 transition-colors"
+                            >
+                              Completar
+                            </button>
+                            <button
+                              onClick={() => handleCambiarEstado('pendiente')}
+                              className="w-full text-left px-4 py-2 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-400 transition-colors"
+                            >
+                              Poner de nuevo en pendiente
+                            </button>
+                          </>
                         )}
                         {/* Completada: permitir revertir a pendiente o cancelar (por error o porque aún no se realizó) */}
                         {solicitud.estado === 'completada' && (puedeCambiarEstado || puedeEditar) && (
@@ -190,6 +198,15 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
                               Cancelar solicitud
                             </button>
                           </>
+                        )}
+                        {/* Cancelada: permitir reactivar (poner de nuevo en pendiente) */}
+                        {solicitud.estado === 'cancelada' && (puedeCambiarEstado || puedeEditar) && (
+                          <button
+                            onClick={() => handleCambiarEstado('pendiente')}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-400 transition-colors"
+                          >
+                            Poner de nuevo en pendiente
+                          </button>
                         )}
                         {solicitud.estado !== 'cancelada' && solicitud.estado !== 'completada' && (
                           <button
@@ -218,7 +235,25 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
                         </button>
                       </>
                     )}
-                    {/* Solo enfermería (no auxiliar): opción Cancelar con motivo cuando no está completada */}
+                    {/* Enfermería/Admin: en proceso o asignada, poder poner de nuevo en pendiente */}
+                    {(puedeEditar && !puedeCambiarEstado && (solicitud.estado === 'en_proceso' || solicitud.estado === 'asignada')) && (
+                      <button
+                        onClick={() => handleCambiarEstado('pendiente')}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-400 transition-colors border-t dark:border-gray-600"
+                      >
+                        Poner de nuevo en pendiente
+                      </button>
+                    )}
+                    {/* Enfermería/Admin: canceladas, poder reactivar */}
+                    {solicitud.estado === 'cancelada' && puedeEditar && !puedeCambiarEstado && (
+                      <button
+                        onClick={() => handleCambiarEstado('pendiente')}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-400 transition-colors border-t dark:border-gray-600"
+                      >
+                        Poner de nuevo en pendiente
+                      </button>
+                    )}
+                    {/* Solo enfermería (no auxiliar): opción Cancelar con motivo cuando no está completada ni cancelada */}
                     {(puedeEditar && !puedeCambiarEstado && solicitud.estado !== 'cancelada' && solicitud.estado !== 'completada') && (
                       <button
                         onClick={() => { setMostrarMenu(false); setMostrarCancelarModal(true) }}
