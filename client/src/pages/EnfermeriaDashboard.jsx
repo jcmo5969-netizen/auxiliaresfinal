@@ -12,6 +12,7 @@ import SolicitudModal from '../components/SolicitudModal'
 import SolicitudCard from '../components/SolicitudCard'
 import FiltrosSolicitudes from '../components/FiltrosSolicitudes'
 import MiPerfilModal from '../components/MiPerfilModal'
+import CanceladasModal from '../components/CanceladasModal'
 import EstadisticasTiempoReal from '../components/EstadisticasTiempoReal'
 
 const EnfermeriaDashboard = () => {
@@ -23,6 +24,7 @@ const EnfermeriaDashboard = () => {
   const [servicios, setServicios] = useState([])
   const [mostrarModal, setMostrarModal] = useState(false)
   const [mostrarMiPerfil, setMostrarMiPerfil] = useState(false)
+  const [mostrarCanceladasModal, setMostrarCanceladasModal] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [pestañaActiva, setPestañaActiva] = useState('todas') // todas, pendientes, en_proceso, completadas
 
@@ -110,7 +112,8 @@ const EnfermeriaDashboard = () => {
     total: solicitudes.length,
     pendientes: solicitudes.filter(s => s.estado === 'pendiente').length,
     enProceso: solicitudes.filter(s => s.estado === 'en_proceso').length,
-    completadas: solicitudes.filter(s => s.estado === 'completada').length
+    completadas: solicitudes.filter(s => s.estado === 'completada').length,
+    canceladas: solicitudes.filter(s => s.estado === 'cancelada').length
   }
 
   if (cargando) {
@@ -236,6 +239,12 @@ const EnfermeriaDashboard = () => {
               >
                 Completadas ({stats.completadas})
               </button>
+              <button
+                onClick={() => setMostrarCanceladasModal(true)}
+                className="flex-1 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium transition whitespace-nowrap text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Canceladas ({stats.canceladas})
+              </button>
             </div>
           </div>
           
@@ -298,6 +307,17 @@ const EnfermeriaDashboard = () => {
           usuario={usuario}
           onClose={() => setMostrarMiPerfil(false)}
           onGuardado={() => refreshUsuario?.()}
+        />
+      )}
+
+      {/* Modal solicitudes canceladas (solo de su servicio) */}
+      {mostrarCanceladasModal && (
+        <CanceladasModal
+          solicitudesCanceladas={solicitudes.filter(s => s.estado === 'cancelada')}
+          onClose={() => setMostrarCanceladasModal(false)}
+          usuario={usuario}
+          servicios={servicios.filter(s => s.id === usuario?.servicioId)}
+          onUpdate={handleActualizarSolicitud}
         />
       )}
     </div>

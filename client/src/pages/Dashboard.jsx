@@ -22,6 +22,7 @@ import LogsModal from '../components/LogsModal'
 import PlantillasModal from '../components/PlantillasModal'
 import AlertasPanel from '../components/AlertasPanel'
 import RecordatoriosModal from '../components/RecordatoriosModal'
+import CanceladasModal from '../components/CanceladasModal'
 import WidgetConfig from '../components/WidgetConfig'
 import EstadisticasTiempoReal from '../components/EstadisticasTiempoReal'
 import Logo from '../components/Logo'
@@ -44,6 +45,7 @@ const Dashboard = () => {
   const [mostrarLogsModal, setMostrarLogsModal] = useState(false)
   const [mostrarPlantillasModal, setMostrarPlantillasModal] = useState(false)
   const [mostrarRecordatoriosModal, setMostrarRecordatoriosModal] = useState(false)
+  const [mostrarCanceladasModal, setMostrarCanceladasModal] = useState(false)
   const [mostrarWidgetConfig, setMostrarWidgetConfig] = useState(false)
   const [widgetsConfig, setWidgetsConfig] = useState([])
 
@@ -179,6 +181,7 @@ const Dashboard = () => {
     pendientes: solicitudes.filter(s => s.estado === 'pendiente').length,
     enProceso: solicitudes.filter(s => s.estado === 'en_proceso').length,
     completadas: solicitudes.filter(s => s.estado === 'completada').length,
+    canceladas: solicitudes.filter(s => s.estado === 'cancelada').length,
     auxiliares: personal.filter(p => p.rol === 'auxiliar' && p.activo).length
   }
 
@@ -429,6 +432,12 @@ const Dashboard = () => {
                   >
                     Históricos ({stats.completadas})
                   </button>
+                  <button
+                    onClick={() => setMostrarCanceladasModal(true)}
+                    className="flex-1 px-6 py-4 text-sm font-medium transition whitespace-nowrap text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Canceladas ({stats.canceladas})
+                  </button>
                 </div>
               </div>
               
@@ -557,6 +566,16 @@ const Dashboard = () => {
       {mostrarRecordatoriosModal && (
         <RecordatoriosModal
           onClose={() => setMostrarRecordatoriosModal(false)}
+        />
+      )}
+
+      {mostrarCanceladasModal && (
+        <CanceladasModal
+          solicitudesCanceladas={solicitudes.filter(s => s.estado === 'cancelada')}
+          onClose={() => setMostrarCanceladasModal(false)}
+          usuario={usuario}
+          servicios={servicios}
+          onUpdate={handleActualizarSolicitud}
         />
       )}
 
