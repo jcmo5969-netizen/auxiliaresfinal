@@ -82,7 +82,7 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
     }
     if (formData.fechaProgramada) {
       const d = new Date(formData.fechaProgramada)
-      if (!isNaN(d.getTime())) payload.fechaProgramada = formData.fechaProgramada
+      if (!isNaN(d.getTime())) payload.fechaProgramada = d.toISOString()
     } else {
       payload.fechaProgramada = null
     }

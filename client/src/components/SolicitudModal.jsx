@@ -34,7 +34,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     const payload = { ...rest }
     if (fechaProgramada && typeof fechaProgramada === 'string') {
       const d = new Date(fechaProgramada)
-      if (!isNaN(d.getTime())) payload.fechaProgramada = fechaProgramada
+      if (!isNaN(d.getTime())) payload.fechaProgramada = d.toISOString()
     }
     return payload
   }
