@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, ChevronLeft, ChevronRight, MapPin, Clock, User, CheckCircle } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, MapPin, Clock, User, CheckCircle, RotateCcw } from 'lucide-react'
 
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -9,9 +9,16 @@ const CalendarioAuxiliar = ({
   solicitudesAsignadas = [],
   onAsignar,
   onCompletar,
+  onDevolver,
   getTipoIcon,
   getPrioridadColor
 }) => {
+  const puedeTomarProgramada = (s) => {
+    if (!s?.fechaProgramada) return { puede: true, liberarA: null }
+    const liberar = new Date(s.fechaProgramada)
+    liberar.setMinutes(liberar.getMinutes() - 15)
+    return { puede: new Date() >= liberar, liberarA: liberar }
+  }
   const [fechaActual, setFechaActual] = useState(new Date())
   const [diaSeleccionado, setDiaSeleccionado] = useState(null)
 
@@ -200,7 +207,9 @@ const CalendarioAuxiliar = ({
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {solicitud.createdAt && new Date(solicitud.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                      {solicitud.fechaProgramada
+                        ? new Date(solicitud.fechaProgramada).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
+                        : solicitud.createdAt && new Date(solicitud.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     <span className="flex items-center gap-1">
                       <User className="w-3 h-3" /> {solicitud.solicitadoPor?.nombre || 'N/A'}
@@ -210,25 +219,50 @@ const CalendarioAuxiliar = ({
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{solicitud.descripcion}</p>
                   )}
                   {puedeAsignarEnDiaSeleccionado && (
-                    <div className="flex gap-2">
-                      {esPendiente && onAsignar && (
-                        <button
-                          type="button"
-                          onClick={() => onAsignar(id)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition"
-                        >
-                          Asignarme
-                        </button>
-                      )}
-                      {esMiaEnProceso && onCompletar && (
-                        <button
-                          type="button"
-                          onClick={() => onCompletar(id)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          Completar traslado
-                        </button>
+                    <div className="flex flex-wrap gap-2">
+                      {esPendiente && onAsignar && (() => {
+                        const { puede, liberarA } = puedeTomarProgramada(solicitud)
+                        if (!puede && liberarA) {
+                          return (
+                            <div className="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-center text-sm">
+                              Disponible a las {liberarA.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          )
+                        }
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => onAsignar(id)}
+                            className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition"
+                          >
+                            Asignarme
+                          </button>
+                        )
+                      })()}
+                      {esMiaEnProceso && (
+                        <>
+                          {onCompletar && (
+                            <button
+                              type="button"
+                              onClick={() => onCompletar(id)}
+                              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              Completar traslado
+                            </button>
+                          )}
+                          {onDevolver && (
+                            <button
+                              type="button"
+                              onClick={() => onDevolver(id)}
+                              className="flex items-center justify-center gap-2 py-2 px-4 border border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg font-medium transition"
+                              title="Devolver solicitud"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                              Devolver
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   )}

@@ -32,10 +32,12 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
     if (fp) {
       const d = typeof fp === 'string' ? new Date(fp) : fp
       if (d && !isNaN(d.getTime())) {
-        const y = d.getUTCFullYear()
-        const m = String(d.getUTCMonth() + 1).padStart(2, '0')
-        const day = String(d.getUTCDate()).padStart(2, '0')
-        fechaStr = `${y}-${m}-${day}`
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        const h = String(d.getHours()).padStart(2, '0')
+        const min = String(d.getMinutes()).padStart(2, '0')
+        fechaStr = `${y}-${m}-${day}T${h}:${min}`
       }
     }
     setFormData({
@@ -299,13 +301,14 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fecha Programada (opcional)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fecha y hora programada (opcional)</label>
             <input
-              type="date"
+              type="datetime-local"
               value={formData.fechaProgramada || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, fechaProgramada: e.target.value || '' }))}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Los auxiliares podrán tomarla desde 15 min antes.</p>
           </div>
 
           <div className="flex gap-3 pt-4">

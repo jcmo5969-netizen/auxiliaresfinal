@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { 
   CheckCircle, Clock, AlertCircle, MapPin, User, 
   LogIn, X, Loader, Bell, BellOff, RefreshCw, 
-  TrendingUp, Calendar, Moon, Sun, HelpCircle
+  TrendingUp, Calendar, Moon, Sun, HelpCircle, RotateCcw
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 // Firebase se carga solo cuando hace falta (evita errores en iPhone/Safari al cargar la página)
@@ -378,6 +378,27 @@ const AuxiliarAcceso = () => {
     }
   }
 
+  // Para solicitudes programadas: se pueden tomar desde 15 min antes
+  const puedeTomarProgramada = (solicitud) => {
+    if (!solicitud?.fechaProgramada) return { puede: true, liberarA: null }
+    const liberar = new Date(solicitud.fechaProgramada)
+    liberar.setMinutes(liberar.getMinutes() - 15)
+    const ahora = new Date()
+    return { puede: ahora >= liberar, liberarA: liberar }
+  }
+
+  const handleDevolver = async (solicitudId) => {
+    try {
+      if (!solicitudId) return
+      await api.put(`/api/solicitudes/${solicitudId}/desasignar`)
+      toast.success('Solicitud devuelta a pendientes', { icon: '↩️' })
+      await cargarSolicitudes(false)
+      if (vistaActiva === 'calendario') await cargarCalendario()
+    } catch (error) {
+      toast.error(error.response?.data?.mensaje || 'Error al devolver la solicitud')
+    }
+  }
+
   const handleFinalizar = async (solicitudId) => {
     try {
       if (!solicitudId) {
@@ -687,6 +708,7 @@ const AuxiliarAcceso = () => {
             solicitudesAsignadas={solicitudesAsignadas}
             onAsignar={handleAsignar}
             onCompletar={handleFinalizar}
+            onDevolver={handleDevolver}
             getTipoIcon={getTipoIcon}
             getPrioridadColor={getPrioridadColor}
           />
@@ -750,13 +772,24 @@ const AuxiliarAcceso = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleFinalizar(solicitud.id || solicitud._id)}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    Finalizar Solicitud
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleFinalizar(solicitud.id || solicitud._id)}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition font-semibold shadow-md"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      Finalizar Solicitud
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDevolver(solicitud.id || solicitud._id)}
+                      className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition font-medium"
+                      title="Devolver solicitud (por error o si no puedes realizarla)"
+                    >
+                      <RotateCcw className="w-5 h-5" />
+                      Devolver
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -851,7 +884,7 @@ const AuxiliarAcceso = () => {
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4 text-primary-600" />
                             <span className="text-primary-600 font-semibold">
-                              Programada: {new Date(solicitud.fechaProgramada).toLocaleDateString('es-ES', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                              Programada: {new Date(solicitud.fechaProgramada).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
                             </span>
                           </div>
                         ) : solicitud.createdAt && (
@@ -864,13 +897,26 @@ const AuxiliarAcceso = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleAsignar(solicitud.id || solicitud._id)}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    Asignarme a esta solicitud
-                  </button>
+                  {(() => {
+                    const { puede, liberarA } = puedeTomarProgramada(solicitud)
+                    if (!puede && liberarA) {
+                      return (
+                        <div className="w-full flex flex-col items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                          <span className="text-sm font-medium">Disponible a las {liberarA.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-xs">(15 min antes del traslado)</span>
+                        </div>
+                      )
+                    }
+                    return (
+                      <button
+                        onClick={() => handleAsignar(solicitud.id || solicitud._id)}
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Asignarme a esta solicitud
+                      </button>
+                    )
+                  })()}
                 </div>
               ))}
             </div>

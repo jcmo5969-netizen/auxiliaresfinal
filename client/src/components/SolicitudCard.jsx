@@ -66,8 +66,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   const formatearFechaProgramada = (fecha) => {
     if (!fecha) return ''
     const d = new Date(fecha)
-    // Usar UTC para evitar que medianoche UTC se muestre como día anterior en Chile
-    return d.toLocaleDateString('es-ES', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' })
+    return d.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
   }
 
   const handleCambiarEstado = async (nuevoEstado) => {
@@ -174,6 +173,23 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
                           >
                             Completar
                           </button>
+                        )}
+                        {/* Completada: permitir revertir a pendiente o cancelar (por error o porque aún no se realizó) */}
+                        {solicitud.estado === 'completada' && (puedeCambiarEstado || puedeEditar) && (
+                          <>
+                            <button
+                              onClick={() => handleCambiarEstado('pendiente')}
+                              className="w-full text-left px-4 py-2 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-700 dark:text-amber-400 transition-colors"
+                            >
+                              Poner de nuevo en pendiente
+                            </button>
+                            <button
+                              onClick={() => { setMostrarMenu(false); setMostrarCancelarModal(true) }}
+                              className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+                            >
+                              Cancelar solicitud
+                            </button>
+                          </>
                         )}
                         {solicitud.estado !== 'cancelada' && solicitud.estado !== 'completada' && (
                           <button

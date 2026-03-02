@@ -303,6 +303,17 @@ router.put('/:id/asignar', auth, async (req, res) => {
       return res.status(400).json({ mensaje: 'La solicitud ya está asignada, en proceso o completada' });
     }
 
+    // Si tiene fecha/hora programada, solo se puede tomar desde 15 minutos antes
+    if (solicitud.fechaProgramada) {
+      const ahora = new Date();
+      const liberar = new Date(solicitud.fechaProgramada);
+      liberar.setMinutes(liberar.getMinutes() - 15);
+      if (ahora < liberar) {
+        const msg = `Esta solicitud programada estará disponible a las ${liberar.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} (15 min antes del traslado).`;
+        return res.status(400).json({ mensaje: msg });
+      }
+    }
+
     // Si es auxiliar, solo puede asignarse a sí mismo
     const auxiliarId = req.usuario.rol === 'auxiliar' 
       ? req.usuario.id 
@@ -332,6 +343,49 @@ router.put('/:id/asignar', auth, async (req, res) => {
         { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
         { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
         { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'] }
+      ]
+    });
+
+    res.json(solicitudCompleta);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error del servidor' });
+  }
+});
+
+// @route   PUT /api/solicitudes/:id/desasignar
+// @desc    El auxiliar se devuelve la solicitud (vuelve a pendiente)
+// @access  Private (solo el auxiliar asignado)
+router.put('/:id/desasignar', auth, async (req, res) => {
+  try {
+    const solicitud = await Solicitud.findByPk(req.params.id);
+    if (!solicitud) {
+      return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
+    }
+    if (solicitud.estado !== 'en_proceso') {
+      return res.status(400).json({ mensaje: 'Solo puedes devolver una solicitud que tengas en proceso' });
+    }
+    if (solicitud.asignadoAId !== req.usuario.id) {
+      return res.status(403).json({ mensaje: 'Solo puedes devolver solicitudes asignadas a ti' });
+    }
+
+    const estadoAnterior = solicitud.estado;
+    const asignadoAnterior = solicitud.asignadoAId;
+    await solicitud.update({
+      estado: 'pendiente',
+      asignadoAId: null,
+      fechaAsignacion: null,
+      tiempoRespuesta: null
+    });
+
+    await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, 'pendiente', 'Auxiliar devolvió la solicitud');
+    await registrarCambio(solicitud.id, req.usuario.id, 'desasignar', 'asignadoAId', String(asignadoAnterior), null, 'Solicitud devuelta a pendientes');
+
+    const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {
+      include: [
+        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
+        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
+        { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false }
       ]
     });
 
@@ -387,7 +441,15 @@ router.put('/:id/estado', [
     } else {
       updateData.motivoCancelacion = null; // limpiar si se reactiva
     }
-    
+    // Al pasar a pendiente (p. ej. revertir un "completado" por error), dejar la solicitud disponible de nuevo
+    if (req.body.estado === 'pendiente') {
+      updateData.asignadoAId = null;
+      updateData.fechaAsignacion = null;
+      updateData.fechaCompletada = null;
+      updateData.tiempoCompletado = null;
+      updateData.tiempoRespuesta = null;
+    }
+
     await solicitud.update(updateData);
 
     if (estadoAnterior !== req.body.estado) {
@@ -397,15 +459,15 @@ router.put('/:id/estado', [
       await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, req.body.estado, descripcionAdicional);
     }
 
-    // Al completar una solicitud, actualizar estadísticas en tiempo real (auxiliares activos/disponibles)
-    if (req.body.estado === 'completada') {
+    // Actualizar estadísticas en tiempo real al completar o al revertir a pendiente
+    if (req.body.estado === 'completada' || req.body.estado === 'pendiente') {
       try {
         const io = req.app.get('io');
         const { calcularEstadisticas } = require('../utils/estadisticas');
         const estadisticas = await calcularEstadisticas();
         if (io) io.to('estadisticas').emit('estadisticas-actualizadas', estadisticas);
       } catch (e) {
-        console.error('Error emitiendo estadísticas al completar:', e);
+        console.error('Error emitiendo estadísticas:', e);
       }
     }
 
