@@ -884,7 +884,7 @@ const AuxiliarAcceso = () => {
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4 text-primary-600" />
                             <span className="text-primary-600 font-semibold">
-                              Programada: {new Date(solicitud.fechaProgramada).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                              Programada: {new Date(solicitud.fechaProgramada).toLocaleString('es-ES', { timeZone: 'America/Santiago', dateStyle: 'short', timeStyle: 'short' })}
                             </span>
                           </div>
                         ) : solicitud.createdAt && (
@@ -902,7 +902,7 @@ const AuxiliarAcceso = () => {
                     if (!puede && liberarA) {
                       return (
                         <div className="w-full flex flex-col items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-                          <span className="text-sm font-medium">Disponible a las {liberarA.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-sm font-medium">Disponible a las {liberarA.toLocaleTimeString('es-ES', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' })}</span>
                           <span className="text-xs">(15 min antes del traslado)</span>
                         </div>
                       )

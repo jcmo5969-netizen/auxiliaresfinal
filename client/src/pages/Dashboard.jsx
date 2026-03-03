@@ -44,6 +44,7 @@ const Dashboard = () => {
   const [mostrarCalendarioModal, setMostrarCalendarioModal] = useState(false)
   const [mostrarLogsModal, setMostrarLogsModal] = useState(false)
   const [mostrarPlantillasModal, setMostrarPlantillasModal] = useState(false)
+  const [datosPlantillaParaNueva, setDatosPlantillaParaNueva] = useState(null)
   const [mostrarRecordatoriosModal, setMostrarRecordatoriosModal] = useState(false)
   const [mostrarCanceladasModal, setMostrarCanceladasModal] = useState(false)
   const [mostrarWidgetConfig, setMostrarWidgetConfig] = useState(false)
@@ -526,8 +527,9 @@ const Dashboard = () => {
       {mostrarModal && (
         <SolicitudModal
           servicios={servicios}
-          onClose={() => setMostrarModal(false)}
+          onClose={() => { setMostrarModal(false); setDatosPlantillaParaNueva(null) }}
           onSubmit={handleNuevaSolicitud}
+          initialFormDataFromPlantilla={datosPlantillaParaNueva}
         />
       )}
 
@@ -560,6 +562,11 @@ const Dashboard = () => {
         <PlantillasModal
           onClose={() => setMostrarPlantillasModal(false)}
           servicios={servicios}
+          onSeleccionarPlantilla={(datos) => {
+            setMostrarPlantillasModal(false)
+            setDatosPlantillaParaNueva(datos)
+            setMostrarModal(true)
+          }}
         />
       )}
 

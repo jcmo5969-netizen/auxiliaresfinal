@@ -10,13 +10,17 @@ const router = express.Router();
 // @access  Private
 router.get('/', auth, async (req, res) => {
   try {
+    const isAdmin = req.usuario.rol === 'administrador'
+    const where = isAdmin
+      ? {}
+      : {
+          [require('sequelize').Op.or]: [
+            { creadoPorId: req.usuario.id },
+            { esPublica: true }
+          ]
+        }
     const plantillas = await PlantillaSolicitud.findAll({
-      where: {
-        [require('sequelize').Op.or]: [
-          { creadoPorId: req.usuario.id },
-          { esPublica: true }
-        ]
-      },
+      where,
       include: [
         { model: Usuario, as: 'creadoPor', attributes: ['id', 'nombre'] },
         { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'], required: false }
@@ -35,7 +39,7 @@ router.get('/', auth, async (req, res) => {
 // @access  Private
 router.post('/', [
   body('nombre').notEmpty().withMessage('El nombre es requerido'),
-  body('tipoRequerimiento').isIn(['alta', 'traslado', 'pabellon', 'otro']).withMessage('Tipo inválido')
+  body('tipoRequerimiento').isIn(['alta', 'traslado', 'pabellon', 'otro', 'gescas']).withMessage('Tipo inválido')
 ], auth, async (req, res) => {
   try {
     const errors = validationResult(req);

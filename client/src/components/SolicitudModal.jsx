@@ -3,7 +3,7 @@ import { X, FileText, Bed } from 'lucide-react'
 import PlantillasModal from './PlantillasModal'
 import CamaModal from './CamaModal'
 
-const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, onSolicitudCreada }) => {
+const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, onSolicitudCreada, initialFormDataFromPlantilla }) => {
   const [formData, setFormData] = useState({
     servicio: servicioPredeterminado || '',
     tipoRequerimiento: 'alta',
@@ -27,6 +27,20 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
       setFormData(prev => ({ ...prev, servicio: servicioPredeterminado }))
     }
   }, [servicioPredeterminado])
+
+  // Prellenar con datos de plantilla cuando el admin usa "Usar Plantilla" desde el Dashboard
+  useEffect(() => {
+    if (initialFormDataFromPlantilla && typeof initialFormDataFromPlantilla === 'object') {
+      const d = initialFormDataFromPlantilla
+      setFormData(prev => ({
+        ...prev,
+        servicio: d.servicio ?? prev.servicio,
+        tipoRequerimiento: d.tipoRequerimiento || prev.tipoRequerimiento,
+        prioridad: d.prioridad || prev.prioridad,
+        descripcion: d.descripcion ?? prev.descripcion
+      }))
+    }
+  }, [initialFormDataFromPlantilla])
 
   // Sanitizar payload para iOS: no enviar fecha inválida o vacía (evita "Invalid date" en Safari/iPhone)
   const buildPayload = () => {

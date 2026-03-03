@@ -35,8 +35,9 @@ async function calcularEstadisticas() {
     });
     const tiempoPromedio = solicitudesCompletadas[0]?.tiempoPromedio || 0;
 
-    // Auxiliares ocupados (con al menos una solicitud asignada o en proceso)
+    // Auxiliares ocupados (activos, con al menos una solicitud asignada o en proceso)
     const auxiliaresOcupados = await Usuario.count({
+      where: { rol: 'auxiliar', activo: true },
       include: [{
         model: Solicitud,
         as: 'solicitudesAsignadas',
@@ -46,9 +47,9 @@ async function calcularEstadisticas() {
       distinct: true
     });
 
-    // Total de auxiliares (rol auxiliar)
+    // Total de auxiliares activos (rol auxiliar, solo activos)
     const totalAuxiliares = await Usuario.count({
-      where: { rol: 'auxiliar' }
+      where: { rol: 'auxiliar', activo: true }
     });
     const auxiliaresDisponibles = Math.max(0, totalAuxiliares - auxiliaresOcupados);
 
