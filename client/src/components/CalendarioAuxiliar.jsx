@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Calendar, ChevronLeft, ChevronRight, MapPin, Clock, User, CheckCircle, RotateCcw } from 'lucide-react'
+import { formatearFechaProgramadaDisplay, formatearHoraProgramadaDisplay } from '../utils/fechaHospital'
 
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -208,7 +209,7 @@ const CalendarioAuxiliar = ({
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {solicitud.fechaProgramada
-                        ? new Date(solicitud.fechaProgramada).toLocaleString('es-ES', { timeZone: 'America/Santiago', dateStyle: 'short', timeStyle: 'short' })
+                        ? formatearFechaProgramadaDisplay(solicitud.fechaProgramada)
                         : solicitud.createdAt && new Date(solicitud.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     <span className="flex items-center gap-1">
@@ -225,7 +226,7 @@ const CalendarioAuxiliar = ({
                         if (!puede && liberarA) {
                           return (
                             <div className="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-center text-sm">
-                              Disponible a las {liberarA.toLocaleTimeString('es-ES', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' })}
+                              Disponible a las {formatearHoraProgramadaDisplay(liberarA)}
                             </div>
                           )
                         }

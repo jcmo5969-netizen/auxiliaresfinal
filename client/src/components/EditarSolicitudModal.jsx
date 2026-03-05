@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Bed } from 'lucide-react'
 import api from '../utils/api'
+import { fechaProgramadaParaEnviar } from '../utils/fechaHospital'
 import toast from 'react-hot-toast'
 import CamaModal from './CamaModal'
 
@@ -81,8 +82,8 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
       tipoPrecaucion: formData.precaucionesEstandar ? (formData.tipoPrecaucion || null) : null
     }
     if (formData.fechaProgramada) {
-      const d = new Date(formData.fechaProgramada)
-      if (!isNaN(d.getTime())) payload.fechaProgramada = d.toISOString()
+      const iso = fechaProgramadaParaEnviar(formData.fechaProgramada)
+      if (iso) payload.fechaProgramada = iso
     } else {
       payload.fechaProgramada = null
     }

@@ -11,6 +11,7 @@ import EtiquetasManager from './EtiquetasManager'
 import EditarSolicitudModal from './EditarSolicitudModal'
 import VentanaInformacionSolicitud from './VentanaInformacionSolicitud'
 import CancelarSolicitudModal from './CancelarSolicitudModal'
+import { formatearFechaProgramadaDisplay } from '../utils/fechaHospital'
 
 const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   const [mostrarMenu, setMostrarMenu] = useState(false)
@@ -65,8 +66,7 @@ const SolicitudCard = ({ solicitud, usuario, onUpdate, servicios = [] }) => {
   }
   const formatearFechaProgramada = (fecha) => {
     if (!fecha) return ''
-    const d = new Date(fecha)
-    return d.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
+    return formatearFechaProgramadaDisplay(fecha)
   }
 
   const handleCambiarEstado = async (nuevoEstado) => {

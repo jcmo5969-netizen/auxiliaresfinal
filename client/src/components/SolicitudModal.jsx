@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, FileText, Bed } from 'lucide-react'
+import { fechaProgramadaParaEnviar } from '../utils/fechaHospital'
 import PlantillasModal from './PlantillasModal'
 import CamaModal from './CamaModal'
 
@@ -47,8 +48,8 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     const { fechaProgramada, ...rest } = formData
     const payload = { ...rest }
     if (fechaProgramada && typeof fechaProgramada === 'string') {
-      const d = new Date(fechaProgramada)
-      if (!isNaN(d.getTime())) payload.fechaProgramada = d.toISOString()
+      const iso = fechaProgramadaParaEnviar(fechaProgramada)
+      if (iso) payload.fechaProgramada = iso
     }
     return payload
   }

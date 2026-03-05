@@ -3,6 +3,7 @@ import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { X, FileText, History, MessageSquare, User, Clock, ArrowRight, Send, Calendar, Bed } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { formatearFechaProgramadaDisplay } from '../utils/fechaHospital'
 
 const ZONA = 'America/Santiago'
 
@@ -150,7 +151,7 @@ const VentanaInformacionSolicitud = ({ solicitud, onClose, onComentarioEnviado }
               {(solicitud.fechaProgramada || solicitud.createdAt) && (
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
                   <Calendar className="w-4 h-4" />
-                  <span>{solicitud.fechaProgramada ? `Programada: ${new Date(solicitud.fechaProgramada).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}` : formatearFecha(solicitud.createdAt)}</span>
+                  <span>{solicitud.fechaProgramada ? `Programada: ${formatearFechaProgramadaDisplay(solicitud.fechaProgramada)}` : formatearFecha(solicitud.createdAt)}</span>
                 </div>
               )}
               {solicitud.cama && (

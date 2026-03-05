@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext'
 // Firebase se carga solo cuando hace falta (evita errores en iPhone/Safari al cargar la página)
 import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
 import { getItem, setItem, removeItem } from '../utils/storage'
+import { formatearFechaProgramadaDisplay, formatearHoraProgramadaDisplay } from '../utils/fechaHospital'
 import CalendarioAuxiliar from '../components/CalendarioAuxiliar'
 
 // ErrorBoundary interno: si falla la vista tras el login (p. ej. en iPhone), mostrar solo "Cerrar sesión"
@@ -884,7 +885,7 @@ const AuxiliarAcceso = () => {
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4 text-primary-600" />
                             <span className="text-primary-600 font-semibold">
-                              Programada: {new Date(solicitud.fechaProgramada).toLocaleString('es-ES', { timeZone: 'America/Santiago', dateStyle: 'short', timeStyle: 'short' })}
+                              Programada: {formatearFechaProgramadaDisplay(solicitud.fechaProgramada)}
                             </span>
                           </div>
                         ) : solicitud.createdAt && (
@@ -902,7 +903,7 @@ const AuxiliarAcceso = () => {
                     if (!puede && liberarA) {
                       return (
                         <div className="w-full flex flex-col items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-                          <span className="text-sm font-medium">Disponible a las {liberarA.toLocaleTimeString('es-ES', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-sm font-medium">Disponible a las {formatearHoraProgramadaDisplay(liberarA)}</span>
                           <span className="text-xs">(15 min antes del traslado)</span>
                         </div>
                       )
