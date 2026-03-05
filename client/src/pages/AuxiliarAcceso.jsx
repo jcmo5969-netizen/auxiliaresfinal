@@ -10,7 +10,7 @@ import { useTheme } from '../context/ThemeContext'
 // Firebase se carga solo cuando hace falta (evita errores en iPhone/Safari al cargar la página)
 import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
 import { getItem, setItem, removeItem } from '../utils/storage'
-import { formatearFechaProgramadaDisplay, formatearHoraProgramadaDisplay } from '../utils/fechaHospital'
+import { formatearFechaProgramadaDisplay } from '../utils/fechaHospital'
 import CalendarioAuxiliar from '../components/CalendarioAuxiliar'
 
 // ErrorBoundary interno: si falla la vista tras el login (p. ej. en iPhone), mostrar solo "Cerrar sesión"
@@ -379,16 +379,7 @@ const AuxiliarAcceso = () => {
     }
   }
 
-  // Para solicitudes programadas: se pueden tomar desde 15 min antes
-  const puedeTomarProgramada = (solicitud) => {
-    if (!solicitud?.fechaProgramada) return { puede: true, liberarA: null }
-    const liberar = new Date(solicitud.fechaProgramada)
-    liberar.setMinutes(liberar.getMinutes() - 15)
-    const ahora = new Date()
-    return { puede: ahora >= liberar, liberarA: liberar }
-  }
-
-  const handleDevolver = async (solicitudId) => {
+    const handleDevolver = async (solicitudId) => {
     try {
       if (!solicitudId) return
       await api.put(`/api/solicitudes/${solicitudId}/desasignar`)
@@ -898,26 +889,13 @@ const AuxiliarAcceso = () => {
                     </div>
                   </div>
 
-                  {(() => {
-                    const { puede, liberarA } = puedeTomarProgramada(solicitud)
-                    if (!puede && liberarA) {
-                      return (
-                        <div className="w-full flex flex-col items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-                          <span className="text-sm font-medium">Disponible a las {formatearHoraProgramadaDisplay(liberarA)}</span>
-                          <span className="text-xs">(15 min antes del traslado)</span>
-                        </div>
-                      )
-                    }
-                    return (
-                      <button
-                        onClick={() => handleAsignar(solicitud.id || solicitud._id)}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
-                      >
-                        <CheckCircle className="w-5 h-5" />
-                        Asignarme a esta solicitud
-                      </button>
-                    )
-                  })()}
+                  <button
+                    onClick={() => handleAsignar(solicitud.id || solicitud._id)}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    Asignarme a esta solicitud
+                  </button>
                 </div>
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Calendar, ChevronLeft, ChevronRight, MapPin, Clock, User, CheckCircle, RotateCcw } from 'lucide-react'
-import { formatearFechaProgramadaDisplay, formatearHoraProgramadaDisplay } from '../utils/fechaHospital'
+import { formatearFechaProgramadaDisplay } from '../utils/fechaHospital'
 
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -14,12 +14,6 @@ const CalendarioAuxiliar = ({
   getTipoIcon,
   getPrioridadColor
 }) => {
-  const puedeTomarProgramada = (s) => {
-    if (!s?.fechaProgramada) return { puede: true, liberarA: null }
-    const liberar = new Date(s.fechaProgramada)
-    liberar.setMinutes(liberar.getMinutes() - 15)
-    return { puede: new Date() >= liberar, liberarA: liberar }
-  }
   const [fechaActual, setFechaActual] = useState(new Date())
   const [diaSeleccionado, setDiaSeleccionado] = useState(null)
 
@@ -221,25 +215,15 @@ const CalendarioAuxiliar = ({
                   )}
                   {puedeAsignarEnDiaSeleccionado && (
                     <div className="flex flex-wrap gap-2">
-                      {esPendiente && onAsignar && (() => {
-                        const { puede, liberarA } = puedeTomarProgramada(solicitud)
-                        if (!puede && liberarA) {
-                          return (
-                            <div className="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-center text-sm">
-                              Disponible a las {formatearHoraProgramadaDisplay(liberarA)}
-                            </div>
-                          )
-                        }
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => onAsignar(id)}
-                            className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition"
-                          >
-                            Asignarme
-                          </button>
-                        )
-                      })()}
+                      {esPendiente && onAsignar && (
+                        <button
+                          type="button"
+                          onClick={() => onAsignar(id)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition"
+                        >
+                          Asignarme
+                        </button>
+                      )}
                       {esMiaEnProceso && (
                         <>
                           {onCompletar && (

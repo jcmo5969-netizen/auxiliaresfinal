@@ -303,17 +303,6 @@ router.put('/:id/asignar', auth, async (req, res) => {
       return res.status(400).json({ mensaje: 'La solicitud ya está asignada, en proceso o completada' });
     }
 
-    // Si tiene fecha/hora programada, solo se puede tomar desde 15 minutos antes
-    if (solicitud.fechaProgramada) {
-      const ahora = new Date();
-      const liberar = new Date(solicitud.fechaProgramada);
-      liberar.setMinutes(liberar.getMinutes() - 15);
-      if (ahora < liberar) {
-        const msg = `Esta solicitud programada estará disponible a las ${liberar.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} (15 min antes del traslado).`;
-        return res.status(400).json({ mensaje: msg });
-      }
-    }
-
     // Si es auxiliar, solo puede asignarse a sí mismo
     const auxiliarId = req.usuario.rol === 'auxiliar' 
       ? req.usuario.id 

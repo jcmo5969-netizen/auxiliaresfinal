@@ -309,7 +309,7 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
               onChange={(e) => setFormData(prev => ({ ...prev, fechaProgramada: e.target.value || '' }))}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Los auxiliares podrán tomarla desde 15 min antes.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Los auxiliares podrán tomarla en cualquier momento.</p>
           </div>
 
           <div className="flex gap-3 pt-4">

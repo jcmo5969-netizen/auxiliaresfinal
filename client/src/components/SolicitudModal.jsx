@@ -353,7 +353,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               placeholder="Fecha y hora del traslado"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Los auxiliares podrán tomar esta solicitud desde 15 minutos antes de la hora indicada (ej. traslado 11:30 → disponible a las 11:15).
+              La solicitud quedará programada para esa fecha y hora. Los auxiliares podrán tomarla en cualquier momento.
             </p>
           </div>
           </div>
