@@ -41,7 +41,7 @@ function mostrarNotificacionEnSW(payload) {
     ? 'Se necesita auxiliar: ' + (payload.data.tipoRequerimiento || '')
     : 'Tienes una nueva solicitud pendiente';
   var tag = (payload.data && payload.data.solicitudId) ? ('solicitud-' + payload.data.solicitudId) : ('solicitud-' + Date.now());
-  // requireInteraction: true ayuda a que la notificación se muestre en pantalla de bloqueo en más dispositivos
+  // requireInteraction + vibrate fuerte para intentar mostrar en pantalla de bloqueo
   var isUrgent = payload.data && payload.data.prioridad === 'urgente';
   var options = {
     body: body,
@@ -51,7 +51,7 @@ function mostrarNotificacionEnSW(payload) {
     data: payload.data || {},
     requireInteraction: true,
     silent: false,
-    vibrate: isUrgent ? [200, 100, 200, 100, 200] : [200, 100, 200],
+    vibrate: isUrgent ? [500, 200, 500, 200, 500] : [300, 150, 300, 150, 300],
     renotify: true,
     timestamp: Date.now()
   };

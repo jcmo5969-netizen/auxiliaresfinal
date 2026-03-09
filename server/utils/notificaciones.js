@@ -83,11 +83,14 @@ const enviarNotificacionPush = async (solicitud) => {
       data,
       android: {
         priority: 'high',
+        ttl: 86400 * 1000,
         notification: {
           sound: 'default',
           channelId: 'solicitudes_channel',
           defaultVibrateTimings: true,
-          priority: 'max'
+          priority: 'max',
+          defaultSound: true,
+          visibility: 'public'
         }
       },
       apns: {
@@ -95,13 +98,19 @@ const enviarNotificacionPush = async (solicitud) => {
           aps: {
             sound: 'default',
             badge: 1,
-            'interruption-level': 'time-sensitive'
+            'interruption-level': 'time-sensitive',
+            'content-available': 1
           }
         }
       },
       webpush: {
-        headers: { Urgency: 'high', TTL: '86400' },
-        notification: { title, body },
+        headers: { Urgency: 'high', TTL: '86400', Priority: 'high' },
+        notification: {
+          title,
+          body,
+          requireInteraction: true,
+          tag: `solicitud-${data.solicitudId}`
+        },
         fcm_options: { link: '/' }
       }
     };
@@ -173,7 +182,12 @@ const enviarNotificacionNuevoComentario = async (solicitudId, autorNombre, conte
       },
       android: {
         priority: 'high',
-        notification: { sound: 'default', channelId: 'solicitudes_channel' }
+        notification: {
+          sound: 'default',
+          channelId: 'solicitudes_channel',
+          priority: 'max',
+          visibility: 'public'
+        }
       },
       apns: {
         payload: {
@@ -183,6 +197,10 @@ const enviarNotificacionNuevoComentario = async (solicitudId, autorNombre, conte
             'interruption-level': 'time-sensitive'
           }
         }
+      },
+      webpush: {
+        headers: { Urgency: 'high', TTL: '86400', Priority: 'high' },
+        notification: { title: titulo, body: cuerpo, requireInteraction: true }
       }
     };
 

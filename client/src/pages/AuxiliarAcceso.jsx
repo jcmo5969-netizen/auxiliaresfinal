@@ -654,10 +654,11 @@ const AuxiliarAcceso = () => {
                 <li><strong>Ajustes del móvil</strong> → Aplicaciones → <strong>Chrome</strong> (o la app &quot;Auxiliares&quot; si la instalaste).</li>
                 <li>Entra en <strong>Notificaciones</strong> y asegúrate de que estén activadas.</li>
                 <li>Activa <strong>&quot;Mostrar en pantalla de bloqueo&quot;</strong> (o &quot;En pantalla de bloqueo&quot;). En algunos móviles: Ajustes → Notificaciones → Notificaciones en pantalla de bloqueo → activar para Chrome o para esta app.</li>
+                <li><strong>Importancia alta</strong>: dentro de Notificaciones de Chrome (o de la app), toca el canal o &quot;Comportamiento&quot; y elige <strong>Urgente</strong> o <strong>Alta</strong> (y &quot;Mostrar en pantalla de bloqueo&quot; + sonido). Si no hay opción de canal, activa &quot;Sonido&quot; y &quot;Pantalla de bloqueo&quot;.</li>
               </ol>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Si ya lo tienes activado y no ves la notificación al bloquear, revisa que no tengas activado &quot;No molestar&quot; o modo concentración.
+              Si ya lo tienes activado y no ves la notificación al bloquear, revisa que no tengas activado &quot;No molestar&quot; o modo concentración. En Android, las PWA a veces reciben la notificación con retraso cuando el móvil lleva mucho tiempo en reposo.
             </p>
             <button type="button" onClick={() => setMostrarAyudaPantallaBloqueo(false)} className="w-full py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
               Entendido

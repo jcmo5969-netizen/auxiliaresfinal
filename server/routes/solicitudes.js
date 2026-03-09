@@ -35,6 +35,7 @@ router.get('/', auth, async (req, res) => {
 
     const solicitudes = await Solicitud.findAll({
       where,
+      distinct: true,
       include: [
         { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
         { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
