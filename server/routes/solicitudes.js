@@ -33,7 +33,7 @@ router.get('/', auth, async (req, res) => {
       }
     }
 
-    const solicitudes = await Solicitud.findAll({
+    const rawList = await Solicitud.findAll({
       where,
       distinct: true,
       include: [
@@ -43,6 +43,15 @@ router.get('/', auth, async (req, res) => {
         { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
       ],
       order: [['createdAt', 'DESC']]
+    });
+
+    // Evitar duplicados por el JOIN con etiquetas (belongsToMany)
+    const seen = new Set();
+    const solicitudes = rawList.filter((s) => {
+      const id = s.id;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
     });
 
     res.json(solicitudes);
