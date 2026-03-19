@@ -131,7 +131,8 @@ const Dashboard = () => {
         servicios: resultados[1].data.length,
         personal: resultados[2]?.data?.length || 0
       })
-      setSolicitudes(resultados[0].data || [])
+      const rawSol = resultados[0].data || []
+      setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
       setServicios(resultados[1].data || [])
       if (usuario?.rol === 'administrador' && resultados[2]) {
         setPersonal(resultados[2].data || [])
@@ -166,10 +167,12 @@ const Dashboard = () => {
       await api.post('/api/solicitudes', datos)
       toast.success('Solicitud creada exitosamente')
       setMostrarModal(false)
-      // Recargar datos inmediatamente
+      setDatosPlantillaParaNueva(null)
       await cargarDatos()
     } catch (error) {
-      toast.error(error.response?.data?.mensaje || 'Error creando solicitud')
+      const msg = error.response?.data?.mensaje || 'Error creando solicitud'
+      toast.error(msg)
+      throw error
     }
   }
 

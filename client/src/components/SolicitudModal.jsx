@@ -21,6 +21,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
   })
   const [mostrarPlantillas, setMostrarPlantillas] = useState(false)
   const [mostrarCamaModal, setMostrarCamaModal] = useState(false)
+  const [enviando, setEnviando] = useState(false)
 
   // Actualizar servicio si cambia servicioPredeterminado
   useEffect(() => {
@@ -54,14 +55,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     return payload
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const payload = buildPayload()
-    if (onSolicitudCreada) {
-      await onSolicitudCreada(payload)
-    } else if (onSubmit) {
-      onSubmit(payload)
-    }
+  const resetForm = () => {
     setFormData({
       servicio: servicioPredeterminado || '',
       tipoRequerimiento: 'alta',
@@ -76,6 +70,25 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
       precaucionesEstandar: false,
       tipoPrecaucion: ''
     })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (enviando) return
+    const payload = buildPayload()
+    setEnviando(true)
+    try {
+      if (onSolicitudCreada) {
+        await onSolicitudCreada(payload)
+      } else if (onSubmit) {
+        await Promise.resolve(onSubmit(payload))
+      }
+      resetForm()
+    } catch {
+      // El padre muestra toast; no limpiar el formulario si falló
+    } finally {
+      setEnviando(false)
+    }
   }
 
   const handlePrioridadInmediato = (checked) => {
@@ -123,7 +136,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -392,9 +405,10 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+              disabled={enviando}
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Crear Solicitud
+              {enviando ? 'Creando…' : 'Crear Solicitud'}
             </button>
           </div>
         </form>

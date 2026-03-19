@@ -9,6 +9,23 @@ const { Op } = require('sequelize');
 
 const router = express.Router();
 
+/** Texto comparable para detectar solicitudes duplicadas por doble envío */
+function normalizarDuplicado(t) {
+  return String(t ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+function mismoMinutoProgramada(a, b) {
+  if (a == null && b == null) return true;
+  if (a == null || b == null) return false;
+  const ta = a instanceof Date ? a.getTime() : new Date(a).getTime();
+  const tb = b instanceof Date ? b.getTime() : new Date(b).getTime();
+  if (Number.isNaN(ta) || Number.isNaN(tb)) return false;
+  return Math.floor(ta / 60000) === Math.floor(tb / 60000);
+}
+
 // @route   GET /api/solicitudes
 // @desc    Obtener todas las solicitudes
 // @access  Private
@@ -225,6 +242,35 @@ router.post('/', [
     }
     datosSolicitud.precaucionesEstandar = Boolean(req.body.precaucionesEstandar);
     datosSolicitud.tipoPrecaucion = req.body.tipoPrecaucion && String(req.body.tipoPrecaucion).trim() ? String(req.body.tipoPrecaucion).trim() : null;
+
+    // Evitar duplicados por doble clic / doble envío (misma persona, mismos datos, pocos segundos)
+    const ventanaSegundos = 120;
+    const desde = new Date(Date.now() - ventanaSegundos * 1000);
+    const recientes = await Solicitud.findAll({
+      where: {
+        solicitadoPorId: req.usuario.id,
+        servicioId,
+        tipoRequerimiento: datosSolicitud.tipoRequerimiento,
+        estado: { [Op.in]: ['pendiente', 'asignada', 'en_proceso'] },
+        createdAt: { [Op.gte]: desde }
+      },
+      order: [['createdAt', 'DESC']],
+      limit: 20
+    });
+    const descN = normalizarDuplicado(datosSolicitud.descripcion);
+    const camaN = normalizarDuplicado(datosSolicitud.cama);
+    const duplicado = recientes.find((s) => {
+      if (normalizarDuplicado(s.descripcion) !== descN) return false;
+      if (normalizarDuplicado(s.cama) !== camaN) return false;
+      if ((s.prioridad || '') !== (datosSolicitud.prioridad || '')) return false;
+      return mismoMinutoProgramada(s.fechaProgramada, datosSolicitud.fechaProgramada);
+    });
+    if (duplicado) {
+      return res.status(409).json({
+        mensaje: 'Ya existe una solicitud igual creada hace unos momentos. Revisa el listado; no hace falta volver a enviarla.',
+        solicitudId: duplicado.id
+      });
+    }
 
     const crearSolicitudConRetry = async () => {
       try {

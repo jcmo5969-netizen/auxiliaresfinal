@@ -72,7 +72,8 @@ const EnfermeriaDashboard = () => {
         api.get('/api/servicios')
       ])
       
-      setSolicitudes(resSolicitudes.data || [])
+      const rawSol = resSolicitudes.data || []
+      setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
       setServicios(resServicios.data || [])
     } catch (error) {
       console.error('Error cargando datos:', error)
@@ -90,7 +91,6 @@ const EnfermeriaDashboard = () => {
 
   const handleNuevaSolicitud = async (datos) => {
     try {
-      // Asegurar que la solicitud sea del servicio del usuario
       const datosConServicio = {
         ...datos,
         servicioId: usuario.servicioId || datos.servicioId
@@ -100,7 +100,9 @@ const EnfermeriaDashboard = () => {
       setMostrarModal(false)
       await cargarDatos()
     } catch (error) {
-      toast.error(error.response?.data?.mensaje || 'Error creando solicitud')
+      const msg = error.response?.data?.mensaje || 'Error creando solicitud'
+      toast.error(msg)
+      throw error
     }
   }
 

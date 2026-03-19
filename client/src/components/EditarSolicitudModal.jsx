@@ -92,6 +92,7 @@ const EditarSolicitudModal = ({ solicitud, servicios = [], onClose, onGuardado }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (guardando) return
     const id = solicitud.id ?? solicitud._id
     if (!id) return
     setGuardando(true)
