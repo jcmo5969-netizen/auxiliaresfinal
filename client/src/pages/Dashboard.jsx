@@ -51,7 +51,7 @@ const Dashboard = () => {
   const [mostrarWidgetConfig, setMostrarWidgetConfig] = useState(false)
   const [widgetsConfig, setWidgetsConfig] = useState([])
   /** Intervalo de auto-refresh: sube si el API falla (evita spam de 500 cada 3s) */
-  const [pollIntervalMs, setPollIntervalMs] = useState(3000)
+  const [pollIntervalMs, setPollIntervalMs] = useState(15000)
   const toastCargaErrorMostrado = useRef(false)
 
   // Verificar que el usuario sea administrador
@@ -120,7 +120,7 @@ const Dashboard = () => {
 
     if (ok > 0) {
       toastCargaErrorMostrado.current = false
-      setPollIntervalMs(3000)
+      setPollIntervalMs(15000)
       if (import.meta.env.DEV) {
         if (fail === 0) {
           console.log('📊 Datos cargados OK (todos los endpoints)')

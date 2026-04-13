@@ -70,6 +70,25 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Fuerza el cierre y re-apertura del pool de conexiones (útil tras recovery del DB)
+// Protegido por clave simple para no exponerlo públicamente
+app.post('/api/reconnect', async (req, res) => {
+  const clave = req.headers['x-reconnect-key'] || req.query.key;
+  if (clave !== (process.env.RECONNECT_KEY || 'render-reconnect-2024')) {
+    return res.status(403).json({ ok: false, mensaje: 'No autorizado' });
+  }
+  try {
+    await sequelize.connectionManager.pool.drain();
+    await sequelize.connectionManager.pool.clear();
+    await sequelize.authenticate();
+    console.log('🔄 Pool de conexiones reiniciado exitosamente');
+    res.json({ ok: true, mensaje: 'Pool reconectado' });
+  } catch (e) {
+    console.error('Error al reconectar pool:', e.message);
+    res.status(503).json({ ok: false, mensaje: e.message });
+  }
+});
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/servicios', require('./routes/servicios'));

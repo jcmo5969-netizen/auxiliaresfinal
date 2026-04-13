@@ -48,9 +48,10 @@ if (process.env.DATABASE_URL) {
     dialectOptions: sslOpts,
     pool: {
       max: 10,
-      min: 0,       // 0 = no conexiones persistentes; reconecta solo cuando se necesita
+      min: 0,
       acquire: 30000,
-      idle: 10000
+      idle: 10000,
+      evict: 5000   // cada 5 s elimina conexiones rotas del pool
     }
   });
 } else {
@@ -79,7 +80,8 @@ if (process.env.DATABASE_URL) {
         max: 10,
         min: 0,
         acquire: 30000,
-        idle: 10000
+        idle: 10000,
+        evict: 5000
       }
     }
   );
