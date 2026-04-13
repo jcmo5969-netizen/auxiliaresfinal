@@ -27,6 +27,7 @@ import WidgetConfig from '../components/WidgetConfig'
 import EstadisticasTiempoReal from '../components/EstadisticasTiempoReal'
 import Logo from '../components/Logo'
 import RelojVentana from '../components/RelojVentana'
+import { EtiquetasProvider } from '../context/EtiquetasContext'
 
 const Dashboard = () => {
   const { usuario, logout } = useAuth()
@@ -201,6 +202,7 @@ const Dashboard = () => {
   }
 
   return (
+    <EtiquetasProvider>
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Panel de Alertas */}
       <AlertasPanel solicitudes={solicitudes} />
@@ -598,6 +600,7 @@ const Dashboard = () => {
       )}
 
     </div>
+    </EtiquetasProvider>
   )
 }
 

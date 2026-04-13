@@ -1,27 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
-import { Tag, Plus, Edit, Trash2, X } from 'lucide-react'
+import { Tag, Plus, X } from 'lucide-react'
+import { useEtiquetasCatalogo } from '../context/EtiquetasContext'
 
 const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChange }) => {
-  const [etiquetas, setEtiquetas] = useState([])
+  const catalogo = useEtiquetasCatalogo()
+  const etiquetas = catalogo?.etiquetas ?? []
+  const refreshCatalogo = catalogo?.refreshEtiquetas
+
   const [mostrarForm, setMostrarForm] = useState(false)
   const [formData, setFormData] = useState({ nombre: '', color: '#3B82F6' })
-  const [cargando, setCargando] = useState(true)
-
-  useEffect(() => {
-    cargarEtiquetas()
-  }, [])
 
   const cargarEtiquetas = async () => {
-    try {
-      const res = await api.get('/api/etiquetas')
-      setEtiquetas(res.data)
-    } catch (error) {
-      toast.error('Error cargando etiquetas')
-    } finally {
-      setCargando(false)
-    }
+    if (refreshCatalogo) await refreshCatalogo()
   }
 
   const handleCrearEtiqueta = async (e) => {
@@ -31,7 +23,7 @@ const EtiquetasManager = ({ solicitudId, etiquetasActuales = [], onEtiquetasChan
       toast.success('Etiqueta creada')
       setFormData({ nombre: '', color: '#3B82F6' })
       setMostrarForm(false)
-      cargarEtiquetas()
+      await cargarEtiquetas()
     } catch (error) {
       toast.error(error.response?.data?.mensaje || 'Error creando etiqueta')
     }

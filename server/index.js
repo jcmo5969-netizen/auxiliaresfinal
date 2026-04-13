@@ -11,6 +11,12 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const app = express();
 
 // Middleware
+// Normalizar origen (CLIENT_URL a veces trae barra final y falla la comparación)
+function normalizeOrigin(o) {
+  if (!o || typeof o !== 'string') return o;
+  return o.trim().replace(/\/$/, '');
+}
+
 // Configurar CORS para producción - aceptar múltiples orígenes
 const allowedOrigins = [
   process.env.CLIENT_URL,
@@ -18,15 +24,20 @@ const allowedOrigins = [
   'https://sistema-auxiliares.com',
   'http://localhost:5173',
   'http://localhost:3000'
-].filter(Boolean); // Eliminar valores undefined/null
+]
+  .filter(Boolean)
+  .map(normalizeOrigin);
 
 const corsOptions = {
   origin: function (origin, callback) {
     // Permitir requests sin origen (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    
-    // Verificar si el origen está en la lista permitida
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+
+    const normalized = normalizeOrigin(origin);
+    const permitido =
+      allowedOrigins.includes(normalized) || process.env.NODE_ENV === 'development';
+
+    if (permitido) {
       callback(null, true);
     } else {
       console.warn('⚠️ CORS bloqueado para origen:', origin);
@@ -39,6 +50,21 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Diagnóstico (sin auth): abre en el navegador o curl para ver si PostgreSQL responde
+app.get('/api/health', async (req, res) => {
+  try {
+    await sequelize.authenticate();
+    res.json({ ok: true, db: true });
+  } catch (e) {
+    console.error('GET /api/health — DB no disponible:', e.message);
+    res.status(503).json({
+      ok: false,
+      db: false,
+      mensaje: e.message || 'No se pudo conectar a la base de datos'
+    });
+  }
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
