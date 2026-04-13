@@ -122,6 +122,11 @@ const startServer = async () => {
     await sequelize.sync(syncOptions);
     console.log('✅ Modelos sincronizados (tablas creadas/verificadas)');
 
+    // Agregar columnas que puedan faltar en tablas ya existentes (idempotente).
+    // Cubre el caso de despliegues donde sync() sin alter:true no agrega columnas nuevas.
+    const ensureSchema = require('./utils/ensureSchema');
+    await ensureSchema(sequelize);
+
     const initializeAdmin = require('./utils/initializeAdmin');
     await initializeAdmin();
 
