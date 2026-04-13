@@ -89,7 +89,9 @@ const Dashboard = () => {
       setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
     } else {
       fail++
-      console.error('❌ solicitudes:', r0.reason?.message || r0.reason)
+      if (import.meta.env.DEV) {
+        console.error('❌ solicitudes:', r0.reason?.message || r0.reason)
+      }
     }
 
     const r1 = resultados[1]
@@ -98,7 +100,9 @@ const Dashboard = () => {
       setServicios(r1.value.data || [])
     } else {
       fail++
-      console.error('❌ servicios:', r1.reason?.message || r1.reason)
+      if (import.meta.env.DEV) {
+        console.error('❌ servicios:', r1.reason?.message || r1.reason)
+      }
     }
 
     if (usuario?.rol === 'administrador' && resultados[2]) {
@@ -108,17 +112,21 @@ const Dashboard = () => {
         setPersonal(r2.value.data || [])
       } else {
         fail++
-        console.error('❌ auxiliares:', r2.reason?.message || r2.reason)
+        if (import.meta.env.DEV) {
+          console.error('❌ auxiliares:', r2.reason?.message || r2.reason)
+        }
       }
     }
 
     if (ok > 0) {
       toastCargaErrorMostrado.current = false
       setPollIntervalMs(3000)
-      if (fail === 0) {
-        console.log('📊 Datos cargados OK (todos los endpoints)')
-      } else {
-        console.warn('⚠️ Carga parcial: se mantiene lo que respondió bien')
+      if (import.meta.env.DEV) {
+        if (fail === 0) {
+          console.log('📊 Datos cargados OK (todos los endpoints)')
+        } else {
+          console.warn('⚠️ Carga parcial: se mantiene lo que respondió bien')
+        }
       }
     }
     if (fail > 0 && ok === 0) {
@@ -161,7 +169,9 @@ const Dashboard = () => {
       default:
         filtradas = solicitudes
     }
-    console.log(`📑 Pestaña ${pestañaActiva}: ${filtradas.length} solicitudes de ${solicitudes.length} totales`)
+    if (import.meta.env.DEV) {
+      console.log(`📑 Pestaña ${pestañaActiva}: ${filtradas.length} solicitudes de ${solicitudes.length} totales`)
+    }
     setSolicitudesFiltradas(filtradas)
   }, [solicitudes, pestañaActiva])
 

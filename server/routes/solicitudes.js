@@ -61,26 +61,42 @@ router.get('/', auth, async (req, res) => {
     try {
       rawList = await Solicitud.findAll({
         where,
-        distinct: true,
         include: [
           ...includeBase,
           { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
         ],
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        subQuery: false
       });
     } catch (err) {
       console.error(
         'GET /api/solicitudes: fallo con etiquetas, reintentando sin etiquetas:',
         err.parent?.message || err.message
       );
-      rawList = await Solicitud.findAll({
-        where,
-        include: includeBase,
-        order: [['createdAt', 'DESC']]
-      });
-      rawList.forEach((s) => {
-        if (!s.etiquetas) s.setDataValue('etiquetas', []);
-      });
+      try {
+        rawList = await Solicitud.findAll({
+          where,
+          include: includeBase,
+          order: [['createdAt', 'DESC']],
+          subQuery: false
+        });
+        rawList.forEach((s) => {
+          if (!s.etiquetas) s.setDataValue('etiquetas', []);
+        });
+      } catch (err2) {
+        console.error(
+          'GET /api/solicitudes: fallo con joins, listado mínimo:',
+          err2.parent?.message || err2.message
+        );
+        rawList = await Solicitud.findAll({
+          where,
+          order: [['createdAt', 'DESC']],
+          limit: 10000
+        });
+        rawList.forEach((s) => {
+          s.setDataValue('etiquetas', []);
+        });
+      }
     }
 
     // Evitar duplicados por el JOIN con etiquetas (belongsToMany)
