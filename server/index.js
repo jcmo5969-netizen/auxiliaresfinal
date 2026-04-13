@@ -19,14 +19,18 @@ function normalizeOrigin(o) {
 
 // Configurar CORS para producción - aceptar múltiples orígenes
 const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'https://auxiliaresfrontend.onrender.com',
-  'https://sistema-auxiliares.com',
-  'http://localhost:5173',
-  'http://localhost:3000'
-]
-  .filter(Boolean)
-  .map(normalizeOrigin);
+  ...new Set(
+    [
+      process.env.CLIENT_URL,
+      'https://auxiliaresfrontend.onrender.com',
+      'https://sistema-auxiliares.com',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ]
+      .filter(Boolean)
+      .map(normalizeOrigin)
+  )
+];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -117,8 +121,12 @@ const connectDatabase = async () => {
         console.error('   Error de autenticación. Verifica usuario y contraseña.');
         console.error('   Si usas DATABASE_URL, verifica que la contraseña en la URL sea correcta.');
         console.error('   Si usas variables individuales, verifica DB_USER y DB_PASSWORD.');
+      } else if (/terminated unexpectedly|ECONNRESET|ETIMEDOUT/i.test(String(err.message))) {
+        console.error('   Conexión cortada. En Render: usa la Internal Database URL del mismo equipo que el Web Service.');
+        console.error('   Si el host es dpg-…-a (interno), no fuerces SSL: ya está desactivado por defecto, o prueba DATABASE_SSL=false.');
+        console.error('   Si usas URL externa (*.postgres.render.com), puedes probar DATABASE_SSL=true en variables de entorno.');
       } else {
-        console.error('   Verifica que PostgreSQL esté corriendo');
+        console.error('   Verifica que PostgreSQL esté corriendo y que DATABASE_URL sea la copiada del panel de Render.');
       }
     }
     
