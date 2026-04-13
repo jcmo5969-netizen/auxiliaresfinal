@@ -18,8 +18,7 @@ router.get('/', auth, esAdministrador, async (req, res) => {
     });
     res.json(personal);
   } catch (error) {
-    console.error('Error en GET /api/auxiliares:', error);
-    console.error('Stack:', error.stack);
+    console.error('GET /api/auxiliares:', error.parent?.message || error.message);
     res.status(500).json({ mensaje: 'Error del servidor', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 });

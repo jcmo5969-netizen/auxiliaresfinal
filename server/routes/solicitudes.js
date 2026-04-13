@@ -50,17 +50,37 @@ router.get('/', auth, async (req, res) => {
       }
     }
 
-    const rawList = await Solicitud.findAll({
-      where,
-      distinct: true,
-      include: [
-        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
-        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
-        { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false },
-        { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
+    const includeBase = [
+      { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
+      { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
+      { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false }
+    ];
+
+    let rawList;
+    try {
+      rawList = await Solicitud.findAll({
+        where,
+        distinct: true,
+        include: [
+          ...includeBase,
+          { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+    } catch (err) {
+      console.error(
+        'GET /api/solicitudes: fallo con etiquetas, reintentando sin etiquetas:',
+        err.parent?.message || err.message
+      );
+      rawList = await Solicitud.findAll({
+        where,
+        include: includeBase,
+        order: [['createdAt', 'DESC']]
+      });
+      rawList.forEach((s) => {
+        if (!s.etiquetas) s.setDataValue('etiquetas', []);
+      });
+    }
 
     // Evitar duplicados por el JOIN con etiquetas (belongsToMany)
     const seen = new Set();
@@ -73,7 +93,7 @@ router.get('/', auth, async (req, res) => {
 
     res.json(solicitudes);
   } catch (error) {
-    console.error(error);
+    console.error('GET /api/solicitudes:', error.parent?.message || error.message);
     res.status(500).json({ mensaje: 'Error del servidor' });
   }
 });

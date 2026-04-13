@@ -33,7 +33,8 @@ const auth = async (req, res, next) => {
     req.usuario = usuario;
     next();
   } catch (error) {
-    console.error('Error en middleware auth:', error);
+    const sqlMsg = error.parent?.message || error.original?.message;
+    console.error('Error en middleware auth:', error.message, sqlMsg ? `| SQL: ${sqlMsg}` : '');
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ mensaje: 'Token no válido' });
     }

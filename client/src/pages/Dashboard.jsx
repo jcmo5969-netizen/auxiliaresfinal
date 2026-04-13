@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useNavigate } from 'react-router-dom'
@@ -50,6 +50,9 @@ const Dashboard = () => {
   const [mostrarCanceladasModal, setMostrarCanceladasModal] = useState(false)
   const [mostrarWidgetConfig, setMostrarWidgetConfig] = useState(false)
   const [widgetsConfig, setWidgetsConfig] = useState([])
+  /** Intervalo de auto-refresh: sube si el API falla (evita spam de 500 cada 3s) */
+  const [pollIntervalMs, setPollIntervalMs] = useState(3000)
+  const toastCargaErrorMostrado = useRef(false)
 
   // Verificar que el usuario sea administrador
   useEffect(() => {
@@ -69,21 +72,58 @@ const Dashboard = () => {
     }
   }, [usuario, navigate])
 
+  const cargarDatos = useCallback(async () => {
+    try {
+      const promesas = [
+        api.get('/api/solicitudes'),
+        api.get('/api/servicios')
+      ]
+
+      if (usuario?.rol === 'administrador') {
+        promesas.push(api.get('/api/auxiliares'))
+      }
+
+      const resultados = await Promise.all(promesas)
+      console.log('📊 Datos cargados:', {
+        solicitudes: resultados[0].data.length,
+        servicios: resultados[1].data.length,
+        personal: resultados[2]?.data?.length || 0
+      })
+      const rawSol = resultados[0].data || []
+      setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
+      setServicios(resultados[1].data || [])
+      if (usuario?.rol === 'administrador' && resultados[2]) {
+        setPersonal(resultados[2].data || [])
+      }
+      toastCargaErrorMostrado.current = false
+      setPollIntervalMs(3000)
+    } catch (error) {
+      console.error('❌ Error cargando datos:', error)
+      if (!toastCargaErrorMostrado.current) {
+        toast.error(
+          'Error cargando datos: ' + (error.response?.data?.mensaje || error.message)
+        )
+        toastCargaErrorMostrado.current = true
+      }
+      setPollIntervalMs((prev) => Math.min(60000, Math.max(10000, prev * 2)))
+    } finally {
+      setCargando(false)
+    }
+  }, [usuario])
+
   useEffect(() => {
     if (!usuario || usuario.rol !== 'administrador') return
-    
+
     cargarDatos()
-    
-    // Configurar actualización automática cada 3 segundos
-    // Solo actualizar si la pestaña está visible
+
     const intervalo = setInterval(() => {
       if (!document.hidden) {
         cargarDatos()
       }
-    }, 3000) // Actualizar cada 3 segundos para actualizaciones casi instantáneas
-    
+    }, pollIntervalMs)
+
     return () => clearInterval(intervalo)
-  }, [usuario])
+  }, [usuario, pollIntervalMs, cargarDatos])
 
   useEffect(() => {
     // Filtrar solicitudes según la pestaña activa
@@ -113,38 +153,6 @@ const Dashboard = () => {
     window.addEventListener('cambiarPestaña', handleCambiarPestaña)
     return () => window.removeEventListener('cambiarPestaña', handleCambiarPestaña)
   }, [])
-
-  const cargarDatos = async () => {
-    try {
-      const promesas = [
-        api.get('/api/solicitudes'),
-        api.get('/api/servicios')
-      ]
-      
-      // Solo cargar personal si es administrador
-      if (usuario?.rol === 'administrador') {
-        promesas.push(api.get('/api/auxiliares'))
-      }
-      
-      const resultados = await Promise.all(promesas)
-      console.log('📊 Datos cargados:', {
-        solicitudes: resultados[0].data.length,
-        servicios: resultados[1].data.length,
-        personal: resultados[2]?.data?.length || 0
-      })
-      const rawSol = resultados[0].data || []
-      setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
-      setServicios(resultados[1].data || [])
-      if (usuario?.rol === 'administrador' && resultados[2]) {
-        setPersonal(resultados[2].data || [])
-      }
-    } catch (error) {
-      console.error('❌ Error cargando datos:', error)
-      toast.error('Error cargando datos: ' + (error.response?.data?.mensaje || error.message))
-    } finally {
-      setCargando(false)
-    }
-  }
 
   const handlePersonalAgregado = async () => {
     if (usuario?.rol === 'administrador') {

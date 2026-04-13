@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useNavigate } from 'react-router-dom'
@@ -27,24 +27,49 @@ const EnfermeriaDashboard = () => {
   const [mostrarCanceladasModal, setMostrarCanceladasModal] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [pestañaActiva, setPestañaActiva] = useState('todas') // todas, pendientes, en_proceso, completadas
+  const [pollIntervalMs, setPollIntervalMs] = useState(5000)
+  const toastCargaErrorMostrado = useRef(false)
+
+  const cargarDatos = useCallback(async () => {
+    try {
+      const [resSolicitudes, resServicios] = await Promise.all([
+        api.get('/api/solicitudes'),
+        api.get('/api/servicios')
+      ])
+
+      const rawSol = resSolicitudes.data || []
+      setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
+      setServicios(resServicios.data || [])
+      toastCargaErrorMostrado.current = false
+      setPollIntervalMs(5000)
+    } catch (error) {
+      console.error('Error cargando datos:', error)
+      if (!toastCargaErrorMostrado.current) {
+        toast.error('Error cargando datos')
+        toastCargaErrorMostrado.current = true
+      }
+      setPollIntervalMs((prev) => Math.min(60000, Math.max(15000, prev * 2)))
+    } finally {
+      setCargando(false)
+    }
+  }, [])
 
   useEffect(() => {
     if (!usuario || usuario.rol !== 'enfermeria') {
       navigate('/login')
       return
     }
-    
+
     cargarDatos()
-    
-    // Actualización automática cada 5 segundos
+
     const intervalo = setInterval(() => {
       if (!document.hidden) {
         cargarDatos()
       }
-    }, 5000)
-    
+    }, pollIntervalMs)
+
     return () => clearInterval(intervalo)
-  }, [usuario, navigate])
+  }, [usuario, navigate, pollIntervalMs, cargarDatos])
 
   useEffect(() => {
     // Filtrar solicitudes según la pestaña activa
@@ -64,24 +89,6 @@ const EnfermeriaDashboard = () => {
     }
     setSolicitudesFiltradas(filtradas)
   }, [solicitudes, pestañaActiva])
-
-  const cargarDatos = async () => {
-    try {
-      const [resSolicitudes, resServicios] = await Promise.all([
-        api.get('/api/solicitudes'),
-        api.get('/api/servicios')
-      ])
-      
-      const rawSol = resSolicitudes.data || []
-      setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
-      setServicios(resServicios.data || [])
-    } catch (error) {
-      console.error('Error cargando datos:', error)
-      toast.error('Error cargando datos')
-    } finally {
-      setCargando(false)
-    }
-  }
 
   const handleLogout = () => {
     logout()

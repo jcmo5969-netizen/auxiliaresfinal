@@ -17,7 +17,7 @@ router.get('/', auth, async (req, res) => {
     });
     res.json(servicios);
   } catch (error) {
-    console.error(error);
+    console.error('GET /api/servicios:', error.parent?.message || error.message);
     res.status(500).json({ mensaje: 'Error del servidor' });
   }
 });
