@@ -1,6 +1,28 @@
 const jwt = require('jsonwebtoken');
-const { Usuario, Servicio } = require('../models');
+const { QueryTypes } = require('sequelize');
+const { Usuario, Servicio, sequelize } = require('../models');
 const { send500 } = require('../utils/sendError');
+
+/**
+ * Carga usuario sin ORM (último recurso si Sequelize revienta al mapear la fila).
+ */
+async function cargarUsuarioPorSql(userId, cargarServicioEnfermeria) {
+  const filas = await sequelize.query(
+    `SELECT id, nombre, email, rol, activo, servicio_id AS "servicioId"
+     FROM usuarios WHERE id = :id LIMIT 1`,
+    { replacements: { id: userId }, type: QueryTypes.SELECT }
+  );
+  if (!filas || !filas[0]) return null;
+  const u = filas[0];
+  if (cargarServicioEnfermeria && u.servicioId) {
+    const srv = await sequelize.query(
+      'SELECT id, nombre, piso FROM servicios WHERE id = :sid LIMIT 1',
+      { replacements: { sid: u.servicioId }, type: QueryTypes.SELECT }
+    );
+    u.servicio = srv && srv[0] ? srv[0] : null;
+  }
+  return u;
+}
 
 const auth = async (req, res, next) => {
   try {
@@ -33,12 +55,24 @@ const auth = async (req, res, next) => {
         'auth: findByPk con include falló, reintentando sin include:',
         dbErr.parent?.message || dbErr.message
       );
-      usuario = await Usuario.findByPk(decoded.id, {
-        attributes: { exclude: ['password'] }
-      });
+      try {
+        usuario = await Usuario.findByPk(decoded.id, {
+          attributes: { exclude: ['password'] }
+        });
+      } catch (dbErr2) {
+        console.error(
+          'auth: findByPk sin include falló, usando SQL directo:',
+          dbErr2.parent?.message || dbErr2.message
+        );
+        usuario = await cargarUsuarioPorSql(decoded.id, decoded.rol === 'enfermeria');
+      }
+    }
+
+    if (!usuario) {
+      usuario = await cargarUsuarioPorSql(decoded.id, decoded.rol === 'enfermeria');
     }
     
-    if (!usuario || !usuario.activo) {
+    if (!usuario || usuario.activo === false || usuario.activo === 0) {
       return res.status(401).json({ mensaje: 'Usuario no válido o inactivo' });
     }
 

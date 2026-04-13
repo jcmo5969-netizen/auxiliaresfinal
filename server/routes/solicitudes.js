@@ -1,11 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { Solicitud, Servicio, Usuario, Etiqueta, SolicitudEtiqueta } = require('../models');
+const { Solicitud, Servicio, Usuario, Etiqueta, SolicitudEtiqueta, sequelize } = require('../models');
 const { auth } = require('../middleware/auth');
 const { enviarNotificacionPush } = require('../utils/notificaciones');
 const { registrarCreacion, registrarCambioEstado, registrarAsignacion, registrarCambio } = require('../utils/historial');
 const { registrarActividad } = require('../utils/logger');
-const { Op } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 const { send500 } = require('../utils/sendError');
 
 const router = express.Router();
@@ -65,8 +65,7 @@ router.get('/', auth, async (req, res) => {
           ...includeBase,
           { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
         ],
-        order: [['createdAt', 'DESC']],
-        subQuery: false
+        order: [['createdAt', 'DESC']]
       });
     } catch (err) {
       console.error(
@@ -77,26 +76,55 @@ router.get('/', auth, async (req, res) => {
         rawList = await Solicitud.findAll({
           where,
           include: includeBase,
-          order: [['createdAt', 'DESC']],
-          subQuery: false
+          order: [['createdAt', 'DESC']]
         });
         rawList.forEach((s) => {
           if (!s.etiquetas) s.setDataValue('etiquetas', []);
         });
       } catch (err2) {
         console.error(
-          'GET /api/solicitudes: fallo con joins, listado mínimo:',
+          'GET /api/solicitudes: fallo con joins, listado mínimo (instancias):',
           err2.parent?.message || err2.message
         );
-        rawList = await Solicitud.findAll({
-          where,
-          order: [['createdAt', 'DESC']],
-          limit: 10000
-        });
-        rawList.forEach((s) => {
-          s.setDataValue('etiquetas', []);
-        });
+        try {
+          rawList = await Solicitud.findAll({
+            where,
+            order: [['createdAt', 'DESC']],
+            limit: 10000
+          });
+          rawList.forEach((s) => {
+            s.setDataValue('etiquetas', []);
+          });
+        } catch (err3) {
+          console.error(
+            'GET /api/solicitudes: listado mínimo (raw):',
+            err3.parent?.message || err3.message
+          );
+          try {
+            rawList = await Solicitud.findAll({
+              where,
+              order: [['createdAt', 'DESC']],
+              limit: 10000,
+              raw: true
+            });
+            rawList = rawList.map((row) => ({ ...row, etiquetas: [] }));
+          } catch (err4) {
+            console.error('GET /api/solicitudes: SQL directo (solo admin):', err4.parent?.message || err4.message);
+            if (req.usuario.rol === 'administrador' && Object.keys(where).length === 0) {
+              const rows = await sequelize.query(
+                'SELECT * FROM solicitudes ORDER BY id DESC LIMIT 10000',
+                { type: QueryTypes.SELECT }
+              );
+              return res.json(rows.map((r) => ({ ...r, etiquetas: [] })));
+            }
+            throw err4;
+          }
+        }
       }
+    }
+
+    if (!Array.isArray(rawList)) {
+      rawList = [];
     }
 
     // Evitar duplicados por el JOIN con etiquetas (belongsToMany)
