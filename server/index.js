@@ -93,62 +93,6 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
-// Connect to PostgreSQL
-const connectDatabase = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ PostgreSQL conectado');
-    
-    // Sincronizar modelos (crear tablas si no existen)
-    // Usar alter: true para crear nuevas tablas sin modificar las existentes
-    await sequelize.sync({ alter: true });
-    console.log('✅ Modelos sincronizados (tablas creadas/verificadas)');
-    
-    // Inicializar usuario admin
-    const initializeAdmin = require('./utils/initializeAdmin');
-    await initializeAdmin();
-
-    // Asegurar servicios por defecto (incl. GESCAS) para Render y entornos sin seed manual
-    const seedServiciosOnStartup = require('./utils/seedServiciosOnStartup');
-    await seedServiciosOnStartup();
-  } catch (err) {
-    console.error('❌ Error conectando a PostgreSQL:', err.message);
-    
-    if (err.name === 'SequelizeConnectionError') {
-      if (err.original && err.original.code === '3D000') {
-        console.error('   La base de datos no existe. Ejecuta: npm run create-db');
-      } else if (err.original && err.original.code === '28P01') {
-        console.error('   Error de autenticación. Verifica usuario y contraseña.');
-        console.error('   Si usas DATABASE_URL, verifica que la contraseña en la URL sea correcta.');
-        console.error('   Si usas variables individuales, verifica DB_USER y DB_PASSWORD.');
-      } else if (/terminated unexpectedly|ECONNRESET|ETIMEDOUT/i.test(String(err.message))) {
-        console.error('   Conexión cortada. En Render: usa la Internal Database URL del mismo equipo que el Web Service.');
-        console.error('   Si el host es dpg-…-a (interno), no fuerces SSL: ya está desactivado por defecto, o prueba DATABASE_SSL=false.');
-        console.error('   Si usas URL externa (*.postgres.render.com), puedes probar DATABASE_SSL=true en variables de entorno.');
-      } else {
-        console.error('   Verifica que PostgreSQL esté corriendo y que DATABASE_URL sea la copiada del panel de Render.');
-      }
-    }
-    
-    // Mostrar información de debug
-    if (process.env.DATABASE_URL) {
-      // Ocultar contraseña en los logs
-      const dbUrl = process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@');
-      console.error('   DATABASE_URL:', dbUrl);
-    } else {
-      console.error('   Host:', process.env.DB_HOST || 'localhost');
-      console.error('   Puerto:', process.env.DB_PORT || 5432);
-      console.error('   Base de datos:', process.env.DB_NAME || 'sistema_auxiliares');
-      console.error('   Usuario:', process.env.DB_USER || 'postgres');
-      console.error('   Password:', process.env.DB_PASSWORD ? '***configurada***' : 'NO configurada');
-    }
-    // No salir del proceso, permitir que el servidor siga corriendo
-    // pero las rutas verificarán la conexión
-  }
-};
-
-connectDatabase();
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
@@ -165,70 +109,115 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Configuración para Render y otros servicios de hosting
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-  console.log(`🌐 CORS permitiendo orígenes: ${allowedOrigins.join(', ')}`);
-});
+// Arrancar el servidor solo cuando la BD esté lista
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ PostgreSQL conectado');
 
-// Configurar Socket.IO para chat en tiempo real
-const { Server } = require('socket.io');
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins.length > 0 ? allowedOrigins : (process.env.CLIENT_URL || 'http://localhost:5173'),
-    methods: ['GET', 'POST'],
-    credentials: true
+    await sequelize.sync({ alter: true });
+    console.log('✅ Modelos sincronizados (tablas creadas/verificadas)');
+
+    const initializeAdmin = require('./utils/initializeAdmin');
+    await initializeAdmin();
+
+    const seedServiciosOnStartup = require('./utils/seedServiciosOnStartup');
+    await seedServiciosOnStartup();
+  } catch (err) {
+    console.error('❌ Error conectando a PostgreSQL:', err.message);
+
+    if (err.name === 'SequelizeConnectionError') {
+      if (err.original && err.original.code === '3D000') {
+        console.error('   La base de datos no existe. Ejecuta: npm run create-db');
+      } else if (err.original && err.original.code === '28P01') {
+        console.error('   Error de autenticación. Verifica usuario y contraseña.');
+        console.error('   Si usas DATABASE_URL, verifica que la contraseña en la URL sea correcta.');
+        console.error('   Si usas variables individuales, verifica DB_USER y DB_PASSWORD.');
+      } else if (/terminated unexpectedly|ECONNRESET|ETIMEDOUT/i.test(String(err.message))) {
+        console.error('   Conexión cortada. En Render: usa la Internal Database URL del mismo equipo que el Web Service.');
+        console.error('   Si el host es dpg-…-a (interno), no fuerces SSL: ya está desactivado por defecto, o prueba DATABASE_SSL=false.');
+        console.error('   Si usas URL externa (*.postgres.render.com), puedes probar DATABASE_SSL=true en variables de entorno.');
+      } else {
+        console.error('   Verifica que PostgreSQL esté corriendo y que DATABASE_URL sea la copiada del panel de Render.');
+      }
+    }
+
+    if (process.env.DATABASE_URL) {
+      const dbUrl = process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@');
+      console.error('   DATABASE_URL:', dbUrl);
+    } else {
+      console.error('   Host:', process.env.DB_HOST || 'localhost');
+      console.error('   Puerto:', process.env.DB_PORT || 5432);
+      console.error('   Base de datos:', process.env.DB_NAME || 'sistema_auxiliares');
+      console.error('   Usuario:', process.env.DB_USER || 'postgres');
+      console.error('   Password:', process.env.DB_PASSWORD ? '***configurada***' : 'NO configurada');
+    }
+    // Continuar aunque falle: el servidor arranca igual para no bloquear Render
+    console.error('⚠️  El servidor arrancará sin BD lista. Las rutas pueden fallar hasta que la BD responda.');
   }
-});
 
-// Manejar conexiones Socket.IO
-io.on('connection', (socket) => {
-  console.log('✅ Usuario conectado:', socket.id);
-
-  // Unirse a una sala de solicitud
-  socket.on('unirse-solicitud', (solicitudId) => {
-    socket.join(`solicitud-${solicitudId}`);
-    console.log(`Usuario ${socket.id} se unió a solicitud ${solicitudId}`);
+  // Iniciar HTTP solo después de intentar la BD
+  const server = app.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+    console.log(`🌐 CORS permitiendo orígenes: ${allowedOrigins.join(', ')}`);
   });
 
-  // Salir de una sala de solicitud
-  socket.on('salir-solicitud', (solicitudId) => {
-    socket.leave(`solicitud-${solicitudId}`);
-  });
-
-  // Unirse a una sala de chat general
-  socket.on('unirse-chat-general', () => {
-    socket.join('chat-general');
-  });
-
-  // Suscribirse a estadísticas en tiempo real
-  socket.on('suscribir-estadisticas', async () => {
-    socket.join('estadisticas');
-    try {
-      const { calcularEstadisticas } = require('./utils/estadisticas');
-      const estadisticas = await calcularEstadisticas();
-      socket.emit('estadisticas-actualizadas', estadisticas);
-    } catch (error) {
-      console.error('Error enviando estadísticas:', error);
+  // Configurar Socket.IO para chat en tiempo real
+  const { Server } = require('socket.io');
+  const io = new Server(server, {
+    cors: {
+      origin: allowedOrigins.length > 0 ? allowedOrigins : (process.env.CLIENT_URL || 'http://localhost:5173'),
+      methods: ['GET', 'POST'],
+      credentials: true
     }
   });
 
-  socket.on('disconnect', () => {
-    console.log('❌ Usuario desconectado:', socket.id);
+  // Manejar conexiones Socket.IO
+  io.on('connection', (socket) => {
+    console.log('✅ Usuario conectado:', socket.id);
+
+    socket.on('unirse-solicitud', (solicitudId) => {
+      socket.join(`solicitud-${solicitudId}`);
+      console.log(`Usuario ${socket.id} se unió a solicitud ${solicitudId}`);
+    });
+
+    socket.on('salir-solicitud', (solicitudId) => {
+      socket.leave(`solicitud-${solicitudId}`);
+    });
+
+    socket.on('unirse-chat-general', () => {
+      socket.join('chat-general');
+    });
+
+    socket.on('suscribir-estadisticas', async () => {
+      socket.join('estadisticas');
+      try {
+        const { calcularEstadisticas } = require('./utils/estadisticas');
+        const estadisticas = await calcularEstadisticas();
+        socket.emit('estadisticas-actualizadas', estadisticas);
+      } catch (error) {
+        console.error('Error enviando estadísticas:', error);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('❌ Usuario desconectado:', socket.id);
+    });
   });
-});
 
-// Emitir estadísticas actualizadas cada 30 segundos
-setInterval(async () => {
-  try {
-    const { calcularEstadisticas } = require('./utils/estadisticas');
-    const estadisticas = await calcularEstadisticas();
-    io.to('estadisticas').emit('estadisticas-actualizadas', estadisticas);
-  } catch (error) {
-    console.error('Error actualizando estadísticas:', error);
-  }
-}, 30000);
+  // Emitir estadísticas actualizadas cada 30 segundos
+  setInterval(async () => {
+    try {
+      const { calcularEstadisticas } = require('./utils/estadisticas');
+      const estadisticas = await calcularEstadisticas();
+      io.to('estadisticas').emit('estadisticas-actualizadas', estadisticas);
+    } catch (error) {
+      console.error('Error actualizando estadísticas:', error);
+    }
+  }, 30000);
 
-// Exportar io para usar en otras rutas
-app.set('io', io);
+  // Exportar io para usar en otras rutas
+  app.set('io', io);
+};
+
+startServer();
