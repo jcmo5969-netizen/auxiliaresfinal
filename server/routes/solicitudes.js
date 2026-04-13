@@ -6,6 +6,7 @@ const { enviarNotificacionPush } = require('../utils/notificaciones');
 const { registrarCreacion, registrarCambioEstado, registrarAsignacion, registrarCambio } = require('../utils/historial');
 const { registrarActividad } = require('../utils/logger');
 const { Op } = require('sequelize');
+const { send500 } = require('../utils/sendError');
 
 const router = express.Router();
 
@@ -93,8 +94,7 @@ router.get('/', auth, async (req, res) => {
 
     res.json(solicitudes);
   } catch (error) {
-    console.error('GET /api/solicitudes:', error.parent?.message || error.message);
-    res.status(500).json({ mensaje: 'Error del servidor' });
+    return send500(res, error, 'GET /api/solicitudes');
   }
 });
 

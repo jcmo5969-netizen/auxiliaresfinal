@@ -1,6 +1,7 @@
 const express = require('express');
 const { Usuario, Solicitud, Servicio } = require('../models');
 const { auth, esAdministrador } = require('../middleware/auth');
+const { send500 } = require('../utils/sendError');
 
 const router = express.Router();
 
@@ -9,17 +10,25 @@ const router = express.Router();
 // @access  Private/Admin
 router.get('/', auth, esAdministrador, async (req, res) => {
   try {
-    const personal = await Usuario.findAll({
-      attributes: { exclude: ['password'] },
-      include: [
-        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'], required: false }
-      ],
-      order: [['rol', 'ASC'], ['nombre', 'ASC']]
-    });
+    let personal;
+    try {
+      personal = await Usuario.findAll({
+        attributes: { exclude: ['password'] },
+        include: [
+          { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'], required: false }
+        ],
+        order: [['rol', 'ASC'], ['nombre', 'ASC']]
+      });
+    } catch (err) {
+      console.error('GET /api/auxiliares: include servicio falló, sin join:', err.parent?.message || err.message);
+      personal = await Usuario.findAll({
+        attributes: { exclude: ['password'] },
+        order: [['rol', 'ASC'], ['nombre', 'ASC']]
+      });
+    }
     res.json(personal);
   } catch (error) {
-    console.error('GET /api/auxiliares:', error.parent?.message || error.message);
-    res.status(500).json({ mensaje: 'Error del servidor', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
+    return send500(res, error, 'GET /api/auxiliares');
   }
 });
 

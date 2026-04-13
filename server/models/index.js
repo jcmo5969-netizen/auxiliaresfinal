@@ -20,8 +20,8 @@ Usuario.hasMany(Solicitud, { foreignKey: 'solicitadoPorId', as: 'solicitudesCrea
 Usuario.hasMany(Solicitud, { foreignKey: 'asignadoAId', as: 'solicitudesAsignadas' });
 
 // Relación Usuario-Servicio (para personal de enfermería)
+// Nota: no duplicar belongsTo al mismo Servicio con la misma FK; Sequelize/Postgres pueden fallar en JOINs.
 Usuario.belongsTo(Servicio, { foreignKey: 'servicioId', as: 'servicio' });
-Usuario.belongsTo(Servicio, { foreignKey: 'servicioId', as: 'servicioAsignado' }); // Alias adicional para compatibilidad
 Servicio.hasMany(Usuario, { foreignKey: 'servicioId', as: 'personal' });
 
 // Relaciones de Comentarios

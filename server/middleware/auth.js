@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { Usuario, Servicio } = require('../models');
+const { send500 } = require('../utils/sendError');
 
 const auth = async (req, res, next) => {
   try {
@@ -21,10 +22,21 @@ const auth = async (req, res, next) => {
       ? [{ model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'], required: false }]
       : [];
     
-    const usuario = await Usuario.findByPk(decoded.id, {
-      attributes: { exclude: ['password'] },
-      include: includeOptions
-    });
+    let usuario;
+    try {
+      usuario = await Usuario.findByPk(decoded.id, {
+        attributes: { exclude: ['password'] },
+        include: includeOptions
+      });
+    } catch (dbErr) {
+      console.error(
+        'auth: findByPk con include falló, reintentando sin include:',
+        dbErr.parent?.message || dbErr.message
+      );
+      usuario = await Usuario.findByPk(decoded.id, {
+        attributes: { exclude: ['password'] }
+      });
+    }
     
     if (!usuario || !usuario.activo) {
       return res.status(401).json({ mensaje: 'Usuario no válido o inactivo' });
@@ -41,7 +53,7 @@ const auth = async (req, res, next) => {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ mensaje: 'Token expirado' });
     }
-    res.status(500).json({ mensaje: 'Error del servidor' });
+    return send500(res, error, 'Error en middleware auth');
   }
 };
 

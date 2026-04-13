@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Servicio } = require('../models');
 const { auth, esAdministrador } = require('../middleware/auth');
+const { send500 } = require('../utils/sendError');
 const { Op } = require('sequelize');
 
 const router = express.Router();
@@ -11,14 +12,21 @@ const router = express.Router();
 // @access  Private
 router.get('/', auth, async (req, res) => {
   try {
-    const servicios = await Servicio.findAll({
-      where: { activo: true },
-      order: [['nombre', 'ASC']]
-    });
+    let servicios;
+    try {
+      servicios = await Servicio.findAll({
+        where: { activo: true },
+        order: [['nombre', 'ASC']]
+      });
+    } catch (err) {
+      console.error('GET /api/servicios: filtro activo falló, listando todos:', err.parent?.message || err.message);
+      servicios = await Servicio.findAll({
+        order: [['nombre', 'ASC']]
+      });
+    }
     res.json(servicios);
   } catch (error) {
-    console.error('GET /api/servicios:', error.parent?.message || error.message);
-    res.status(500).json({ mensaje: 'Error del servidor' });
+    return send500(res, error, 'GET /api/servicios');
   }
 });
 
