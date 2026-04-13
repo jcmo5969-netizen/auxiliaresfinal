@@ -73,42 +73,62 @@ const Dashboard = () => {
   }, [usuario, navigate])
 
   const cargarDatos = useCallback(async () => {
-    try {
-      const promesas = [
-        api.get('/api/solicitudes'),
-        api.get('/api/servicios')
-      ]
+    const promesas = [api.get('/api/solicitudes'), api.get('/api/servicios')]
+    if (usuario?.rol === 'administrador') {
+      promesas.push(api.get('/api/auxiliares'))
+    }
 
-      if (usuario?.rol === 'administrador') {
-        promesas.push(api.get('/api/auxiliares'))
-      }
+    const resultados = await Promise.allSettled(promesas)
+    let ok = 0
+    let fail = 0
 
-      const resultados = await Promise.all(promesas)
-      console.log('📊 Datos cargados:', {
-        solicitudes: resultados[0].data.length,
-        servicios: resultados[1].data.length,
-        personal: resultados[2]?.data?.length || 0
-      })
-      const rawSol = resultados[0].data || []
+    const r0 = resultados[0]
+    if (r0.status === 'fulfilled') {
+      ok++
+      const rawSol = r0.value.data || []
       setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
-      setServicios(resultados[1].data || [])
-      if (usuario?.rol === 'administrador' && resultados[2]) {
-        setPersonal(resultados[2].data || [])
+    } else {
+      fail++
+      console.error('❌ solicitudes:', r0.reason?.message || r0.reason)
+    }
+
+    const r1 = resultados[1]
+    if (r1.status === 'fulfilled') {
+      ok++
+      setServicios(r1.value.data || [])
+    } else {
+      fail++
+      console.error('❌ servicios:', r1.reason?.message || r1.reason)
+    }
+
+    if (usuario?.rol === 'administrador' && resultados[2]) {
+      const r2 = resultados[2]
+      if (r2.status === 'fulfilled') {
+        ok++
+        setPersonal(r2.value.data || [])
+      } else {
+        fail++
+        console.error('❌ auxiliares:', r2.reason?.message || r2.reason)
       }
+    }
+
+    if (ok > 0) {
       toastCargaErrorMostrado.current = false
       setPollIntervalMs(3000)
-    } catch (error) {
-      console.error('❌ Error cargando datos:', error)
+      if (fail === 0) {
+        console.log('📊 Datos cargados OK (todos los endpoints)')
+      } else {
+        console.warn('⚠️ Carga parcial: se mantiene lo que respondió bien')
+      }
+    }
+    if (fail > 0 && ok === 0) {
       if (!toastCargaErrorMostrado.current) {
-        toast.error(
-          'Error cargando datos: ' + (error.response?.data?.mensaje || error.message)
-        )
+        toast.error('Error cargando datos. Comprueba la conexión con el servidor.')
         toastCargaErrorMostrado.current = true
       }
       setPollIntervalMs((prev) => Math.min(60000, Math.max(10000, prev * 2)))
-    } finally {
-      setCargando(false)
     }
+    setCargando(false)
   }, [usuario])
 
   useEffect(() => {
@@ -227,14 +247,10 @@ const Dashboard = () => {
               {/* Logo del Hospital */}
               <div className="flex items-center gap-3">
                 <img 
-                  src="/logo-hospital-quilpue.png" 
+                  src="/logo-hospital-quilpue.svg" 
                   alt="Hospital de Quilpué"
                   className="h-10 sm:h-12 w-auto object-contain"
                   onError={(e) => {
-                    if (e.currentTarget.src.includes('logo-hospital-quilpue.png')) {
-                      e.currentTarget.src = '/logo-hospital-quilpue.svg'
-                      return
-                    }
                     e.currentTarget.style.display = 'none'
                   }}
                 />

@@ -31,27 +31,42 @@ const EnfermeriaDashboard = () => {
   const toastCargaErrorMostrado = useRef(false)
 
   const cargarDatos = useCallback(async () => {
-    try {
-      const [resSolicitudes, resServicios] = await Promise.all([
-        api.get('/api/solicitudes'),
-        api.get('/api/servicios')
-      ])
+    const [rSol, rSer] = await Promise.allSettled([
+      api.get('/api/solicitudes'),
+      api.get('/api/servicios')
+    ])
+    let ok = 0
+    let fail = 0
 
-      const rawSol = resSolicitudes.data || []
+    if (rSol.status === 'fulfilled') {
+      ok++
+      const rawSol = rSol.value.data || []
       setSolicitudes([...new Map(rawSol.map((s) => [s.id, s])).values()])
-      setServicios(resServicios.data || [])
+    } else {
+      fail++
+      console.error('solicitudes:', rSol.reason?.message || rSol.reason)
+    }
+
+    if (rSer.status === 'fulfilled') {
+      ok++
+      setServicios(rSer.value.data || [])
+    } else {
+      fail++
+      console.error('servicios:', rSer.reason?.message || rSer.reason)
+    }
+
+    if (ok > 0) {
       toastCargaErrorMostrado.current = false
       setPollIntervalMs(5000)
-    } catch (error) {
-      console.error('Error cargando datos:', error)
+    }
+    if (fail > 0 && ok === 0) {
       if (!toastCargaErrorMostrado.current) {
         toast.error('Error cargando datos')
         toastCargaErrorMostrado.current = true
       }
       setPollIntervalMs((prev) => Math.min(60000, Math.max(15000, prev * 2)))
-    } finally {
-      setCargando(false)
     }
+    setCargando(false)
   }, [])
 
   useEffect(() => {

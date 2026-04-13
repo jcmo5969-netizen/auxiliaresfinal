@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext'
 
 const Logo = ({ className = '', size = 'default' }) => {
   const { isDark } = useTheme()
-  const [logoSrc, setLogoSrc] = useState('/logo-hospital-quilpue.png')
+  const [logoSrc, setLogoSrc] = useState('/logo-hospital-quilpue.svg')
   
   // Tamaños predefinidos
   const sizes = {
