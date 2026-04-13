@@ -41,6 +41,8 @@ api.interceptors.response.use(
         window.location.href = base + '#/login'
       }
     }
+    // 503 = BD temporalmente en recovery mode; no redirigir, dejar que el
+    // polling del Dashboard reintente automáticamente con backoff.
     return Promise.reject(error)
   }
 )

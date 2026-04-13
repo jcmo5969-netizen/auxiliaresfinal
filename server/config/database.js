@@ -47,10 +47,10 @@ if (process.env.DATABASE_URL) {
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     dialectOptions: sslOpts,
     pool: {
-      max: 15,
-      min: 1,
-      acquire: 60000,
-      idle: 20000
+      max: 10,
+      min: 0,       // 0 = no conexiones persistentes; reconecta solo cuando se necesita
+      acquire: 30000,
+      idle: 10000
     }
   });
 } else {
@@ -76,10 +76,10 @@ if (process.env.DATABASE_URL) {
         } : false
       },
       pool: {
-        max: 15,
-        min: 1,
-        acquire: 60000,
-        idle: 20000
+        max: 10,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
       }
     }
   );
