@@ -115,7 +115,11 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ PostgreSQL conectado');
 
-    await sequelize.sync({ alter: true });
+    // En producción: solo crear tablas que no existen (sin ALTER).
+    // alter:true causa operaciones lentas sobre ENUMs en PostgreSQL y puede dejar
+    // el esquema en estado inconsistente. Usa migraciones para cambios de esquema.
+    const syncOptions = process.env.NODE_ENV === 'production' ? {} : { alter: true };
+    await sequelize.sync(syncOptions);
     console.log('✅ Modelos sincronizados (tablas creadas/verificadas)');
 
     const initializeAdmin = require('./utils/initializeAdmin');
