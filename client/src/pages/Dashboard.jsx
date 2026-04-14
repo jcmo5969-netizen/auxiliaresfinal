@@ -413,7 +413,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 pb-28 pt-8 sm:px-6 md:pb-8 lg:px-8">
         {/* Estadísticas en Tiempo Real */}
         {usuario?.rol === 'administrador' && (
           <div className="mb-8">
@@ -623,6 +623,18 @@ const Dashboard = () => {
           servicios={servicios}
           onUpdate={handleActualizarSolicitud}
         />
+      )}
+
+      {!mostrarModal && (
+        <button
+          type="button"
+          aria-label="Nueva solicitud"
+          onClick={() => setMostrarModal(true)}
+          className="fixed z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg ring-4 ring-white/30 transition hover:bg-primary-700 hover:shadow-xl active:scale-95 dark:bg-primary-500 dark:ring-gray-900/50 md:hidden"
+          style={{ bottom: 'max(1.25rem, env(safe-area-inset-bottom))', right: 'max(1.25rem, env(safe-area-inset-right))' }}
+        >
+          <Plus className="h-7 w-7" strokeWidth={2.5} />
+        </button>
       )}
 
       {mostrarWidgetConfig && (

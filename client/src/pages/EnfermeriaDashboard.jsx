@@ -209,7 +209,7 @@ const EnfermeriaDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 pb-28 pt-6 sm:px-6 sm:pt-8 md:pb-8 lg:px-8">
         {/* Estadísticas solo del servicio del usuario (no total hospital) */}
         <div className="mb-6 sm:mb-8">
           <EstadisticasTiempoReal
@@ -297,6 +297,16 @@ const EnfermeriaDashboard = () => {
                 <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                   {pestañaActiva === 'todas' ? 'Crea tu primera solicitud' : 'No hay solicitudes en esta categoría'}
                 </p>
+                {pestañaActiva === 'todas' && (
+                  <button
+                    type="button"
+                    onClick={() => setMostrarModal(true)}
+                    className="mt-6 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-base font-semibold text-white shadow-md hover:bg-primary-700 md:hidden"
+                  >
+                    <Plus className="h-5 w-5" />
+                    Nueva solicitud
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -343,6 +353,18 @@ const EnfermeriaDashboard = () => {
           servicios={servicios.filter(s => s.id === usuario?.servicioId)}
           onUpdate={handleActualizarSolicitud}
         />
+      )}
+
+      {!mostrarModal && (
+        <button
+          type="button"
+          aria-label="Nueva solicitud"
+          onClick={() => setMostrarModal(true)}
+          className="fixed z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg ring-4 ring-white/30 transition hover:bg-primary-700 hover:shadow-xl active:scale-95 dark:bg-primary-500 dark:ring-gray-900/50 md:hidden"
+          style={{ bottom: 'max(1.25rem, env(safe-area-inset-bottom))', right: 'max(1.25rem, env(safe-area-inset-right))' }}
+        >
+          <Plus className="h-7 w-7" strokeWidth={2.5} />
+        </button>
       )}
     </div>
   )

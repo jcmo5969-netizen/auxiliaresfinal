@@ -99,45 +99,69 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
     }))
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 md:p-8 relative shadow-xl max-h-[90vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-        >
-          <X className="w-6 h-6" />
-        </button>
+  const inputClass =
+    'w-full min-h-[44px] px-3 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
 
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nueva Solicitud</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Completa los datos mínimos para crear la solicitud.
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 backdrop-blur-[1px] md:items-center md:justify-center md:p-4"
+      role="presentation"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div
+        className="flex h-[100dvh] max-h-[100dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl dark:bg-gray-800 md:h-auto md:max-h-[90vh] md:rounded-xl md:shadow-xl md:overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="solicitud-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative shrink-0 border-b border-gray-200 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-gray-700 md:px-8 md:pb-4 md:pt-8">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-2 top-2 rounded-lg p-3 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200 md:right-4 md:top-4"
+            aria-label="Cerrar"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          <div className="pr-10 md:pr-12">
+            <h2 id="solicitud-modal-title" className="text-xl font-bold text-gray-900 dark:text-white md:text-2xl">
+              Nueva solicitud
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Completa los datos para enviar la solicitud desde el celular o la computadora.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setMostrarCamaModal(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-gray-100 px-3 text-sm font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200 sm:flex-none md:px-4"
             >
-              <Bed className="w-4 h-4" />
+              <Bed className="h-5 w-5 shrink-0" />
               Cama
             </button>
             <button
               type="button"
               onClick={() => setMostrarPlantillas(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-gray-100 px-3 text-sm font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200 sm:flex-none md:px-4"
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="h-5 w-5 shrink-0" />
               Plantillas
             </button>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col md:block md:max-h-none md:overflow-visible"
+          noValidate
+        >
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-y-contain px-4 py-4 md:space-y-6 md:overflow-visible md:px-8 md:py-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Servicio <span className="text-red-500">*</span>
@@ -147,7 +171,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               onChange={(e) => setFormData({ ...formData, servicio: e.target.value })}
               required
               disabled={servicios.length === 1 && servicioPredeterminado}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className={`${inputClass} disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-700`}
             >
               {servicios.length > 1 && <option value="">Selecciona un servicio</option>}
               {servicios.map((servicio) => (
@@ -172,7 +196,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
                 destinoGescas: e.target.value === 'gescas' ? formData.destinoGescas : ''
               })}
               required
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className={inputClass}
             >
               <option value="alta">Alta</option>
               <option value="traslado">Traslado</option>
@@ -192,7 +216,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             <select
               value={formData.tipoServicio}
               onChange={(e) => setFormData({ ...formData, tipoServicio: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className={inputClass}
             >
               <option value="traslado_pcte">TRASLADO DE PCTE</option>
             </select>
@@ -205,7 +229,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             <select
               value={formData.tipoTraslado}
               onChange={(e) => setFormData({ ...formData, tipoTraslado: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className={inputClass}
             >
               <option value="sin_silla_ni_camilla">Sin silla ni camilla</option>
               <option value="con_silla">Con silla de ruedas</option>
@@ -224,7 +248,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
                 type="text"
                 value={formData.destinoGescas || ''}
                 onChange={(e) => setFormData({ ...formData, destinoGescas: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className={inputClass}
                 placeholder="Ej: UCI, Pabellón 3..."
               />
             </div>
@@ -240,7 +264,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               onChange={(e) => setFormData({ ...formData, prioridad: e.target.value })}
               required
               disabled={formData.prioridadInmediato}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}
             >
               <option value="baja">Baja</option>
               <option value="media">Media</option>
@@ -250,14 +274,14 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
           </div>
 
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-3 text-base text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 checked={formData.prioridadInmediato}
                 onChange={(e) => handlePrioridadInmediato(e.target.checked)}
-                className="h-4 w-4"
+                className="h-5 w-5 shrink-0 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
-              Prioridad Inmediato
+              Prioridad inmediata
             </label>
           </div>
           </div>
@@ -268,24 +292,24 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Precauciones adicionales
               </label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <div className="flex flex-wrap gap-6">
+                <label className="flex min-h-[44px] cursor-pointer items-center gap-3 text-base">
                   <input
                     type="radio"
                     name="precaucionesEstandar"
                     checked={formData.precaucionesEstandar === true}
                     onChange={() => setFormData(prev => ({ ...prev, precaucionesEstandar: true }))}
-                    className="h-4 w-4"
+                    className="h-5 w-5 shrink-0 border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
                   Sí
                 </label>
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <label className="flex min-h-[44px] cursor-pointer items-center gap-3 text-base">
                   <input
                     type="radio"
                     name="precaucionesEstandar"
                     checked={formData.precaucionesEstandar === false}
                     onChange={() => setFormData(prev => ({ ...prev, precaucionesEstandar: false, tipoPrecaucion: '' }))}
-                    className="h-4 w-4"
+                    className="h-5 w-5 shrink-0 border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
                   No
                 </label>
@@ -299,7 +323,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
                 <select
                   value={formData.tipoPrecaucion}
                   onChange={(e) => setFormData(prev => ({ ...prev, tipoPrecaucion: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className={inputClass}
                 >
                   <option value="">Seleccione tipo</option>
                   <option value="contacto">Contacto</option>
@@ -320,7 +344,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
               <button
                 type="button"
                 onClick={() => setMostrarCamaModal(true)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2.5 text-base text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 {formData.cama ? 'Editar cama' : 'Agregar cama'}
               </button>
@@ -340,8 +364,8 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             <textarea
               value={formData.descripcion}
               onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-              rows="3"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              rows={4}
+              className={`${inputClass} min-h-[6rem] resize-y`}
               placeholder="Detalles adicionales..."
             />
           </div>
@@ -362,7 +386,7 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
                 d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
                 return d.toISOString().slice(0, 16)
               })()}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className={inputClass}
               placeholder="Fecha y hora del traslado"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -395,21 +419,25 @@ const SolicitudModal = ({ servicios, onClose, onSubmit, servicioPredeterminado, 
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={enviando}
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {enviando ? 'Creando…' : 'Crear Solicitud'}
-            </button>
+          </div>
+
+          <div className="shrink-0 border-t border-gray-200 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-700 dark:bg-gray-800 md:border-transparent md:bg-transparent md:px-8 md:pb-6">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex min-h-[48px] flex-1 items-center justify-center rounded-lg border border-gray-300 text-base font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={enviando}
+                className="flex min-h-[48px] flex-1 items-center justify-center rounded-lg bg-primary-600 text-base font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {enviando ? 'Creando…' : 'Crear solicitud'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
