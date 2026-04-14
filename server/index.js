@@ -246,6 +246,27 @@ const startServer = async () => {
 
   // Exportar io para usar en otras rutas
   app.set('io', io);
+
+  // Ping cada 20s: si la BD está caída limpia el pool para que reconecte sola cuando vuelva
+  let _dbViva = true;
+  setInterval(async () => {
+    try {
+      await sequelize.authenticate();
+      if (!_dbViva) {
+        console.log('✅ BD reconectada automáticamente');
+        _dbViva = true;
+      }
+    } catch (err) {
+      if (_dbViva) {
+        console.warn('⚠️  BD no disponible, limpiando pool:', err.message);
+        _dbViva = false;
+      }
+      try {
+        await sequelize.connectionManager.pool.drain();
+        await sequelize.connectionManager.pool.clear();
+      } catch (_) { /* ignorar errores del pool */ }
+    }
+  }, 20000);
 };
 
 startServer();

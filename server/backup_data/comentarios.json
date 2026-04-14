@@ -1,0 +1,245 @@
+[
+  {
+    "id": 1,
+    "solicitud_id": 9,
+    "usuario_id": 1,
+    "contenido": "apurate necesito la cama",
+    "tipo": "comentario",
+    "createdAt": "2026-02-11T18:41:36.196Z",
+    "updatedAt": "2026-02-11T18:41:36.196Z"
+  },
+  {
+    "id": 2,
+    "solicitud_id": 23,
+    "usuario_id": 9,
+    "contenido": "Procedimiento suspendido",
+    "tipo": "comentario",
+    "createdAt": "2026-02-17T14:56:22.694Z",
+    "updatedAt": "2026-02-17T14:56:22.694Z"
+  },
+  {
+    "id": 3,
+    "solicitud_id": 27,
+    "usuario_id": 9,
+    "contenido": "Realizado",
+    "tipo": "comentario",
+    "createdAt": "2026-02-17T19:49:47.431Z",
+    "updatedAt": "2026-02-17T19:49:47.431Z"
+  },
+  {
+    "id": 4,
+    "solicitud_id": 28,
+    "usuario_id": 6,
+    "contenido": "CANCELADA",
+    "tipo": "comentario",
+    "createdAt": "2026-02-17T19:59:50.723Z",
+    "updatedAt": "2026-02-17T19:59:50.723Z"
+  },
+  {
+    "id": 5,
+    "solicitud_id": 30,
+    "usuario_id": 9,
+    "contenido": "Prioridad alta",
+    "tipo": "comentario",
+    "createdAt": "2026-02-18T12:40:30.952Z",
+    "updatedAt": "2026-02-18T12:40:30.952Z"
+  },
+  {
+    "id": 6,
+    "solicitud_id": 30,
+    "usuario_id": 9,
+    "contenido": "Aun sin novedad. Requiero traslado",
+    "tipo": "comentario",
+    "createdAt": "2026-02-18T12:43:47.211Z",
+    "updatedAt": "2026-02-18T12:43:47.211Z"
+  },
+  {
+    "id": 7,
+    "solicitud_id": 34,
+    "usuario_id": 9,
+    "contenido": "COMPLETADO",
+    "tipo": "comentario",
+    "createdAt": "2026-02-18T13:42:41.922Z",
+    "updatedAt": "2026-02-18T13:42:41.922Z"
+  },
+  {
+    "id": 8,
+    "solicitud_id": 38,
+    "usuario_id": 9,
+    "contenido": "Funcionario no se presenta a tiempo. Se sube por auxiliar de piso.",
+    "tipo": "comentario",
+    "createdAt": "2026-02-18T19:40:57.286Z",
+    "updatedAt": "2026-02-18T19:40:57.286Z"
+  },
+  {
+    "id": 9,
+    "solicitud_id": 39,
+    "usuario_id": 9,
+    "contenido": "Reprogramada por escaner",
+    "tipo": "comentario",
+    "createdAt": "2026-02-18T20:25:04.587Z",
+    "updatedAt": "2026-02-18T20:25:04.587Z"
+  },
+  {
+    "id": 10,
+    "solicitud_id": 40,
+    "usuario_id": 9,
+    "contenido": "Se sube con auxiliar de piso",
+    "tipo": "comentario",
+    "createdAt": "2026-02-19T11:53:57.885Z",
+    "updatedAt": "2026-02-19T11:53:57.885Z"
+  },
+  {
+    "id": 11,
+    "solicitud_id": 44,
+    "usuario_id": 9,
+    "contenido": "Se sube con auxiliar de piso dado demora",
+    "tipo": "comentario",
+    "createdAt": "2026-02-19T15:42:32.315Z",
+    "updatedAt": "2026-02-19T15:42:32.315Z"
+  },
+  {
+    "id": 12,
+    "solicitud_id": 53,
+    "usuario_id": 9,
+    "contenido": "Aun en espera",
+    "tipo": "comentario",
+    "createdAt": "2026-02-19T19:21:28.047Z",
+    "updatedAt": "2026-02-19T19:21:28.047Z"
+  },
+  {
+    "id": 13,
+    "solicitud_id": 30,
+    "usuario_id": 9,
+    "contenido": "Se subió con auxiliar de piso",
+    "tipo": "comentario",
+    "createdAt": "2026-02-20T11:52:19.516Z",
+    "updatedAt": "2026-02-20T11:52:19.516Z"
+  },
+  {
+    "id": 14,
+    "solicitud_id": 61,
+    "usuario_id": 9,
+    "contenido": "Precaucion por gotitas",
+    "tipo": "comentario",
+    "createdAt": "2026-02-20T13:01:42.970Z",
+    "updatedAt": "2026-02-20T13:01:42.970Z"
+  },
+  {
+    "id": 15,
+    "solicitud_id": 106,
+    "usuario_id": 9,
+    "contenido": "Me comunico via telefonica con enfermero jefe a cargo para agilizar",
+    "tipo": "comentario",
+    "createdAt": "2026-02-26T13:01:17.184Z",
+    "updatedAt": "2026-02-26T13:01:17.184Z"
+  },
+  {
+    "id": 16,
+    "solicitud_id": 124,
+    "usuario_id": 1,
+    "contenido": "Se suspende traslado, gracias ",
+    "tipo": "comentario",
+    "createdAt": "2026-02-27T14:59:16.579Z",
+    "updatedAt": "2026-02-27T14:59:16.579Z"
+  },
+  {
+    "id": 17,
+    "solicitud_id": 124,
+    "usuario_id": 1,
+    "contenido": "Sorry no era este traslado ",
+    "tipo": "comentario",
+    "createdAt": "2026-02-27T15:00:39.080Z",
+    "updatedAt": "2026-02-27T15:00:39.080Z"
+  },
+  {
+    "id": 18,
+    "solicitud_id": 128,
+    "usuario_id": 9,
+    "contenido": "Sin respuesta auxiliar de unidad de traslado. Se sube con auxiliar de piso.",
+    "tipo": "comentario",
+    "createdAt": "2026-02-27T19:46:30.664Z",
+    "updatedAt": "2026-02-27T19:46:30.664Z"
+  },
+  {
+    "id": 19,
+    "solicitud_id": 133,
+    "usuario_id": 9,
+    "contenido": "NO SE ENCUENTRA COMPLETADA, AUN NO OCURRE ESTO",
+    "tipo": "comentario",
+    "createdAt": "2026-03-02T13:46:00.371Z",
+    "updatedAt": "2026-03-02T13:46:00.371Z"
+  },
+  {
+    "id": 20,
+    "solicitud_id": 148,
+    "usuario_id": 9,
+    "contenido": "Realizada",
+    "tipo": "comentario",
+    "createdAt": "2026-03-02T19:20:01.091Z",
+    "updatedAt": "2026-03-02T19:20:01.091Z"
+  },
+  {
+    "id": 21,
+    "solicitud_id": 139,
+    "usuario_id": 9,
+    "contenido": "Realizado",
+    "tipo": "comentario",
+    "createdAt": "2026-03-02T19:22:29.596Z",
+    "updatedAt": "2026-03-02T19:22:29.596Z"
+  },
+  {
+    "id": 22,
+    "solicitud_id": 158,
+    "usuario_id": 9,
+    "contenido": "Realizado a tiempo 14:00",
+    "tipo": "comentario",
+    "createdAt": "2026-03-03T17:50:37.109Z",
+    "updatedAt": "2026-03-03T17:50:37.109Z"
+  },
+  {
+    "id": 23,
+    "solicitud_id": 183,
+    "usuario_id": 26,
+    "contenido": "Siendo las 14:40 aún paciente no llega a pabellón.",
+    "tipo": "comentario",
+    "createdAt": "2026-03-05T17:36:50.707Z",
+    "updatedAt": "2026-03-05T17:36:50.707Z"
+  },
+  {
+    "id": 24,
+    "solicitud_id": 203,
+    "usuario_id": 26,
+    "contenido": "traslado desde recuperación a pediatria",
+    "tipo": "comentario",
+    "createdAt": "2026-03-06T16:24:52.184Z",
+    "updatedAt": "2026-03-06T16:24:52.184Z"
+  },
+  {
+    "id": 25,
+    "solicitud_id": 355,
+    "usuario_id": 9,
+    "contenido": "Por favor priorizar",
+    "tipo": "comentario",
+    "createdAt": "2026-03-18T17:40:16.783Z",
+    "updatedAt": "2026-03-18T17:40:16.783Z"
+  },
+  {
+    "id": 26,
+    "solicitud_id": 982,
+    "usuario_id": 9,
+    "contenido": "auxiliar no se presenta en servicio ",
+    "tipo": "comentario",
+    "createdAt": "2026-04-10T11:39:24.366Z",
+    "updatedAt": "2026-04-10T11:39:24.366Z"
+  },
+  {
+    "id": 27,
+    "solicitud_id": 981,
+    "usuario_id": 9,
+    "contenido": "auxiliar no se presenta en servicio ",
+    "tipo": "comentario",
+    "createdAt": "2026-04-10T11:39:52.465Z",
+    "updatedAt": "2026-04-10T11:39:52.465Z"
+  }
+]

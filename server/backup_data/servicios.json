@@ -1,0 +1,146 @@
+[
+  {
+    "id": 2,
+    "nombre": "Medicina Quirúrgico 2",
+    "piso": "2",
+    "descripcion": "",
+    "activo": true,
+    "createdAt": "2026-01-29T12:29:48.556Z",
+    "updatedAt": "2026-01-29T12:30:35.100Z"
+  },
+  {
+    "id": 3,
+    "nombre": "Medicina Quirúrgica 3",
+    "piso": "1",
+    "descripcion": "",
+    "activo": true,
+    "createdAt": "2026-01-29T12:30:48.419Z",
+    "updatedAt": "2026-01-29T12:30:48.419Z"
+  },
+  {
+    "id": 1,
+    "nombre": "Medicina Quirúrgica 1",
+    "piso": "3",
+    "descripcion": "",
+    "activo": true,
+    "createdAt": "2026-01-27T19:36:07.189Z",
+    "updatedAt": "2026-01-29T12:30:55.744Z"
+  },
+  {
+    "id": 4,
+    "nombre": "UCI",
+    "piso": "1",
+    "descripcion": "",
+    "activo": true,
+    "createdAt": "2026-01-29T12:31:05.807Z",
+    "updatedAt": "2026-01-29T12:31:05.807Z"
+  },
+  {
+    "id": 5,
+    "nombre": "UTI",
+    "piso": "3",
+    "descripcion": "",
+    "activo": true,
+    "createdAt": "2026-01-29T12:31:13.433Z",
+    "updatedAt": "2026-01-29T12:31:13.433Z"
+  },
+  {
+    "id": 6,
+    "nombre": "Pabellón",
+    "piso": "2",
+    "descripcion": "",
+    "activo": true,
+    "createdAt": "2026-01-29T12:31:27.903Z",
+    "updatedAt": "2026-01-29T12:31:27.903Z"
+  },
+  {
+    "id": 7,
+    "nombre": "Maternidad/ginecología",
+    "piso": "1",
+    "descripcion": "",
+    "activo": true,
+    "createdAt": "2026-01-29T12:31:42.987Z",
+    "updatedAt": "2026-01-29T12:31:42.987Z"
+  },
+  {
+    "id": 8,
+    "nombre": "Pabellon",
+    "piso": "Piso 2",
+    "descripcion": "",
+    "activo": true,
+    "createdAt": "2026-02-11T18:50:15.809Z",
+    "updatedAt": "2026-02-11T18:50:15.809Z"
+  },
+  {
+    "id": 9,
+    "nombre": "Medicina Quirurgica 1",
+    "piso": "1",
+    "descripcion": null,
+    "activo": true,
+    "createdAt": "2026-02-16T12:28:50.427Z",
+    "updatedAt": "2026-02-16T12:28:50.427Z"
+  },
+  {
+    "id": 10,
+    "nombre": "Medicina Quirurgica 2",
+    "piso": "2",
+    "descripcion": null,
+    "activo": true,
+    "createdAt": "2026-02-16T12:28:50.448Z",
+    "updatedAt": "2026-02-16T12:28:50.448Z"
+  },
+  {
+    "id": 11,
+    "nombre": "Medicina Quirurgica 3",
+    "piso": "3",
+    "descripcion": null,
+    "activo": true,
+    "createdAt": "2026-02-16T12:28:50.510Z",
+    "updatedAt": "2026-02-16T12:28:50.510Z"
+  },
+  {
+    "id": 12,
+    "nombre": "Urgencias Adulto",
+    "piso": "N/A",
+    "descripcion": null,
+    "activo": true,
+    "createdAt": "2026-02-16T12:28:50.530Z",
+    "updatedAt": "2026-02-16T12:28:50.530Z"
+  },
+  {
+    "id": 13,
+    "nombre": "Urgencia Infantil",
+    "piso": "N/A",
+    "descripcion": null,
+    "activo": true,
+    "createdAt": "2026-02-16T12:28:50.538Z",
+    "updatedAt": "2026-02-16T12:28:50.538Z"
+  },
+  {
+    "id": 14,
+    "nombre": "CMA",
+    "piso": "N/A",
+    "descripcion": null,
+    "activo": true,
+    "createdAt": "2026-02-16T12:28:50.557Z",
+    "updatedAt": "2026-02-16T12:28:50.557Z"
+  },
+  {
+    "id": 15,
+    "nombre": "Maternidad/ginecologia",
+    "piso": "N/A",
+    "descripcion": null,
+    "activo": true,
+    "createdAt": "2026-02-16T12:28:50.567Z",
+    "updatedAt": "2026-02-16T12:28:50.567Z"
+  },
+  {
+    "id": 16,
+    "nombre": "GESCAS",
+    "piso": "N/A",
+    "descripcion": null,
+    "activo": true,
+    "createdAt": "2026-02-16T12:28:50.622Z",
+    "updatedAt": "2026-02-16T12:28:50.622Z"
+  }
+]
