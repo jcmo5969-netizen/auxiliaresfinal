@@ -6,13 +6,41 @@
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const dotenv = require('dotenv');
 
-const SOURCE_URL =
-  process.env.BACKUP_DATABASE_URL ||
-  process.env.SOURCE_DATABASE_URL ||
-  process.env.DATABASE_URL ||
-  '';
+for (const envPath of [path.join(__dirname, '.env'), path.join(__dirname, '..', '.env')]) {
+  if (fs.existsSync(envPath)) dotenv.config({ path: envPath });
+}
+
+function construirUrlDesdeDbVars() {
+  const host = process.env.DB_HOST;
+  if (!host) return '';
+  const user = process.env.DB_USER || 'postgres';
+  const pass = process.env.DB_PASSWORD != null ? String(process.env.DB_PASSWORD) : '';
+  const db = process.env.DB_NAME || 'sistema_auxiliares';
+  const port = process.env.DB_PORT || 5432;
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${host}:${port}/${encodeURIComponent(db)}`;
+}
+
+function urlOrigen() {
+  return (
+    process.env.BACKUP_DATABASE_URL ||
+    process.env.SOURCE_DATABASE_URL ||
+    process.env.DATABASE_URL ||
+    construirUrlDesdeDbVars() ||
+    ''
+  );
+}
+
+function sslParaPg(urlStr) {
+  try {
+    const h = new URL(urlStr).hostname || '';
+    if (h === 'localhost' || h === '127.0.0.1') return undefined;
+    return { rejectUnauthorized: false };
+  } catch {
+    return { rejectUnauthorized: false };
+  }
+}
 
 const OUTPUT_DIR = path.join(__dirname, 'backup_data');
 
@@ -30,9 +58,10 @@ const TABLAS = [
 ];
 
 async function conectar() {
+  const url = urlOrigen();
   const client = new Client({
-    connectionString: SOURCE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString: url,
+    ssl: sslParaPg(url),
     connectionTimeoutMillis: 10000,
   });
   await client.connect();
@@ -72,9 +101,10 @@ async function exportarTabla(tabla) {
 }
 
 async function main() {
-  if (!SOURCE_URL) {
+  if (!urlOrigen()) {
     console.error(
-      '❌ Define BACKUP_DATABASE_URL, SOURCE_DATABASE_URL o DATABASE_URL (BD origen).'
+      '❌ No hay URL de Postgres origen. Usa BACKUP_DATABASE_URL / DATABASE_URL en .env,\n' +
+        '   o DB_HOST + DB_USER + DB_PASSWORD + DB_NAME, o pásala en la sesión de PowerShell.'
     );
     process.exit(1);
   }
