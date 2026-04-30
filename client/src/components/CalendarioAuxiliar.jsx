@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, ChevronLeft, ChevronRight, MapPin, Clock, User, CheckCircle, RotateCcw } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, MapPin, Clock, User, CheckCircle, RotateCcw, Bed } from 'lucide-react'
 import { formatearFechaProgramadaDisplay } from '../utils/fechaHospital'
 
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -200,6 +200,11 @@ const CalendarioAuxiliar = ({
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" /> {solicitud.servicio?.nombre}
                     </span>
+                    {(solicitud.cama != null && String(solicitud.cama).trim() !== '') && (
+                      <span className="flex items-center gap-1 font-semibold text-primary-700 dark:text-primary-300">
+                        <Bed className="w-3.5 h-3.5" /> Cama {String(solicitud.cama).trim()}
+                      </span>
+                    )}
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {solicitud.fechaProgramada

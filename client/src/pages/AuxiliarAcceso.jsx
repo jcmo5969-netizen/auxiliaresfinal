@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { 
   CheckCircle, Clock, AlertCircle, MapPin, User, 
   LogIn, X, Loader, Bell, BellOff, RefreshCw, 
-  TrendingUp, Calendar, Moon, Sun, HelpCircle, RotateCcw
+  TrendingUp, Calendar, Moon, Sun, HelpCircle, RotateCcw, Bed
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 // Firebase se carga solo cuando hace falta (evita errores en iPhone/Safari al cargar la página)
@@ -494,9 +494,18 @@ const AuxiliarAcceso = () => {
       alta: '🏥',
       traslado: '🚑',
       pabellon: '⚕️',
+      gescas: '🛏️',
       otro: '📋'
     }
     return iconos[tipo] || '📋'
+  }
+
+  /** Texto de cama que envía el solicitante (camelCase o snake_case por compatibilidad). */
+  const textoCama = (s) => {
+    const v = s?.cama ?? s?.cama_numero
+    if (v == null || v === '') return ''
+    const t = String(v).trim()
+    return t
   }
 
   if (cargando) {
@@ -746,6 +755,13 @@ const AuxiliarAcceso = () => {
                         </span>
                       </div>
 
+                      {textoCama(solicitud) && (
+                        <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100">
+                          <Bed className="h-5 w-5 shrink-0" aria-hidden />
+                          <span>Cama: {textoCama(solicitud)}</span>
+                        </div>
+                      )}
+
                       {solicitud.descripcion && (
                         <p className="text-gray-700 dark:text-gray-300 mb-3 bg-white dark:bg-gray-800 p-3 rounded-lg">{solicitud.descripcion}</p>
                       )}
@@ -863,6 +879,13 @@ const AuxiliarAcceso = () => {
                           {solicitud.tipoRequerimiento.toUpperCase()}
                         </span>
                       </div>
+
+                      {textoCama(solicitud) && (
+                        <div className="mb-3 flex items-center gap-2 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-900 dark:border-primary-600 dark:bg-primary-900/40 dark:text-primary-100">
+                          <Bed className="h-5 w-5 shrink-0" aria-hidden />
+                          <span>Cama: {textoCama(solicitud)}</span>
+                        </div>
+                      )}
 
                       {solicitud.descripcion && (
                         <p className="text-gray-700 mb-3 bg-gray-50 p-3 rounded-lg">{solicitud.descripcion}</p>
