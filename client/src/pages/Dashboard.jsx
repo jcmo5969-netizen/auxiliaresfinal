@@ -28,6 +28,7 @@ import EstadisticasTiempoReal from '../components/EstadisticasTiempoReal'
 import Logo from '../components/Logo'
 import RelojVentana from '../components/RelojVentana'
 import { EtiquetasProvider } from '../context/EtiquetasContext'
+import { useSolicitudesEnVivo } from '../utils/socket'
 
 const Dashboard = () => {
   const { usuario, logout } = useAuth()
@@ -53,6 +54,7 @@ const Dashboard = () => {
   /** Intervalo de auto-refresh: sube si el API falla (evita spam de 500 cada 3s) */
   const [pollIntervalMs, setPollIntervalMs] = useState(15000)
   const toastCargaErrorMostrado = useRef(false)
+  const cargarDatosRef = useRef(null)
 
   // Verificar que el usuario sea administrador
   useEffect(() => {
@@ -71,6 +73,9 @@ const Dashboard = () => {
       return
     }
   }, [usuario, navigate])
+
+  // Tiempo real: el listado se actualiza apenas cambia una solicitud
+  useSolicitudesEnVivo(() => cargarDatosRef.current?.(), usuario?.rol === 'administrador')
 
   const cargarDatos = useCallback(async () => {
     const promesas = [api.get('/api/solicitudes'), api.get('/api/servicios')]
@@ -138,6 +143,8 @@ const Dashboard = () => {
     }
     setCargando(false)
   }, [usuario])
+
+  cargarDatosRef.current = cargarDatos
 
   useEffect(() => {
     if (!usuario || usuario.rol !== 'administrador') return

@@ -43,3 +43,11 @@ server/firebase-service-account.json
 # Temporary files
 *.tmp
 *.temp
+
+# Credenciales: nunca deben subirse al repositorio
+server/*firebase-adminsdk*.json
+server/firebase-service-account*.txt
+*.pem
+
+# Respaldos con datos reales (usuarios, solicitudes)
+server/backup_data/

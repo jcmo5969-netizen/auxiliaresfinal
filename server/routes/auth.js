@@ -2,7 +2,20 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { Usuario, sequelize } = require('../models');
-const { auth } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+const { auth, invalidateUserCache } = require('../middleware/auth');
+
+// Frena intentos de adivinar contraseñas. Se cuenta por correo + IP (no solo por IP)
+// porque todo el hospital sale a internet con la misma dirección.
+const limiteLogin = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${String(req.body?.email || '').toLowerCase().trim()}|${req.ip}`,
+  message: { mensaje: 'Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.' }
+});
 
 const router = express.Router();
 
@@ -79,7 +92,7 @@ router.post('/registro', [
 // @route   POST /api/auth/login
 // @desc    Iniciar sesión
 // @access  Public
-router.post('/login', [
+router.post('/login', limiteLogin, [
   body('email').isEmail().withMessage('Email inválido'),
   body('password').notEmpty().withMessage('La contraseña es requerida')
 ], async (req, res) => {
@@ -138,8 +151,7 @@ router.post('/login', [
     
     if (error.name === 'SequelizeConnectionError') {
       return res.status(503).json({ 
-        mensaje: 'Servicio no disponible. Base de datos no conectada.',
-        error: 'PostgreSQL connection error'
+        mensaje: 'Servicio no disponible. Base de datos no conectada.'
       });
     }
     
@@ -210,42 +222,17 @@ router.put('/me', auth, [
     if (password && password.length >= 6) updateData.password = password;
 
     await usuario.update(updateData);
+    invalidateUserCache(usuario.id);
 
     const { Servicio } = require('../models');
     const usuarioData = await Usuario.findByPk(usuario.id, {
-      attributes: { exclude: ['password'] },
+      attributes: { exclude: ['password', 'secret2FA', 'fcmToken'] },
       include: [{ model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'], required: false }]
     });
     res.json(usuarioData);
   } catch (error) {
     console.error('Error en PUT /me:', error);
     res.status(500).json({ mensaje: 'Error del servidor' });
-  }
-});
-
-// @route   POST /api/auth/fcm-token
-// @desc    Guardar FCM token para notificaciones push
-// @access  Private
-router.post('/fcm-token', auth, [
-  body('fcmToken').notEmpty().withMessage('El token FCM es requerido')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errores: errors.array() });
-    }
-
-    const { fcmToken } = req.body;
-    await Usuario.update({ fcmToken }, { where: { id: req.usuario.id } });
-
-    res.json({ mensaje: 'Token FCM guardado exitosamente' });
-  } catch (error) {
-    console.error('Error en fcm-token:', error);
-    console.error('Stack:', error.stack);
-    res.status(500).json({ 
-      mensaje: 'Error del servidor',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
   }
 });
 

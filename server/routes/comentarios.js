@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Comentario, Solicitud, Usuario } = require('../models');
 const { auth } = require('../middleware/auth');
-const { enviarNotificacionNuevoComentario } = require('../utils/notificaciones');
+const { notificarComentario } = require('../utils/push');
 
 const router = express.Router();
 
@@ -69,13 +69,8 @@ router.post('/', [
       ]
     });
 
-    // Notificación al auxiliar asignado y al solicitante (alarma en el celular)
-    enviarNotificacionNuevoComentario(
-      req.body.solicitudId,
-      req.usuario.nombre || 'Usuario',
-      req.body.contenido,
-      req.usuario.id
-    ).catch(err => console.error('Error enviando notificación comentario:', err));
+    // Aviso al celular del auxiliar asignado, del solicitante y de enfermería del servicio
+    notificarComentario(req.body.solicitudId, { id: req.usuario.id, nombre: req.usuario.nombre }, req.body.contenido);
 
     res.status(201).json(comentarioCompleto);
   } catch (error) {

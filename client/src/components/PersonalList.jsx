@@ -1,4 +1,4 @@
-import { User, Plus, Mail, Shield, UserCheck, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react'
+import { User, Plus, Mail, Shield, UserCheck, Edit, CheckCircle, XCircle, Bell, BellOff } from 'lucide-react'
 import { useState } from 'react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
@@ -20,15 +20,6 @@ const PersonalList = ({ personal, usuario, onPersonalAgregado, servicios = [] })
       }
     } catch (error) {
       toast.error(error.response?.data?.mensaje || error.response?.data?.errores?.[0]?.msg || 'Error agregando personal')
-    }
-  }
-
-  const handleToggleActivo = async (persona) => {
-    try {
-      // Nota: Necesitarías agregar una ruta en el backend para esto
-      toast.info('Funcionalidad de activar/desactivar próximamente')
-    } catch (error) {
-      toast.error('Error actualizando estado')
     }
   }
 
@@ -146,9 +137,27 @@ const PersonalList = ({ personal, usuario, onPersonalAgregado, servicios = [] })
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Mail className="w-4 h-4" />
-                      <span className="truncate">{persona.email}</span>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Mail className="w-4 h-4 shrink-0" />
+                        <span className="truncate">{persona.email}</span>
+                      </span>
+                      {persona.rol !== 'administrador' && persona.dispositivosPush !== undefined && (
+                        persona.dispositivosPush > 0 ? (
+                          <span className="flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                            <Bell className="w-3.5 h-3.5" />
+                            Notificaciones activas ({persona.dispositivosPush})
+                          </span>
+                        ) : (
+                          <span
+                            className="flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400"
+                            title="Esta persona aún no activa las notificaciones en su celular"
+                          >
+                            <BellOff className="w-3.5 h-3.5" />
+                            Sin notificaciones
+                          </span>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>

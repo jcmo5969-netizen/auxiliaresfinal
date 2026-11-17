@@ -1,20 +1,23 @@
 import axios from 'axios'
 import { getItem, removeItem } from './storage'
 
-// Configurar la URL base del API
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+/**
+ * URL base del API.
+ * - Si se define VITE_API_URL (frontend y backend en servicios separados), se usa esa.
+ * - En producción sin variable: mismo origen (el backend también sirve el frontend).
+ * - En desarrollo: backend local en el puerto 5000.
+ */
+export const API_URL = (
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
+).replace(/\/$/, '')
 
-// Log para debug (solo en desarrollo)
-if (import.meta.env.DEV) {
-  console.log('🔗 API URL configurada:', API_URL || 'NO CONFIGURADA - usando localhost:5000')
-}
-
-// Crear instancia de axios con configuración base
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  // En Render (plan gratuito) el servidor puede tardar ~1 minuto en despertar
+  timeout: 70000
 })
 
 // Interceptor para agregar el token (storage seguro para iOS)
@@ -33,10 +36,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const esLogin = String(error.config?.url || '').includes('/api/auth/login')
+    if (error.response?.status === 401 && !esLogin) {
       const currentHash = window.location.hash || ''
       removeItem('token')
-      if (!currentHash.includes('/auxiliar/acceso')) {
+      if (!currentHash.includes('/auxiliar/acceso') && !currentHash.includes('/login')) {
         const base = (window.location.origin || '') + (window.location.pathname || '/')
         window.location.href = base + '#/login'
       }
@@ -48,4 +52,3 @@ api.interceptors.response.use(
 )
 
 export default api
-

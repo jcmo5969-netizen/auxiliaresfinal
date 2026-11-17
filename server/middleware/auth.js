@@ -71,7 +71,7 @@ const auth = async (req, res, next) => {
 
       try {
         usuario = await Usuario.findByPk(userId, {
-          attributes: { exclude: ['password'] },
+          attributes: { exclude: ['password', 'secret2FA', 'fcmToken'] },
           include: includeOptions
         });
       } catch (dbErr) {
@@ -81,7 +81,7 @@ const auth = async (req, res, next) => {
         );
         try {
           usuario = await Usuario.findByPk(userId, {
-            attributes: { exclude: ['password'] }
+            attributes: { exclude: ['password', 'secret2FA', 'fcmToken'] }
           });
         } catch (dbErr2) {
           console.error(

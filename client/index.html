@@ -2,15 +2,22 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo-hospital-quilpue.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#2563eb" />
+    <title>Sistema de Auxiliares</title>
+    <meta name="description" content="Solicitudes de auxiliar del Hospital de Quilpué, con avisos al celular." />
+    <meta name="theme-color" content="#0369a1" />
+
+    <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png" />
+    <link rel="icon" type="image/svg+xml" href="/logo-hospital-quilpue.svg" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- iPhone / iPad: app en la pantalla de inicio (requisito para recibir notificaciones) -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Auxiliares" />
-    <link rel="apple-touch-icon" href="/logo-hospital-quilpue.svg" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>Sistema de Auxiliares</title>
+
     <!-- HashRouter: una sola redirección para iOS/Safari (evitar pantalla en blanco) -->
     <script>
       (function() {
@@ -21,63 +28,19 @@
         if (hash.length > 1 && hash.indexOf('#/') === 0) return;
         // Ruta con path (ej. /auxiliar/acceso) sin hash -> ir a #/auxiliar/acceso
         if (path !== '/' && path !== '/index.html') {
-          window.location.replace('#' + path + search);
+          window.location.replace('/#' + path + search);
           return;
         }
         // Raíz sin hash -> ir a #/ para que React arranque
         if (hash === '' || hash === '#') window.location.replace('#/');
       })();
     </script>
-    <!-- Firebase Messaging Service Worker -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        // Evitar registro múltiple
-        if (!window._swRegistered) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-              // Verificar si ya está registrado
-              const yaRegistrado = registrations.some(reg => 
-                reg.active && reg.active.scriptURL.includes('firebase-messaging-sw.js')
-              );
-              
-              if (!yaRegistrado) {
-                navigator.serviceWorker.register('/firebase-messaging-sw.js')
-                  .then((registration) => {
-                    console.log('✅ Service Worker registrado:', registration.scope);
-                    window._swRegistered = true;
-                  })
-                  .catch((error) => {
-                    // Solo mostrar error si no es un error de scope duplicado
-                    if (!error.message.includes('already been registered')) {
-                      console.warn('⚠️ Error registrando Service Worker:', error);
-                    }
-                  });
-              } else {
-                console.log('✅ Service Worker ya estaba registrado');
-                window._swRegistered = true;
-              }
-            });
-          });
-        }
-      }
-    </script>
   </head>
   <body>
     <div id="root">
       <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:#6b7280;font-size:0.875rem;" id="root-fallback">Cargando…</div>
     </div>
+    <noscript>Esta aplicación necesita JavaScript para funcionar.</noscript>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      // Quitar fallback cuando React monte (por si el módulo tarda o falla en iOS)
-      setTimeout(function() {
-        var r = document.getElementById('root');
-        if (r && r.children.length > 1) {
-          var f = document.getElementById('root-fallback');
-          if (f) f.remove();
-        }
-      }, 8000);
-    </script>
   </body>
 </html>
-
-

@@ -2,7 +2,8 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { Solicitud, Servicio, Usuario, Etiqueta, SolicitudEtiqueta, sequelize } = require('../models');
 const { auth } = require('../middleware/auth');
-const { enviarNotificacionPush } = require('../utils/notificaciones');
+const push = require('../utils/push');
+const { emitirCambioSolicitud } = require('../utils/tiempoReal');
 const { registrarCreacion, registrarCambioEstado, registrarAsignacion, registrarCambio } = require('../utils/historial');
 const { registrarActividad } = require('../utils/logger');
 const { Op, QueryTypes } = require('sequelize');
@@ -25,6 +26,37 @@ function mismoMinutoProgramada(a, b) {
   const tb = b instanceof Date ? b.getTime() : new Date(b).getTime();
   if (Number.isNaN(ta) || Number.isNaN(tb)) return false;
   return Math.floor(ta / 60000) === Math.floor(tb / 60000);
+}
+
+const INCLUDE_COMPLETO = [
+  { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
+  { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
+  { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false }
+];
+
+const cargarCompleta = (id, conEtiquetas = false) =>
+  Solicitud.findByPk(id, {
+    include: conEtiquetas
+      ? [
+          ...INCLUDE_COMPLETO,
+          { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
+        ]
+      : INCLUDE_COMPLETO
+  });
+
+const texto = (v, max) => {
+  if (v == null) return null;
+  const t = String(v).trim();
+  return t ? t.slice(0, max) : null;
+};
+
+const idValido = (v) => /^\d+$/.test(String(v));
+
+/** Enfermería solo puede actuar sobre solicitudes de su servicio (o las que creó). */
+function enfermeriaPuedeGestionar(usuario, solicitud) {
+  if (usuario.rol !== 'enfermeria') return true;
+  if (solicitud.solicitadoPorId === usuario.id) return true;
+  return Boolean(usuario.servicioId) && Number(usuario.servicioId) === Number(solicitud.servicioId);
 }
 
 // @route   GET /api/solicitudes
@@ -220,6 +252,9 @@ router.get('/mis-asignadas', auth, async (req, res) => {
 // @access  Private
 router.get('/:id', auth, async (req, res) => {
   try {
+    if (!idValido(req.params.id)) {
+      return res.status(400).json({ mensaje: 'ID de solicitud inválido' });
+    }
     const solicitud = await Solicitud.findByPk(req.params.id, {
       include: [
         { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
@@ -243,54 +278,69 @@ router.get('/:id', auth, async (req, res) => {
 // @desc    Crear una nueva solicitud
 // @access  Private
 router.post('/', [
-  body('tipoRequerimiento').isIn(['alta', 'traslado', 'pabellon', 'otro', 'gescas']).withMessage('Tipo de requerimiento inválido')
+  body('tipoRequerimiento').isIn(['alta', 'traslado', 'pabellon', 'otro', 'gescas']).withMessage('Tipo de requerimiento inválido'),
+  body('prioridad').optional({ values: 'falsy' }).isIn(['baja', 'media', 'alta', 'urgente']).withMessage('Prioridad inválida')
 ], auth, async (req, res) => {
   try {
     // Aceptar tanto 'servicio' como 'servicioId' del frontend
     let servicioId = req.body.servicioId || req.body.servicio;
-    
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errores: errors.array() });
     }
 
+    if (req.usuario.rol === 'auxiliar') {
+      return res.status(403).json({ mensaje: 'Los auxiliares no pueden crear solicitudes' });
+    }
+
     // Si es personal de enfermería, solo puede crear solicitudes en su servicio
     if (req.usuario.rol === 'enfermeria') {
-      // Si no tiene servicioId en el body, usar el del usuario
       if (!servicioId && req.usuario.servicioId) {
         servicioId = req.usuario.servicioId;
       }
-      // Validar que el servicioId coincida con el del usuario
-      if (req.usuario.servicioId && servicioId !== req.usuario.servicioId) {
+      if (req.usuario.servicioId && Number(servicioId) !== Number(req.usuario.servicioId)) {
         return res.status(403).json({ mensaje: 'Solo puedes crear solicitudes en tu servicio asignado' });
       }
     }
-    
-    if (!servicioId) {
+
+    if (!servicioId || !idValido(servicioId)) {
       return res.status(400).json({ mensaje: 'El servicio es requerido' });
     }
+    servicioId = Number(servicioId);
 
-    // Preparar datos para crear la solicitud
+    const servicio = await Servicio.findByPk(servicioId, { attributes: ['id'] });
+    if (!servicio) {
+      return res.status(400).json({ mensaje: 'El servicio indicado no existe' });
+    }
+
+    // Solo se aceptan estos campos del cliente: estado, asignación y tiempos los controla el servidor
     const datosSolicitud = {
-      ...req.body,
-      servicioId: servicioId,
-      solicitadoPorId: req.usuario.id
+      servicioId,
+      solicitadoPorId: req.usuario.id,
+      tipoRequerimiento: req.body.tipoRequerimiento,
+      descripcion: texto(req.body.descripcion, 2000),
+      cama: texto(req.body.cama, 100),
+      prioridad: req.body.prioridad || 'media',
+      prioridadInmediato: Boolean(req.body.prioridadInmediato),
+      tipoServicio: texto(req.body.tipoServicio, 100),
+      tipoTraslado: texto(req.body.tipoTraslado, 100),
+      destinoGescas: texto(req.body.destinoGescas, 255),
+      precaucionesEstandar: Boolean(req.body.precaucionesEstandar),
+      tipoPrecaucion: texto(req.body.tipoPrecaucion, 255)
     };
 
-    // Si hay fechaProgramada, convertirla a Date. "YYYY-MM-DD" como medianoche UTC se ve día anterior en Chile; usar mediodía UTC.
+    // "YYYY-MM-DD" como medianoche UTC se ve día anterior en Chile; usar mediodía UTC.
     const rawFecha = req.body.fechaProgramada;
+    datosSolicitud.fechaProgramada = null;
     if (rawFecha && String(rawFecha).trim() !== '' && String(rawFecha) !== 'Invalid date') {
       const str = String(rawFecha).trim();
       const fecha = /^\d{4}-\d{2}-\d{2}$/.test(str)
-        ? new Date(str + 'T12:00:00.000Z')  // mediodía UTC = mismo día en cualquier zona
+        ? new Date(str + 'T12:00:00.000Z')
         : new Date(str);
       if (!isNaN(fecha.getTime())) {
         datosSolicitud.fechaProgramada = fecha;
-      } else {
-        datosSolicitud.fechaProgramada = null;
       }
-    } else {
-      datosSolicitud.fechaProgramada = null;
     }
 
     // Normalizar campos de traslado y prioridad inmediata
@@ -301,11 +351,9 @@ router.post('/', [
     if (datosSolicitud.tipoRequerimiento !== 'gescas') {
       datosSolicitud.destinoGescas = null;
     }
-    if (datosSolicitud.prioridadInmediato && datosSolicitud.prioridad !== 'urgente') {
+    if (datosSolicitud.prioridadInmediato) {
       datosSolicitud.prioridad = 'urgente';
     }
-    datosSolicitud.precaucionesEstandar = Boolean(req.body.precaucionesEstandar);
-    datosSolicitud.tipoPrecaucion = req.body.tipoPrecaucion && String(req.body.tipoPrecaucion).trim() ? String(req.body.tipoPrecaucion).trim() : null;
 
     // Evitar duplicados por doble clic / doble envío (misma persona, mismos datos, pocos segundos)
     const ventanaSegundos = 120;
@@ -336,70 +384,49 @@ router.post('/', [
       });
     }
 
-    const crearSolicitudConRetry = async () => {
-      try {
-        return await Solicitud.create(datosSolicitud);
-      } catch (error) {
-        if (error.name === 'SequelizeDatabaseError' && !error._reintentado) {
-          // Intentar sincronizar la tabla por si faltan columnas nuevas
-          await Solicitud.sync({ alter: true });
-          error._reintentado = true;
-          return await Solicitud.create(datosSolicitud);
-        }
-        throw error;
-      }
-    };
-
-    const solicitud = await crearSolicitudConRetry();
+    const solicitud = await Solicitud.create(datosSolicitud);
 
     // Agregar etiquetas si se proporcionan
-    if (req.body.etiquetas && Array.isArray(req.body.etiquetas)) {
+    if (Array.isArray(req.body.etiquetas)) {
       for (const etiquetaId of req.body.etiquetas) {
-        await SolicitudEtiqueta.findOrCreate({
-          where: { solicitudId: solicitud.id, etiquetaId }
-        });
+        if (!idValido(etiquetaId)) continue;
+        try {
+          await SolicitudEtiqueta.findOrCreate({
+            where: { solicitudId: solicitud.id, etiquetaId: Number(etiquetaId) }
+          });
+        } catch (e) {
+          console.error('Etiqueta no asociada:', e.parent?.message || e.message);
+        }
       }
     }
 
-    // Cargar solicitud con todas las relaciones
-    const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {
-      include: [
-        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
-        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
-        { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
-      ]
-    });
+    let solicitudCompleta;
+    try {
+      solicitudCompleta = await cargarCompleta(solicitud.id, true);
+    } catch (e) {
+      solicitudCompleta = await cargarCompleta(solicitud.id);
+    }
 
-    // Registrar en historial
     await registrarCreacion(solicitudCompleta, req.usuario.id);
 
-    // Registrar actividad
     await registrarActividad({
       usuarioId: req.usuario.id,
       accion: 'crear',
       entidad: 'solicitud',
       entidadId: solicitud.id,
       detalles: { tipo: solicitud.tipoRequerimiento, prioridad: solicitud.prioridad },
-      ip: req.ip || req.connection.remoteAddress,
+      ip: req.ip,
       userAgent: req.get('user-agent')
     });
 
-    // Enviar notificaciones push a todos los auxiliares
-    await enviarNotificacionPush(solicitudCompleta);
-
-    // Emitir evento Socket.IO
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('nueva-solicitud', solicitudCompleta);
-    }
+    // Aviso al celular de los auxiliares. No se espera la respuesta de Apple/Google
+    // para no demorar a quien está creando la solicitud.
+    push.notificarNuevaSolicitud(solicitudCompleta);
+    emitirCambioSolicitud(req.app, 'creada', solicitudCompleta);
 
     res.status(201).json(solicitudCompleta);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ 
-      mensaje: 'Error del servidor',
-      ...(process.env.NODE_ENV === 'development' && { detalle: error.message })
-    });
+    return send500(res, error, 'POST /api/solicitudes');
   }
 });
 
@@ -408,57 +435,56 @@ router.post('/', [
 // @access  Private
 router.put('/:id/asignar', auth, async (req, res) => {
   try {
-    const solicitudId = req.params.id;
-    
-    if (!solicitudId || solicitudId === 'undefined') {
+    if (!idValido(req.params.id)) {
       return res.status(400).json({ mensaje: 'ID de solicitud inválido' });
     }
+    if (req.usuario.rol === 'enfermeria') {
+      return res.status(403).json({ mensaje: 'No tienes permiso para asignar solicitudes' });
+    }
 
-    const solicitud = await Solicitud.findByPk(solicitudId);
+    const solicitud = await Solicitud.findByPk(req.params.id);
     if (!solicitud) {
       return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
     }
 
-    if (solicitud.estado !== 'pendiente') {
-      return res.status(400).json({ mensaje: 'La solicitud ya está asignada, en proceso o completada' });
-    }
-
     // Si es auxiliar, solo puede asignarse a sí mismo
-    const auxiliarId = req.usuario.rol === 'auxiliar' 
-      ? req.usuario.id 
-      : req.body.auxiliarId || req.usuario.id;
-
-    const estadoAnterior = solicitud.estado;
-    
-    const fechaAsignacion = new Date();
-    await solicitud.update({
-      asignadoAId: auxiliarId,
-      estado: 'en_proceso',
-      fechaAsignacion: fechaAsignacion
-    });
-
-    // Calcular tiempo de respuesta (desde creación hasta asignación)
-    if (solicitud.createdAt) {
-      const tiempoRespuesta = Math.round((fechaAsignacion - new Date(solicitud.createdAt)) / 60000); // minutos
-      await solicitud.update({ tiempoRespuesta });
+    let auxiliarId = req.usuario.id;
+    if (req.usuario.rol === 'administrador' && req.body.auxiliarId) {
+      if (!idValido(req.body.auxiliarId)) {
+        return res.status(400).json({ mensaje: 'Auxiliar inválido' });
+      }
+      const auxiliar = await Usuario.findByPk(req.body.auxiliarId, { attributes: ['id', 'rol', 'activo'] });
+      if (!auxiliar || auxiliar.rol !== 'auxiliar' || !auxiliar.activo) {
+        return res.status(400).json({ mensaje: 'El auxiliar indicado no existe o está inactivo' });
+      }
+      auxiliarId = auxiliar.id;
     }
 
-    // Registrar en historial
-    await registrarAsignacion(solicitud.id, req.usuario.id, auxiliarId);
-    await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, 'en_proceso');
+    const fechaAsignacion = new Date();
+    const tiempoRespuesta = solicitud.createdAt
+      ? Math.max(0, Math.round((fechaAsignacion - new Date(solicitud.createdAt)) / 60000))
+      : null;
 
-    const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {
-      include: [
-        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
-        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
-        { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'] }
-      ]
-    });
+    // Actualización atómica: si dos auxiliares tocan "Asignarme" al mismo tiempo, solo uno la obtiene
+    const [afectadas] = await Solicitud.update(
+      { asignadoAId: auxiliarId, estado: 'en_proceso', fechaAsignacion, tiempoRespuesta },
+      { where: { id: solicitud.id, estado: 'pendiente' } }
+    );
+    if (afectadas === 0) {
+      return res.status(409).json({ mensaje: 'Otro auxiliar ya tomó esta solicitud o ya no está pendiente' });
+    }
+
+    await registrarAsignacion(solicitud.id, req.usuario.id, auxiliarId);
+    await registrarCambioEstado(solicitud.id, req.usuario.id, 'pendiente', 'en_proceso');
+
+    const solicitudCompleta = await cargarCompleta(solicitud.id);
+
+    push.notificarSolicitudTomada(solicitudCompleta, req.usuario.id);
+    emitirCambioSolicitud(req.app, 'asignada', solicitudCompleta);
 
     res.json(solicitudCompleta);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ mensaje: 'Error del servidor' });
+    return send500(res, error, 'PUT /api/solicitudes/:id/asignar');
   }
 });
 
@@ -467,6 +493,9 @@ router.put('/:id/asignar', auth, async (req, res) => {
 // @access  Private (solo el auxiliar asignado)
 router.put('/:id/desasignar', auth, async (req, res) => {
   try {
+    if (!idValido(req.params.id)) {
+      return res.status(400).json({ mensaje: 'ID de solicitud inválido' });
+    }
     const solicitud = await Solicitud.findByPk(req.params.id);
     if (!solicitud) {
       return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
@@ -490,18 +519,15 @@ router.put('/:id/desasignar', auth, async (req, res) => {
     await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, 'pendiente', 'Auxiliar devolvió la solicitud');
     await registrarCambio(solicitud.id, req.usuario.id, 'desasignar', 'asignadoAId', String(asignadoAnterior), null, 'Solicitud devuelta a pendientes');
 
-    const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {
-      include: [
-        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
-        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
-        { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false }
-      ]
-    });
+    const solicitudCompleta = await cargarCompleta(solicitud.id);
+
+    // Vuelve a quedar disponible: se avisa de nuevo al resto de auxiliares
+    push.notificarSolicitudDevuelta(solicitudCompleta, req.usuario.id);
+    emitirCambioSolicitud(req.app, 'devuelta', solicitudCompleta);
 
     res.json(solicitudCompleta);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ mensaje: 'Error del servidor' });
+    return send500(res, error, 'PUT /api/solicitudes/:id/desasignar');
   }
 });
 
@@ -517,41 +543,42 @@ router.put('/:id/estado', [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errores: errors.array() });
     }
+    if (!idValido(req.params.id)) {
+      return res.status(400).json({ mensaje: 'ID de solicitud inválido' });
+    }
 
     const solicitud = await Solicitud.findByPk(req.params.id);
     if (!solicitud) {
       return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
     }
 
-    // Verificar permisos: auxiliares solo pueden actualizar sus propias solicitudes
+    // Auxiliares solo pueden actualizar sus propias solicitudes
     if (req.usuario.rol === 'auxiliar' && solicitud.asignadoAId !== req.usuario.id) {
       return res.status(403).json({ mensaje: 'No tienes permiso para actualizar esta solicitud' });
     }
+    if (!enfermeriaPuedeGestionar(req.usuario, solicitud)) {
+      return res.status(403).json({ mensaje: 'Solo puedes gestionar solicitudes de tu servicio' });
+    }
 
-    if (req.body.estado === 'cancelada') {
-      const motivo = req.body.motivoCancelacion && String(req.body.motivoCancelacion).trim();
-      if (!motivo) {
-        return res.status(400).json({ mensaje: 'Debe indicar el motivo de la cancelación' });
-      }
+    const nuevoEstado = req.body.estado;
+    const motivo = texto(req.body.motivoCancelacion, 1000);
+    if (nuevoEstado === 'cancelada' && !motivo) {
+      return res.status(400).json({ mensaje: 'Debe indicar el motivo de la cancelación' });
     }
 
     const estadoAnterior = solicitud.estado;
-    const updateData = { estado: req.body.estado };
-    if (req.body.estado === 'completada') {
+    const asignadoAnterior = solicitud.asignadoAId;
+    const updateData = { estado: nuevoEstado };
+    if (nuevoEstado === 'completada') {
       const fechaCompletada = new Date();
       updateData.fechaCompletada = fechaCompletada;
       if (solicitud.fechaAsignacion) {
-        const tiempoCompletado = Math.round((fechaCompletada - new Date(solicitud.fechaAsignacion)) / 60000);
-        updateData.tiempoCompletado = tiempoCompletado;
+        updateData.tiempoCompletado = Math.max(0, Math.round((fechaCompletada - new Date(solicitud.fechaAsignacion)) / 60000));
       }
     }
-    if (req.body.estado === 'cancelada') {
-      updateData.motivoCancelacion = (req.body.motivoCancelacion && String(req.body.motivoCancelacion).trim()) || null;
-    } else {
-      updateData.motivoCancelacion = null; // limpiar si se reactiva
-    }
+    updateData.motivoCancelacion = nuevoEstado === 'cancelada' ? motivo : null; // se limpia si se reactiva
     // Al pasar a pendiente (p. ej. revertir un "completado" por error), dejar la solicitud disponible de nuevo
-    if (req.body.estado === 'pendiente') {
+    if (nuevoEstado === 'pendiente') {
       updateData.asignadoAId = null;
       updateData.fechaAsignacion = null;
       updateData.fechaCompletada = null;
@@ -561,37 +588,28 @@ router.put('/:id/estado', [
 
     await solicitud.update(updateData);
 
-    if (estadoAnterior !== req.body.estado) {
-      const descripcionAdicional = req.body.estado === 'cancelada' && updateData.motivoCancelacion
-        ? `Motivo: ${updateData.motivoCancelacion}`
-        : null;
-      await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, req.body.estado, descripcionAdicional);
+    const cambio = estadoAnterior !== nuevoEstado;
+    if (cambio) {
+      const descripcionAdicional = nuevoEstado === 'cancelada' && motivo ? `Motivo: ${motivo}` : null;
+      await registrarCambioEstado(solicitud.id, req.usuario.id, estadoAnterior, nuevoEstado, descripcionAdicional);
     }
 
-    // Actualizar estadísticas en tiempo real al completar o al revertir a pendiente
-    if (req.body.estado === 'completada' || req.body.estado === 'pendiente') {
-      try {
-        const io = req.app.get('io');
-        const { calcularEstadisticas } = require('../utils/estadisticas');
-        const estadisticas = await calcularEstadisticas();
-        if (io) io.to('estadisticas').emit('estadisticas-actualizadas', estadisticas);
-      } catch (e) {
-        console.error('Error emitiendo estadísticas:', e);
+    const solicitudCompleta = await cargarCompleta(solicitud.id);
+
+    if (cambio) {
+      if (nuevoEstado === 'completada') {
+        push.notificarSolicitudCompletada(solicitudCompleta, req.usuario.id);
+      } else if (nuevoEstado === 'cancelada') {
+        push.notificarSolicitudCancelada(solicitudCompleta, asignadoAnterior, req.usuario.id);
+      } else if (nuevoEstado === 'pendiente') {
+        push.notificarSolicitudDevuelta(solicitudCompleta, req.usuario.id);
       }
+      emitirCambioSolicitud(req.app, 'estado', solicitudCompleta);
     }
-
-    const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {
-      include: [
-        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
-        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
-        { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false }
-      ]
-    });
 
     res.json(solicitudCompleta);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ mensaje: 'Error del servidor' });
+    return send500(res, error, 'PUT /api/solicitudes/:id/estado');
   }
 });
 
@@ -607,6 +625,9 @@ router.put('/:id', [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errores: errors.array() });
     }
+    if (!idValido(req.params.id)) {
+      return res.status(400).json({ mensaje: 'ID de solicitud inválido' });
+    }
 
     const solicitud = await Solicitud.findByPk(req.params.id);
     if (!solicitud) {
@@ -615,7 +636,7 @@ router.put('/:id', [
 
     const puedeModificar =
       req.usuario.rol === 'administrador' ||
-      req.usuario.rol === 'enfermeria';
+      (req.usuario.rol === 'enfermeria' && enfermeriaPuedeGestionar(req.usuario, solicitud));
 
     if (!puedeModificar) {
       return res.status(403).json({ mensaje: 'No tienes permiso para modificar esta solicitud' });
@@ -623,18 +644,26 @@ router.put('/:id', [
 
     const updateData = {};
     const servicioId = req.body.servicioId ?? req.body.servicio;
-    if (servicioId !== undefined) updateData.servicioId = servicioId ? Number(servicioId) : null;
+    if (servicioId !== undefined && servicioId !== null && servicioId !== '') {
+      if (!idValido(servicioId) || !(await Servicio.findByPk(servicioId, { attributes: ['id'] }))) {
+        return res.status(400).json({ mensaje: 'El servicio indicado no existe' });
+      }
+      if (req.usuario.rol === 'enfermeria' && req.usuario.servicioId && Number(servicioId) !== Number(req.usuario.servicioId)) {
+        return res.status(403).json({ mensaje: 'Solo puedes usar tu servicio asignado' });
+      }
+      updateData.servicioId = Number(servicioId);
+    }
     if (req.body.tipoRequerimiento !== undefined) updateData.tipoRequerimiento = req.body.tipoRequerimiento;
-    if (req.body.destinoGescas !== undefined) updateData.destinoGescas = req.body.destinoGescas || null;
-    if (req.body.descripcion !== undefined) updateData.descripcion = req.body.descripcion || null;
-    if (req.body.tipoServicio !== undefined) updateData.tipoServicio = req.body.tipoServicio || null;
-    if (req.body.tipoTraslado !== undefined) updateData.tipoTraslado = req.body.tipoTraslado || null;
+    if (req.body.destinoGescas !== undefined) updateData.destinoGescas = texto(req.body.destinoGescas, 255);
+    if (req.body.descripcion !== undefined) updateData.descripcion = texto(req.body.descripcion, 2000);
+    if (req.body.tipoServicio !== undefined) updateData.tipoServicio = texto(req.body.tipoServicio, 100);
+    if (req.body.tipoTraslado !== undefined) updateData.tipoTraslado = texto(req.body.tipoTraslado, 100);
+    if (req.body.cama !== undefined) updateData.cama = texto(req.body.cama, 100);
+    if (req.body.prioridad !== undefined) updateData.prioridad = req.body.prioridad;
     if (req.body.prioridadInmediato !== undefined) {
       updateData.prioridadInmediato = Boolean(req.body.prioridadInmediato);
       if (updateData.prioridadInmediato) updateData.prioridad = 'urgente';
     }
-    if (req.body.cama !== undefined) updateData.cama = req.body.cama || null;
-    if (req.body.prioridad !== undefined) updateData.prioridad = req.body.prioridad;
     if (req.body.fechaProgramada !== undefined) {
       const raw = req.body.fechaProgramada && String(req.body.fechaProgramada).trim();
       if (raw) {
@@ -645,7 +674,7 @@ router.put('/:id', [
       }
     }
     if (req.body.precaucionesEstandar !== undefined) updateData.precaucionesEstandar = Boolean(req.body.precaucionesEstandar);
-    if (req.body.tipoPrecaucion !== undefined) updateData.tipoPrecaucion = req.body.tipoPrecaucion || null;
+    if (req.body.tipoPrecaucion !== undefined) updateData.tipoPrecaucion = texto(req.body.tipoPrecaucion, 255);
 
     if (updateData.tipoRequerimiento && updateData.tipoRequerimiento !== 'traslado') {
       updateData.tipoServicio = null;
@@ -657,14 +686,12 @@ router.put('/:id', [
 
     await solicitud.update(updateData);
 
-    const solicitudCompleta = await Solicitud.findByPk(solicitud.id, {
-      include: [
-        { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'] },
-        { model: Usuario, as: 'solicitadoPor', attributes: ['id', 'nombre', 'email'] },
-        { model: Usuario, as: 'asignadoA', attributes: ['id', 'nombre', 'email'], required: false },
-        { model: Etiqueta, as: 'etiquetas', attributes: ['id', 'nombre', 'color'], through: { attributes: [] }, required: false }
-      ]
-    });
+    let solicitudCompleta;
+    try {
+      solicitudCompleta = await cargarCompleta(solicitud.id, true);
+    } catch (e) {
+      solicitudCompleta = await cargarCompleta(solicitud.id);
+    }
 
     await registrarCambio(
       solicitud.id,
@@ -676,10 +703,11 @@ router.put('/:id', [
       `Solicitud modificada: ${Object.keys(updateData).join(', ')}`
     );
 
+    emitirCambioSolicitud(req.app, 'editada', solicitudCompleta);
+
     res.json(solicitudCompleta);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ mensaje: 'Error del servidor' });
+    return send500(res, error, 'PUT /api/solicitudes/:id');
   }
 });
 

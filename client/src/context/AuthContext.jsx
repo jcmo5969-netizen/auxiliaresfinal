@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../utils/api'
 import { getItem, setItem, removeItem } from '../utils/storage'
+import { desvincularDispositivo } from '../utils/push'
 
 const AuthContext = createContext()
 
@@ -51,6 +52,8 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = () => {
+    // Este dispositivo deja de recibir los avisos del usuario que cierra sesión
+    desvincularDispositivo()
     removeItem('token')
     setUsuario(null)
   }

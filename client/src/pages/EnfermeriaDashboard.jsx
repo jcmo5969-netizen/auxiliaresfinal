@@ -14,6 +14,8 @@ import FiltrosSolicitudes from '../components/FiltrosSolicitudes'
 import MiPerfilModal from '../components/MiPerfilModal'
 import CanceladasModal from '../components/CanceladasModal'
 import EstadisticasTiempoReal from '../components/EstadisticasTiempoReal'
+import NotificacionesPush from '../components/NotificacionesPush'
+import { useSolicitudesEnVivo } from '../utils/socket'
 
 const EnfermeriaDashboard = () => {
   const { usuario, logout, refreshUsuario } = useAuth()
@@ -27,7 +29,7 @@ const EnfermeriaDashboard = () => {
   const [mostrarCanceladasModal, setMostrarCanceladasModal] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [pestañaActiva, setPestañaActiva] = useState('todas') // todas, pendientes, en_proceso, completadas
-  const [pollIntervalMs, setPollIntervalMs] = useState(5000)
+  const [pollIntervalMs, setPollIntervalMs] = useState(20000)
   const toastCargaErrorMostrado = useRef(false)
 
   const cargarDatos = useCallback(async () => {
@@ -57,14 +59,14 @@ const EnfermeriaDashboard = () => {
 
     if (ok > 0) {
       toastCargaErrorMostrado.current = false
-      setPollIntervalMs(5000)
+      setPollIntervalMs(20000)
     }
     if (fail > 0 && ok === 0) {
       if (!toastCargaErrorMostrado.current) {
         toast.error('Error cargando datos')
         toastCargaErrorMostrado.current = true
       }
-      setPollIntervalMs((prev) => Math.min(60000, Math.max(15000, prev * 2)))
+      setPollIntervalMs((prev) => Math.min(60000, Math.max(20000, prev * 2)))
     }
     setCargando(false)
   }, [])
@@ -85,6 +87,9 @@ const EnfermeriaDashboard = () => {
 
     return () => clearInterval(intervalo)
   }, [usuario, navigate, pollIntervalMs, cargarDatos])
+
+  // Tiempo real: se recarga apenas un auxiliar toma, devuelve o completa una solicitud
+  useSolicitudesEnVivo(() => cargarDatos(), usuario?.rol === 'enfermeria')
 
   useEffect(() => {
     // Filtrar solicitudes según la pestaña activa
@@ -210,6 +215,10 @@ const EnfermeriaDashboard = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 pb-28 pt-6 sm:px-6 sm:pt-8 md:pb-8 lg:px-8">
+        <div className="mb-6">
+          <NotificacionesPush compacta ejemplo="Auxiliar en camino · Cama 12, piso 3" />
+        </div>
+
         {/* Estadísticas solo del servicio del usuario (no total hospital) */}
         <div className="mb-6 sm:mb-8">
           <EstadisticasTiempoReal

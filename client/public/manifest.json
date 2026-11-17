@@ -1,18 +1,33 @@
 {
-  "name": "Sistema de Auxiliares - Hospital Quilpué",
+  "id": "/",
+  "name": "Sistema de Auxiliares - Hospital de Quilpué",
   "short_name": "Auxiliares",
-  "description": "Solicitudes y notificaciones para auxiliares",
-  "start_url": "/",
+  "description": "Solicitudes de auxiliar con avisos al celular",
+  "lang": "es-CL",
+  "start_url": "/#/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#0369a1",
   "icons": [
     {
-      "src": "/logo-hospital-quilpue.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "categories": ["medical", "productivity"]

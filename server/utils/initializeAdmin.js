@@ -5,16 +5,14 @@ const initializeAdmin = async () => {
     const adminExiste = await Usuario.findOne({ where: { rol: 'administrador' } });
     
     if (!adminExiste) {
-      const admin = await Usuario.create({
-        nombre: 'Administrador',
-        email: 'admin@sistema.com',
-        password: 'admin123',
-        rol: 'administrador'
-      });
-      console.log('✅ Usuario administrador creado:');
-      console.log('   Email: admin@sistema.com');
-      console.log('   Password: admin123');
-      console.log('   ⚠️  IMPORTANTE: Cambia la contraseña después del primer inicio de sesión');
+      const email = String(process.env.ADMIN_EMAIL || 'admin@sistema.com').toLowerCase().trim();
+      const password = process.env.ADMIN_PASSWORD || 'admin123';
+      await Usuario.create({ nombre: 'Administrador', email, password, rol: 'administrador' });
+      console.log(`Usuario administrador creado: ${email}`);
+      if (!process.env.ADMIN_PASSWORD) {
+        console.log('   Contraseña inicial: admin123 — cámbiala apenas inicies sesión (Mi perfil).');
+        console.log('   Para definirla tú, configura ADMIN_EMAIL y ADMIN_PASSWORD antes del primer arranque.');
+      }
     }
   } catch (error) {
     console.error('Error inicializando administrador:', error);

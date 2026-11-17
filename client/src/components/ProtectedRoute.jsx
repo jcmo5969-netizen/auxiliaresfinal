@@ -19,14 +19,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 
   // Si requiere admin y el usuario no es administrador, redirigir
   if (requireAdmin) {
-    console.log('🔐 ProtectedRoute - Verificando acceso admin:', {
-      usuario: usuario?.nombre,
-      rol: usuario?.rol,
-      requireAdmin
-    })
-    
     if (usuario.rol !== 'administrador') {
-      console.log('❌ Acceso denegado - No es administrador, redirigiendo...')
       // Redirigir según el rol del usuario
       if (usuario.rol === 'auxiliar') {
         return <Navigate to="/auxiliar/acceso" replace />
@@ -37,8 +30,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
       // Si no tiene permiso, redirigir al login
       return <Navigate to="/login" replace />
     }
-    
-    console.log('✅ Acceso permitido - Es administrador')
     // Si es administrador, permitir acceso
     return children
   }
@@ -49,7 +40,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   
   if (path === '/enfermeria/dashboard') {
     if (usuario.rol !== 'enfermeria') {
-      console.log('❌ Acceso denegado a /enfermeria/dashboard - Rol:', usuario.rol)
       // Redirigir según el rol
       if (usuario.rol === 'auxiliar') {
         return <Navigate to="/auxiliar/acceso" replace />
@@ -64,7 +54,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 
   if (path === '/auxiliar/acceso') {
     if (usuario.rol !== 'auxiliar') {
-      console.log('❌ Acceso denegado a /auxiliar/acceso - Rol:', usuario.rol)
       // Redirigir según el rol
       if (usuario.rol === 'enfermeria') {
         return <Navigate to="/enfermeria/dashboard" replace />

@@ -40,7 +40,9 @@ let sequelize;
 
 if (process.env.DATABASE_URL) {
   const sslOpts = sslDialectOptionsForDatabaseUrl(process.env.DATABASE_URL);
-  console.log('📦 Usando DATABASE_URL para conexión');
+  let hostBD = '';
+  try { hostBD = new URL(process.env.DATABASE_URL).hostname; } catch { /* URL inválida: Sequelize lo informará */ }
+  console.log('📦 Usando DATABASE_URL para conexión', hostBD ? `(host: ${hostBD})` : '');
   console.log('   SSL dialectOptions:', Object.keys(sslOpts).length ? 'activado' : 'desactivado (host interno Render o DATABASE_SSL=false)');
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
@@ -64,7 +66,7 @@ if (process.env.DATABASE_URL) {
   sequelize = new Sequelize(
     process.env.DB_NAME || 'sistema_auxiliares',
     process.env.DB_USER || 'postgres',
-    process.env.DB_PASSWORD || 'kokito123',
+    process.env.DB_PASSWORD || '',
     {
       host: process.env.DB_HOST || 'localhost',
       port: process.env.DB_PORT || 5432,

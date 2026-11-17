@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { io } from 'socket.io-client'
+import { crearSocket } from '../utils/socket'
 import { Activity, TrendingUp, Clock, Users } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
@@ -45,10 +45,7 @@ const EstadisticasTiempoReal = ({ solicitudes = null, nombreServicio = null }) =
   }, [solicitudes])
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-    const newSocket = io(apiUrl, {
-      transports: ['websocket', 'polling']
-    })
+    const newSocket = crearSocket()
 
     newSocket.on('connect', () => {
       newSocket.emit('suscribir-estadisticas')

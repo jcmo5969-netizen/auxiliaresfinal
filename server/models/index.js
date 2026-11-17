@@ -9,6 +9,9 @@ const PlantillaSolicitud = require('./PlantillaSolicitud');
 const Etiqueta = require('./Etiqueta');
 const LogActividad = require('./LogActividad');
 const Mensaje = require('./Mensaje');
+const SuscripcionPush = require('./SuscripcionPush');
+const Configuracion = require('./Configuracion');
+const Recordatorio = require('./Recordatorio');
 
 // Definir relaciones
 Solicitud.belongsTo(Servicio, { foreignKey: 'servicioId', as: 'servicio' });
@@ -75,6 +78,15 @@ Usuario.hasMany(Mensaje, { foreignKey: 'remitenteId', as: 'mensajesEnviados' });
 Usuario.hasMany(Mensaje, { foreignKey: 'destinatarioId', as: 'mensajesRecibidos' });
 Solicitud.hasMany(Mensaje, { foreignKey: 'solicitudId', as: 'mensajes' });
 
+// Dispositivos suscritos a notificaciones push
+SuscripcionPush.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
+Usuario.hasMany(SuscripcionPush, { foreignKey: 'usuarioId', as: 'dispositivosPush' });
+
+// Recordatorios personales
+Recordatorio.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
+Recordatorio.belongsTo(Solicitud, { foreignKey: 'solicitudId', as: 'solicitud' });
+Usuario.hasMany(Recordatorio, { foreignKey: 'usuarioId', as: 'recordatorios' });
+
 module.exports = {
   sequelize,
   Usuario,
@@ -86,6 +98,9 @@ module.exports = {
   Etiqueta,
   LogActividad,
   Mensaje,
-  SolicitudEtiqueta
+  SolicitudEtiqueta,
+  SuscripcionPush,
+  Configuracion,
+  Recordatorio
 };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { io } from 'socket.io-client'
+import { crearSocket } from '../utils/socket'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { MessageSquare, Send, X } from 'lucide-react'
@@ -15,15 +15,14 @@ const ChatComponent = ({ solicitudId, onClose }) => {
 
   useEffect(() => {
     // Conectar a Socket.IO
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-    const newSocket = io(apiUrl, {
-      transports: ['websocket', 'polling']
-    })
+    const newSocket = crearSocket()
     setSocket(newSocket)
 
     // Unirse a la sala de la solicitud
     if (solicitudId) {
-      newSocket.emit('unirse-solicitud', solicitudId)
+      newSocket.on('connect', () => {
+        newSocket.emit('unirse-solicitud', solicitudId)
+      })
     }
 
     // Escuchar nuevos mensajes

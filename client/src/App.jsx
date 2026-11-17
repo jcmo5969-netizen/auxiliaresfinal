@@ -111,7 +111,11 @@ function App() {
             } />
             <Route path="/" element={<HomeRedirect />} />
             </Routes>
-            <Toaster position="top-right" />
+            <Toaster
+              position="top-center"
+              containerStyle={{ top: 'calc(env(safe-area-inset-top, 0px) + 72px)' }}
+              toastOptions={{ duration: 3500, style: { maxWidth: '92vw' } }}
+            />
           </div>
         </Router>
       </AuthProvider>

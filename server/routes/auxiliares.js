@@ -1,6 +1,6 @@
 const express = require('express');
-const { Usuario, Solicitud, Servicio } = require('../models');
-const { auth, esAdministrador } = require('../middleware/auth');
+const { Usuario, Solicitud, Servicio, SuscripcionPush, sequelize } = require('../models');
+const { auth, esAdministrador, invalidateUserCache } = require('../middleware/auth');
 const { send500 } = require('../utils/sendError');
 
 const router = express.Router();
@@ -26,7 +26,26 @@ router.get('/', auth, esAdministrador, async (req, res) => {
         order: [['rol', 'ASC'], ['nombre', 'ASC']]
       });
     }
-    res.json(personal);
+    // Cuántos dispositivos tiene cada persona con notificaciones activadas
+    // (sirve para saber quién todavía no las ha activado en su celular)
+    let porUsuario = new Map();
+    try {
+      const conteos = await SuscripcionPush.findAll({
+        attributes: ['usuarioId', [sequelize.fn('COUNT', sequelize.col('id')), 'total']],
+        group: ['usuarioId'],
+        raw: true
+      });
+      porUsuario = new Map(conteos.map((c) => [c.usuarioId, Number(c.total)]));
+    } catch (err) {
+      console.error('GET /api/auxiliares: conteo de dispositivos falló:', err.parent?.message || err.message);
+    }
+
+    res.json(
+      personal.map((p) => {
+        const { fcmToken, secret2FA, ...datos } = p.toJSON();
+        return { ...datos, dispositivosPush: porUsuario.get(p.id) || 0 };
+      })
+    );
   } catch (error) {
     return send500(res, error, 'GET /api/auxiliares');
   }
@@ -105,9 +124,15 @@ router.put('/:id', auth, esAdministrador, async (req, res) => {
     }
 
     await usuario.update(updateData);
+    invalidateUserCache(usuario.id);
+
+    // Si se desactiva a la persona, sus dispositivos dejan de recibir avisos
+    if (updateData.activo === false) {
+      await SuscripcionPush.destroy({ where: { usuarioId: usuario.id } }).catch(() => {});
+    }
 
     const usuarioActualizado = await Usuario.findByPk(usuario.id, {
-      attributes: { exclude: ['password'] },
+      attributes: { exclude: ['password', 'secret2FA', 'fcmToken'] },
       include: [
         { model: Servicio, as: 'servicio', attributes: ['id', 'nombre', 'piso'], required: false }
       ]

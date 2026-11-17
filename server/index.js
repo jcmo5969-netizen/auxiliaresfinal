@@ -1,27 +1,43 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
 const path = require('path');
-// Importar todos los modelos para que Sequelize los registre
-const { sequelize, Usuario, Servicio, Solicitud, Comentario, HistorialCambio, PlantillaSolicitud, Etiqueta, LogActividad, Mensaje } = require('./models');
+const fs = require('fs');
+const dotenv = require('dotenv');
 
-// Cargar variables de entorno desde server/.env
+// Cargar variables de entorno desde server/.env antes de cualquier otro módulo
 dotenv.config({ path: path.join(__dirname, '.env') });
 
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const jwt = require('jsonwebtoken');
+const { sequelize, Usuario } = require('./models');
+const { version } = require('./package.json');
+
+if (!process.env.JWT_SECRET) {
+  console.error('ERROR: JWT_SECRET no está definido en las variables de entorno');
+  console.error('   Local: crea server/.env a partir de server/.env.example');
+  console.error('   Render: agrégalo en Environment (o usa el render.yaml, que lo genera solo)');
+  process.exit(1);
+}
+
+const esProduccion = process.env.NODE_ENV === 'production';
 const app = express();
 
-// Middleware
-// Normalizar origen (CLIENT_URL a veces trae barra final y falla la comparación)
+// Render (y cualquier proxy) entrega la IP real en X-Forwarded-For
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+
+// ─── Orígenes permitidos ────────────────────────────────────────────────────
 function normalizeOrigin(o) {
   if (!o || typeof o !== 'string') return o;
   return o.trim().replace(/\/$/, '');
 }
 
-// Configurar CORS para producción - aceptar múltiples orígenes
 const allowedOrigins = [
   ...new Set(
     [
-      process.env.CLIENT_URL,
+      ...String(process.env.CLIENT_URL || '').split(','),
+      process.env.RENDER_EXTERNAL_URL, // la propia URL del servicio en Render
       'https://auxiliaresfrontend.onrender.com',
       'https://sistema-auxiliares.com',
       'http://localhost:5173',
@@ -29,67 +45,92 @@ const allowedOrigins = [
     ]
       .filter(Boolean)
       .map(normalizeOrigin)
+      .filter(Boolean)
   )
 ];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Permitir requests sin origen (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+function origenPermitido(origin, host) {
+  if (!origin) return true; // apps móviles, curl, mismo origen sin cabecera
+  const normalizado = normalizeOrigin(origin);
+  if (allowedOrigins.includes(normalizado)) return true;
+  if (!esProduccion) return true;
+  try {
+    // Mismo origen: el frontend lo sirve este mismo servidor
+    return Boolean(host) && new URL(normalizado).host === host;
+  } catch {
+    return false;
+  }
+}
 
-    const normalized = normalizeOrigin(origin);
-    const permitido =
-      allowedOrigins.includes(normalized) || process.env.NODE_ENV === 'development';
+// ─── Middleware ─────────────────────────────────────────────────────────────
+app.use(
+  helmet({
+    // La app usa scripts en línea en index.html y WebSocket; la CSP se deja fuera a propósito
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginEmbedderPolicy: false
+  })
+);
+app.use(compression());
+app.use(
+  cors((req, callback) => {
+    const permitido = origenPermitido(req.header('Origin'), req.header('Host'));
+    if (!permitido) console.warn('CORS bloqueado para origen:', req.header('Origin'));
+    callback(null, { origin: permitido, credentials: true, optionsSuccessStatus: 200 });
+  })
+);
+app.use(express.json({ limit: '200kb' }));
+app.use(express.urlencoded({ extended: true, limit: '200kb' }));
 
-    if (permitido) {
-      callback(null, true);
-    } else {
-      console.warn('⚠️ CORS bloqueado para origen:', origin);
-      callback(new Error('No permitido por CORS'));
-    }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ─── Salud ──────────────────────────────────────────────────────────────────
+// /healthz: lo consulta Render. Responde siempre que el proceso esté vivo, para que
+// una caída momentánea de la base de datos no provoque reinicios en cadena.
+app.get('/healthz', (req, res) => res.json({ ok: true }));
 
-// Diagnóstico (sin auth): abre en el navegador o curl para ver si PostgreSQL responde
+// /api/health: diagnóstico completo (base de datos y notificaciones)
 app.get('/api/health', async (req, res) => {
+  const { estadoPush } = require('./utils/push');
+  const base = {
+    version,
+    uptimeSegundos: Math.round(process.uptime()),
+    push: estadoPush().listo
+  };
   try {
     await sequelize.authenticate();
-    res.json({ ok: true, db: true });
+    res.json({ ok: true, db: true, ...base });
   } catch (e) {
     console.error('GET /api/health — DB no disponible:', e.message);
     res.status(503).json({
       ok: false,
       db: false,
-      mensaje: e.message || 'No se pudo conectar a la base de datos'
+      ...base,
+      mensaje: 'No se pudo conectar a la base de datos'
     });
   }
 });
 
-// Fuerza el cierre y re-apertura del pool de conexiones (útil tras recovery del DB)
-// Protegido por clave simple para no exponerlo públicamente
+// Reinicia el pool de conexiones (útil tras una recuperación de la BD).
+// Solo existe si se define RECONNECT_KEY: no hay clave por defecto.
 app.post('/api/reconnect', async (req, res) => {
-  const clave = req.headers['x-reconnect-key'] || req.query.key;
-  if (clave !== (process.env.RECONNECT_KEY || 'render-reconnect-2024')) {
+  const esperada = process.env.RECONNECT_KEY;
+  const clave = req.headers['x-reconnect-key'];
+  if (!esperada || clave !== esperada) {
     return res.status(403).json({ ok: false, mensaje: 'No autorizado' });
   }
   try {
     await sequelize.connectionManager.pool.drain();
     await sequelize.connectionManager.pool.clear();
     await sequelize.authenticate();
-    console.log('🔄 Pool de conexiones reiniciado exitosamente');
+    console.log('Pool de conexiones reiniciado');
     res.json({ ok: true, mensaje: 'Pool reconectado' });
   } catch (e) {
     console.error('Error al reconectar pool:', e.message);
-    res.status(503).json({ ok: false, mensaje: e.message });
+    res.status(503).json({ ok: false, mensaje: 'No se pudo reconectar' });
   }
 });
 
-// Routes
+// ─── Rutas de la API ────────────────────────────────────────────────────────
+app.use('/api/auth/2fa', require('./routes/auth2fa'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/servicios', require('./routes/servicios'));
 app.use('/api/solicitudes', require('./routes/solicitudes'));
@@ -102,111 +143,117 @@ app.use('/api/plantillas', require('./routes/plantillas'));
 app.use('/api/etiquetas', require('./routes/etiquetas'));
 app.use('/api/logs', require('./routes/logs'));
 app.use('/api/chat', require('./routes/chat'));
-app.use('/api/auth/2fa', require('./routes/auth2fa'));
 app.use('/api/recordatorios', require('./routes/recordatorios'));
+app.use('/api/push', require('./routes/push'));
 
-// Verificar variables de entorno críticas
-if (!process.env.JWT_SECRET) {
-  console.error('❌ ERROR: JWT_SECRET no está definido en las variables de entorno');
-  console.error('   Por favor, crea un archivo .env en la carpeta server con JWT_SECRET');
-  process.exit(1);
-}
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    mensaje: err.message || 'Error del servidor',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
+app.use('/api', (req, res) => {
+  res.status(404).json({ mensaje: 'Ruta no encontrada' });
 });
 
-// 404 handler
+// ─── Frontend (un solo servicio en Render) ──────────────────────────────────
+// Si existe client/dist (lo genera `npm run build`), este servidor también entrega la app.
+const dirCliente = path.join(__dirname, '..', 'client', 'dist');
+const sirveCliente = fs.existsSync(path.join(dirCliente, 'index.html'));
+
+if (sirveCliente) {
+  const SIN_CACHE = new Set(['index.html', 'sw.js', 'manifest.json']);
+  app.use(
+    express.static(dirCliente, {
+      index: false,
+      setHeaders(res, archivo) {
+        if (SIN_CACHE.has(path.basename(archivo))) {
+          // El service worker y el index deben actualizarse en cada despliegue
+          res.setHeader('Cache-Control', 'no-cache');
+        } else if (archivo.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      }
+    })
+  );
+  app.get('*', (req, res, next) => {
+    if (req.method !== 'GET' || path.extname(req.path)) return next();
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(path.join(dirCliente, 'index.html'));
+  });
+}
+
 app.use((req, res) => {
   res.status(404).json({ mensaje: 'Ruta no encontrada' });
 });
 
+// Manejo de errores
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ mensaje: 'JSON inválido' });
+  }
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ mensaje: 'Solicitud demasiado grande' });
+  }
+  console.error('Error no controlado:', err);
+  const status = err.status || 500;
+  res.status(status).json({
+    mensaje: status >= 500 ? 'Error del servidor' : err.message,
+    ...(!esProduccion && { detalle: err.message })
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
-// Arrancar el servidor solo cuando la BD esté lista
-const startServer = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ PostgreSQL conectado');
-
-    // En producción: solo crear tablas que no existen (sin ALTER).
-    // alter:true causa operaciones lentas sobre ENUMs en PostgreSQL y puede dejar
-    // el esquema en estado inconsistente. Usa migraciones para cambios de esquema.
-    const syncOptions = process.env.NODE_ENV === 'production' ? {} : { alter: true };
-    await sequelize.sync(syncOptions);
-    console.log('✅ Modelos sincronizados (tablas creadas/verificadas)');
-
-    // Agregar columnas que puedan faltar en tablas ya existentes (idempotente).
-    // Cubre el caso de despliegues donde sync() sin alter:true no agrega columnas nuevas.
-    const ensureSchema = require('./utils/ensureSchema');
-    await ensureSchema(sequelize);
-
-    const initializeAdmin = require('./utils/initializeAdmin');
-    await initializeAdmin();
-
-    const seedServiciosOnStartup = require('./utils/seedServiciosOnStartup');
-    await seedServiciosOnStartup();
-  } catch (err) {
-    console.error('❌ Error conectando a PostgreSQL:', err.message);
-
-    if (err.name === 'SequelizeConnectionError') {
-      if (err.original && err.original.code === '3D000') {
-        console.error('   La base de datos no existe. Ejecuta: npm run create-db');
-      } else if (err.original && err.original.code === '28P01') {
-        console.error('   Error de autenticación. Verifica usuario y contraseña.');
-        console.error('   Si usas DATABASE_URL, verifica que la contraseña en la URL sea correcta.');
-        console.error('   Si usas variables individuales, verifica DB_USER y DB_PASSWORD.');
-      } else if (/terminated unexpectedly|ECONNRESET|ETIMEDOUT/i.test(String(err.message))) {
-        console.error('   Conexión cortada. En Render: usa la Internal Database URL del mismo equipo que el Web Service.');
-        console.error('   Si el host es dpg-…-a (interno), no fuerces SSL: ya está desactivado por defecto, o prueba DATABASE_SSL=false.');
-        console.error('   Si usas URL externa (*.postgres.render.com), puedes probar DATABASE_SSL=true en variables de entorno.');
-      } else {
-        console.error('   Verifica que PostgreSQL esté corriendo y que DATABASE_URL sea la copiada del panel de Render.');
-      }
-    }
-
-    if (process.env.DATABASE_URL) {
-      const dbUrl = process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@');
-      console.error('   DATABASE_URL:', dbUrl);
-    } else {
-      console.error('   Host:', process.env.DB_HOST || 'localhost');
-      console.error('   Puerto:', process.env.DB_PORT || 5432);
-      console.error('   Base de datos:', process.env.DB_NAME || 'sistema_auxiliares');
-      console.error('   Usuario:', process.env.DB_USER || 'postgres');
-      console.error('   Password:', process.env.DB_PASSWORD ? '***configurada***' : 'NO configurada');
-    }
-    // Continuar aunque falle: el servidor arranca igual para no bloquear Render
-    console.error('⚠️  El servidor arrancará sin BD lista. Las rutas pueden fallar hasta que la BD responda.');
-  }
-
-  // Iniciar HTTP solo después de intentar la BD
-  const server = app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-    console.log(`🌐 CORS permitiendo orígenes: ${allowedOrigins.join(', ')}`);
-  });
-
-  // Configurar Socket.IO para chat en tiempo real
+// ─── Socket.IO ──────────────────────────────────────────────────────────────
+function configurarSockets(server) {
   const { Server } = require('socket.io');
   const io = new Server(server, {
     cors: {
-      origin: allowedOrigins.length > 0 ? allowedOrigins : (process.env.CLIENT_URL || 'http://localhost:5173'),
+      origin: (origin, callback) => callback(null, origenPermitido(origin, null) || !origin),
       methods: ['GET', 'POST'],
       credentials: true
     }
   });
 
-  // Manejar conexiones Socket.IO
+  // Solo personal con sesión válida puede conectarse
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth?.token;
+      if (!token) return next(new Error('No autorizado'));
+      const { id } = jwt.verify(token, process.env.JWT_SECRET);
+      const usuario = await Usuario.findByPk(id, {
+        attributes: ['id', 'nombre', 'rol', 'servicioId', 'activo']
+      });
+      if (!usuario || !usuario.activo) return next(new Error('No autorizado'));
+      socket.data.usuario = {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        rol: usuario.rol,
+        servicioId: usuario.servicioId
+      };
+      next();
+    } catch {
+      next(new Error('No autorizado'));
+    }
+  });
+
+  const emitirConectadosChat = async () => {
+    try {
+      const sockets = await io.in('chat-general').fetchSockets();
+      const vistos = new Map();
+      sockets.forEach((s) => {
+        const u = s.data.usuario;
+        if (u) vistos.set(u.id, { id: u.id, nombre: u.nombre, rol: u.rol });
+      });
+      io.to('chat-general').emit('usuarios-conectados', [...vistos.values()]);
+    } catch (error) {
+      console.error('Error listando conectados al chat:', error.message);
+    }
+  };
+
   io.on('connection', (socket) => {
-    console.log('✅ Usuario conectado:', socket.id);
+    const { id, rol } = socket.data.usuario;
+    socket.join(`usuario-${id}`);
+    socket.join(`rol-${rol}`);
 
     socket.on('unirse-solicitud', (solicitudId) => {
-      socket.join(`solicitud-${solicitudId}`);
-      console.log(`Usuario ${socket.id} se unió a solicitud ${solicitudId}`);
+      if (/^\d+$/.test(String(solicitudId))) socket.join(`solicitud-${solicitudId}`);
     });
 
     socket.on('salir-solicitud', (solicitudId) => {
@@ -215,51 +262,120 @@ const startServer = async () => {
 
     socket.on('unirse-chat-general', () => {
       socket.join('chat-general');
+      emitirConectadosChat();
     });
 
     socket.on('suscribir-estadisticas', async () => {
       socket.join('estadisticas');
       try {
         const { calcularEstadisticas } = require('./utils/estadisticas');
-        const estadisticas = await calcularEstadisticas();
-        socket.emit('estadisticas-actualizadas', estadisticas);
+        socket.emit('estadisticas-actualizadas', await calcularEstadisticas());
       } catch (error) {
-        console.error('Error enviando estadísticas:', error);
+        console.error('Error enviando estadísticas:', error.message);
       }
     });
 
     socket.on('disconnect', () => {
-      console.log('❌ Usuario desconectado:', socket.id);
+      emitirConectadosChat();
     });
   });
 
-  // Emitir estadísticas actualizadas cada 30 segundos
-  setInterval(async () => {
+  // Estadísticas cada 30 s, solo si alguien las está mirando
+  const intervalo = setInterval(async () => {
     try {
+      const sala = io.sockets.adapter.rooms.get('estadisticas');
+      if (!sala || sala.size === 0) return;
       const { calcularEstadisticas } = require('./utils/estadisticas');
-      const estadisticas = await calcularEstadisticas();
-      io.to('estadisticas').emit('estadisticas-actualizadas', estadisticas);
+      io.to('estadisticas').emit('estadisticas-actualizadas', await calcularEstadisticas());
     } catch (error) {
-      console.error('Error actualizando estadísticas:', error);
+      console.error('Error actualizando estadísticas:', error.message);
     }
   }, 30000);
+  intervalo.unref();
 
-  // Exportar io para usar en otras rutas
+  return io;
+}
+
+// ─── Base de datos ──────────────────────────────────────────────────────────
+async function prepararBaseDeDatos() {
+  await sequelize.authenticate();
+  console.log('PostgreSQL conectado');
+
+  // Por defecto solo se crean las tablas que falten. Las columnas nuevas las agrega
+  // ensureSchema. `alter` reescribe tablas completas, así que solo corre si se pide
+  // de forma explícita (nunca por accidente contra la base de producción).
+  const alter = process.env.DB_SYNC_ALTER === 'true';
+  await sequelize.sync(alter ? { alter: true } : {});
+  console.log(`Modelos sincronizados${alter ? ' (alter)' : ''}`);
+
+  const ensureSchema = require('./utils/ensureSchema');
+  await ensureSchema(sequelize);
+
+  const initializeAdmin = require('./utils/initializeAdmin');
+  await initializeAdmin();
+
+  const seedServiciosOnStartup = require('./utils/seedServiciosOnStartup');
+  await seedServiciosOnStartup();
+
+  const { inicializarPush } = require('./utils/push');
+  await inicializarPush();
+}
+
+function explicarErrorBD(err) {
+  console.error('Error conectando a PostgreSQL:', err.message);
+  const codigo = err.original?.code;
+  if (codigo === '3D000') {
+    console.error('   La base de datos no existe. Ejecuta: npm run create-db');
+  } else if (codigo === '28P01') {
+    console.error('   Usuario o contraseña incorrectos. Revisa DATABASE_URL (o DB_USER / DB_PASSWORD).');
+  } else if (/terminated unexpectedly|ECONNRESET|ETIMEDOUT/i.test(String(err.message))) {
+    console.error('   Conexión cortada. En Render usa la Internal Database URL del mismo equipo que el Web Service.');
+    console.error('   Host interno (dpg-…-a): sin SSL. URL externa (*.postgres.render.com): DATABASE_SSL=true.');
+  } else {
+    console.error('   Verifica que PostgreSQL esté corriendo y que DATABASE_URL sea la del panel de Render.');
+  }
+  console.error('   El servidor sigue arriba; las rutas responderán cuando la BD vuelva.');
+}
+
+// ─── Arranque ───────────────────────────────────────────────────────────────
+const startServer = async () => {
+  let bdLista = false;
+  try {
+    await prepararBaseDeDatos();
+    bdLista = true;
+  } catch (err) {
+    explicarErrorBD(err);
+  }
+
+  const server = app.listen(PORT, () => {
+    console.log(`Servidor v${version} en puerto ${PORT} (${esProduccion ? 'producción' : 'desarrollo'})`);
+    console.log(`   Frontend servido por este servidor: ${sirveCliente ? 'sí' : 'no (solo API)'}`);
+    console.log(`   Orígenes permitidos: ${allowedOrigins.join(', ')}`);
+  });
+
+  const io = configurarSockets(server);
   app.set('io', io);
 
-  // Ping cada 20s: si la BD está caída limpia el pool para que reconecte sola cuando vuelva
-  let _dbViva = true;
-  setInterval(async () => {
+  const { iniciarAvisosRecordatorios } = require('./utils/recordatoriosJob');
+  iniciarAvisosRecordatorios();
+
+  // Ping cada 20 s: si la BD se cae limpia el pool, y cuando vuelve termina la preparación pendiente
+  let bdViva = bdLista;
+  const ping = setInterval(async () => {
     try {
       await sequelize.authenticate();
-      if (!_dbViva) {
-        console.log('✅ BD reconectada automáticamente');
-        _dbViva = true;
+      if (!bdViva) {
+        console.log('BD reconectada');
+        bdViva = true;
+      }
+      if (!bdLista) {
+        await prepararBaseDeDatos();
+        bdLista = true;
       }
     } catch (err) {
-      if (_dbViva) {
-        console.warn('⚠️  BD no disponible, limpiando pool:', err.message);
-        _dbViva = false;
+      if (bdViva) {
+        console.warn('BD no disponible, limpiando pool:', err.message);
+        bdViva = false;
       }
       try {
         await sequelize.connectionManager.pool.drain();
@@ -267,6 +383,28 @@ const startServer = async () => {
       } catch (_) { /* ignorar errores del pool */ }
     }
   }, 20000);
+  ping.unref();
+
+  // Cierre ordenado: Render envía SIGTERM en cada despliegue
+  let cerrando = false;
+  const cerrar = (senal) => {
+    if (cerrando) return;
+    cerrando = true;
+    console.log(`${senal} recibido, cerrando…`);
+    clearInterval(ping);
+    io.close();
+    server.close(async () => {
+      try { await sequelize.close(); } catch (_) { /* ya cerrado */ }
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(0), 10000).unref();
+  };
+  process.on('SIGTERM', () => cerrar('SIGTERM'));
+  process.on('SIGINT', () => cerrar('SIGINT'));
 };
+
+process.on('unhandledRejection', (motivo) => {
+  console.error('Promesa rechazada sin manejar:', motivo);
+});
 
 startServer();

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { io } from 'socket.io-client'
+import { crearSocket } from '../utils/socket'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { MessageSquare, Send, X, Users } from 'lucide-react'
@@ -18,14 +18,13 @@ const ChatModal = ({ onClose, solicitudId = null }) => {
     if (!usuario) return
 
     // Conectar a Socket.IO
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-    const newSocket = io(apiUrl, {
-      transports: ['websocket', 'polling']
-    })
+    const newSocket = crearSocket()
 
     if (solicitudId) {
       // Chat de solicitud específica
-      newSocket.emit('unirse-solicitud', solicitudId)
+      newSocket.on('connect', () => {
+        newSocket.emit('unirse-solicitud', solicitudId)
+      })
       newSocket.on('nuevo-mensaje', (mensaje) => {
         if (mensaje.solicitudId === solicitudId) {
           setMensajes(prev => [...prev, mensaje])

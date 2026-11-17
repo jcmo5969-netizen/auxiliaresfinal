@@ -11,11 +11,12 @@ router.get('/generar', auth, async (req, res) => {
   try {
     // URL para que los auxiliares escaneen y accedan
     // Usar HashRouter, así que la URL incluye #
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
+    const clientUrl = (
+      String(process.env.CLIENT_URL || '').split(',')[0].trim() ||
+      process.env.RENDER_EXTERNAL_URL ||
+      `${req.protocol}://${req.get('host')}`
+    ).replace(/\/$/, '');
     const urlAcceso = `${clientUrl}/#/auxiliar/acceso`;
-    
-    console.log('📱 Generando QR con URL:', urlAcceso);
-    console.log('📱 CLIENT_URL configurado:', clientUrl);
     
     // Generar QR como imagen base64
     const qrCodeDataURL = await QRCode.toDataURL(urlAcceso, {

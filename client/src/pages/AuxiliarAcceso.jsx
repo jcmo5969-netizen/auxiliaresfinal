@@ -1,19 +1,25 @@
-import { useState, useEffect, useCallback, Component } from 'react'
+import { useState, useEffect, useCallback, useRef, Component } from 'react'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
-import { 
-  CheckCircle, Clock, AlertCircle, MapPin, User, 
-  LogIn, X, Loader, Bell, BellOff, RefreshCw, 
-  TrendingUp, Calendar, Moon, Sun, HelpCircle, RotateCcw, Bed
+import {
+  AlertTriangle, ArrowRightLeft, Bed, BedDouble, Calendar, CalendarClock, CheckCircle,
+  ClipboardList, Clock, DoorOpen, Hand, Layers, List, Loader2, LogOut, MapPin, Moon,
+  RefreshCw, RotateCcw, ShieldAlert, Stethoscope, Sun, User, WifiOff, Zap
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
-// Firebase se carga solo cuando hace falta (evita errores en iPhone/Safari al cargar la página)
-import { solicitarPermisoNotificaciones as solicitarWeb, mostrarNotificacion } from '../utils/notificacionesWeb'
 import { getItem, setItem, removeItem } from '../utils/storage'
 import { formatearFechaProgramadaDisplay } from '../utils/fechaHospital'
+import { desvincularDispositivo } from '../utils/push'
+import { useSolicitudesEnVivo } from '../utils/socket'
 import CalendarioAuxiliar from '../components/CalendarioAuxiliar'
+import NotificacionesPush from '../components/NotificacionesPush'
+import TarjetaLogin from '../components/TarjetaLogin'
+import { mensajeErrorLogin } from './Login'
 
-// ErrorBoundary interno: si falla la vista tras el login (p. ej. en iPhone), mostrar solo "Cerrar sesión"
+// Respaldo por si se pierde la conexión en tiempo real: recarga cada 20 s
+const INTERVALO_RESPALDO_MS = 20000
+
+// Si falla la vista tras el login (p. ej. en iPhone), mostrar solo "Cerrar sesión"
 class AuxiliarVistaErrorBoundary extends Component {
   state = { hasError: false }
   static getDerivedStateFromError = () => ({ hasError: true })
@@ -23,14 +29,14 @@ class AuxiliarVistaErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-          <p className="text-gray-700 dark:text-gray-300 text-center mb-4">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6 dark:bg-gray-900">
+          <p className="mb-4 text-center text-gray-700 dark:text-gray-300">
             No se pudo cargar la vista. Cierra sesión e intenta de nuevo.
           </p>
           <button
             type="button"
             onClick={this.props.onCerrarSesion}
-            className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium"
+            className="rounded-lg bg-primary-600 px-6 py-3 font-medium text-white"
           >
             Cerrar sesión
           </button>
@@ -41,184 +47,296 @@ class AuxiliarVistaErrorBoundary extends Component {
   }
 }
 
-// Componente de Login específico para auxiliares
-const LoginAuxiliar = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [cargando, setCargando] = useState(false)
-  const { isDark, toggleTheme } = useTheme()
+// ─── Textos y estilos de una solicitud ──────────────────────────────────────
+const TIPOS = {
+  alta: { etiqueta: 'Alta', Icono: DoorOpen },
+  traslado: { etiqueta: 'Traslado', Icono: ArrowRightLeft },
+  pabellon: { etiqueta: 'Pabellón', Icono: Stethoscope },
+  gescas: { etiqueta: 'GESCAS', Icono: BedDouble },
+  otro: { etiqueta: 'Otro', Icono: ClipboardList }
+}
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setCargando(true)
+const TRASLADOS = {
+  sin_silla_ni_camilla: 'Sin silla ni camilla',
+  con_silla: 'Con silla de ruedas',
+  con_camilla: 'Con camilla'
+}
 
-    try {
-      const res = await api.post('/api/auth/login', { email, password })
-      const { token, usuario } = res.data
-      
-      if (usuario.rol !== 'auxiliar') {
-        toast.error('Solo los auxiliares pueden acceder desde aquí')
-        setCargando(false)
-        return
-      }
-      
-      setItem('token', token)
-      // Llamar al callback sin actualizar el contexto global para evitar redirecciones
-      onLoginSuccess(token)
-      toast.success('Inicio de sesión exitoso')
-      // No actualizar el AuthContext global para evitar redirecciones automáticas
-    } catch (error) {
-      toast.error(error.response?.data?.mensaje || 'Error al iniciar sesión')
-      setCargando(false)
-    }
-  }
+const PRIORIDADES = {
+  baja: 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600',
+  media: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-700',
+  alta: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-700',
+  urgente: 'bg-red-600 text-white border-red-700'
+}
+
+const getPrioridadColor = (prioridad) => PRIORIDADES[prioridad] || PRIORIDADES.media
+
+const getTipoIcon = (tipo) => {
+  const { Icono } = TIPOS[tipo] || TIPOS.otro
+  return <Icono className="inline h-6 w-6 text-primary-600 dark:text-primary-300" aria-hidden />
+}
+
+const textoCama = (s) => {
+  const v = s?.cama ?? s?.cama_numero
+  return v == null ? '' : String(v).trim()
+}
+
+const textoPiso = (s) => {
+  const p = String(s?.servicio?.piso ?? '').trim()
+  if (!p || /^(n\/?a|no aplica|-+)$/i.test(p)) return ''
+  return /^piso\b/i.test(p) ? p : `Piso ${p}`
+}
+
+const formatearHace = (fecha) => {
+  if (!fecha) return ''
+  const mins = Math.floor((Date.now() - new Date(fecha).getTime()) / 60000)
+  if (mins < 1) return 'hace un momento'
+  if (mins < 60) return `hace ${mins} min`
+  const horas = Math.floor(mins / 60)
+  if (horas < 24) return `hace ${horas} h ${mins % 60} min`
+  return new Date(fecha).toLocaleDateString('es-CL')
+}
+
+const esUrgente = (s) => s.prioridad === 'urgente' || Boolean(s.prioridadInmediato)
+
+// ─── Tarjeta de solicitud ───────────────────────────────────────────────────
+const TarjetaSolicitud = ({ solicitud, mia = false, ocupada = false, onAsignar, onFinalizar, onDevolver }) => {
+  const tipo = TIPOS[solicitud.tipoRequerimiento] || TIPOS.otro
+  const cama = textoCama(solicitud)
+  const piso = textoPiso(solicitud)
+  const urgente = esUrgente(solicitud)
+  const id = solicitud.id || solicitud._id
+  const destinoGescas = solicitud.destinoGescas || solicitud.destino_gescas
+  const tipoPrecaucion = solicitud.tipoPrecaucion || solicitud.tipo_precaucion
+
+  const borde = mia
+    ? 'border-orange-400 dark:border-orange-500'
+    : urgente
+      ? 'border-red-500'
+      : 'border-primary-500'
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-700 dark:from-gray-900 dark:to-gray-800 px-4 transition-colors duration-300">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 transition-colors duration-300">
-        {/* Botón de modo oscuro */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={toggleTheme}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title={isDark ? 'Modo claro' : 'Modo oscuro'}
-          >
-            {isDark ? (
-              <Sun className="w-5 h-5 text-yellow-500" />
-            ) : (
-              <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+    <article
+      className={`overflow-hidden rounded-2xl border-l-[6px] bg-white shadow-md ring-1 ring-gray-200 transition-colors dark:bg-gray-800 dark:ring-gray-700 ${borde}`}
+    >
+      {urgente && (
+        <div className="flex items-center gap-2 bg-red-600 px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-white">
+          <Zap className="h-4 w-4" aria-hidden />
+          {solicitud.prioridadInmediato ? 'Inmediato' : 'Urgente'}
+        </div>
+      )}
+
+      <div className="p-4 sm:p-5">
+        {/* Ubicación: lo primero que necesita saber el auxiliar */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              {cama ? (
+                <p className="flex items-center gap-2 text-2xl font-extrabold leading-tight text-gray-900 dark:text-white">
+                  <Bed className="h-6 w-6 shrink-0 text-primary-600 dark:text-primary-300" aria-hidden />
+                  <span className="break-words">Cama {cama}</span>
+                </p>
+              ) : (
+                <p className="text-xl font-bold leading-tight text-gray-900 dark:text-white">
+                  {solicitud.servicio?.nombre || 'Servicio no indicado'}
+                </p>
+              )}
+              {piso && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-primary-100 px-2.5 py-1 text-base font-bold text-primary-800 dark:bg-primary-900/50 dark:text-primary-100">
+                  <Layers className="h-4 w-4" aria-hidden />
+                  {piso}
+                </span>
+              )}
+            </div>
+            {cama && (
+              <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300">
+                <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+                {solicitud.servicio?.nombre || 'Servicio no indicado'}
+              </p>
             )}
-          </button>
+          </div>
+          <div className="shrink-0 rounded-xl bg-primary-50 p-2.5 dark:bg-primary-900/30">
+            <tipo.Icono className="h-7 w-7 text-primary-700 dark:text-primary-200" aria-hidden />
+          </div>
         </div>
-        
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            Acceso Auxiliares
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Inicia sesión para gestionar solicitudes
+
+        {/* Qué hay que hacer */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-primary-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+            {tipo.etiqueta}
+          </span>
+          {solicitud.tipoRequerimiento === 'traslado' && solicitud.tipoTraslado && (
+            <span className="rounded-full border border-primary-300 bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800 dark:border-primary-700 dark:bg-primary-900/30 dark:text-primary-100">
+              {TRASLADOS[solicitud.tipoTraslado] || solicitud.tipoTraslado}
+            </span>
+          )}
+          {!urgente && (
+            <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase ${getPrioridadColor(solicitud.prioridad)}`}>
+              Prioridad {solicitud.prioridad || 'media'}
+            </span>
+          )}
+          {mia && (
+            <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-bold uppercase text-white">En proceso</span>
+          )}
+        </div>
+
+        {solicitud.tipoRequerimiento === 'gescas' && destinoGescas && (
+          <p className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-100">Destino: {destinoGescas}</p>
+        )}
+
+        {solicitud.precaucionesEstandar && (
+          <p className="mt-3 flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100">
+            <ShieldAlert className="h-5 w-5 shrink-0" aria-hidden />
+            Precauciones adicionales{tipoPrecaucion ? `: ${tipoPrecaucion}` : ''}
           </p>
+        )}
+
+        {solicitud.descripcion && (
+          <p className="mt-3 whitespace-pre-line break-words rounded-xl bg-gray-50 px-3 py-2.5 text-sm text-gray-800 dark:bg-gray-700/60 dark:text-gray-100">
+            {solicitud.descripcion}
+          </p>
+        )}
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+          <span className="flex items-center gap-1">
+            <User className="h-3.5 w-3.5" aria-hidden />
+            {solicitud.solicitadoPor?.nombre || 'Sin solicitante'}
+          </span>
+          {mia && solicitud.fechaAsignacion ? (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" aria-hidden />
+              Tomada {formatearHace(solicitud.fechaAsignacion)}
+            </span>
+          ) : solicitud.createdAt ? (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" aria-hidden />
+              Pedida {formatearHace(solicitud.createdAt)}
+            </span>
+          ) : null}
+          {solicitud.fechaProgramada && (
+            <span className="flex items-center gap-1 font-semibold text-primary-700 dark:text-primary-300">
+              <CalendarClock className="h-3.5 w-3.5" aria-hidden />
+              Programada: {formatearFechaProgramadaDisplay(solicitud.fechaProgramada)}
+            </span>
+          )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-              placeholder="tu@email.com"
-            />
+        {/* Acciones */}
+        {mia ? (
+          <div className="mt-4 flex gap-3">
+            <button
+              type="button"
+              onClick={() => onFinalizar(id)}
+              disabled={ocupada}
+              className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-base font-bold text-white shadow-md transition hover:bg-green-700 active:scale-[0.98] disabled:opacity-60"
+            >
+              {ocupada ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <CheckCircle className="h-5 w-5" aria-hidden />}
+              Finalizar
+            </button>
+            <button
+              type="button"
+              onClick={() => onDevolver(id)}
+              disabled={ocupada}
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-xl border-2 border-orange-500 px-4 py-3 text-sm font-semibold text-orange-700 transition hover:bg-orange-50 active:scale-[0.98] disabled:opacity-60 dark:text-orange-300 dark:hover:bg-orange-900/20"
+              title="Devolver la solicitud si no puedes realizarla"
+            >
+              <RotateCcw className="h-5 w-5" aria-hidden />
+              Devolver
+            </button>
           </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Contraseña
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-              placeholder="••••••••"
-            />
-          </div>
-
+        ) : (
           <button
-            type="submit"
-            disabled={cargando}
-            className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            onClick={() => onAsignar(id)}
+            disabled={ocupada}
+            className={`mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-base font-bold text-white shadow-md transition active:scale-[0.98] disabled:opacity-60 ${
+              urgente ? 'bg-red-600 hover:bg-red-700' : 'bg-primary-600 hover:bg-primary-700'
+            }`}
           >
-            {cargando ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            {ocupada ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Hand className="h-5 w-5" aria-hidden />}
+            Tomar esta solicitud
           </button>
-        </form>
-
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p className="text-sm text-blue-800 dark:text-blue-300 text-center">
-            <strong>Acceso exclusivo para auxiliares</strong>
-          </p>
-        </div>
+        )}
       </div>
-    </div>
+    </article>
   )
 }
 
+// ─── Página ─────────────────────────────────────────────────────────────────
 const AuxiliarAcceso = () => {
+  const { isDark, toggleTheme } = useTheme()
   const [autenticado, setAutenticado] = useState(false)
+  const [usuario, setUsuario] = useState(null)
   const [solicitudes, setSolicitudes] = useState([])
   const [solicitudesAsignadas, setSolicitudesAsignadas] = useState([])
   const [cargando, setCargando] = useState(true)
-  const [token, setToken] = useState(() => getItem('token'))
-  const [notificacionesActivas, setNotificacionesActivas] = useState(false)
+  const [primeraCargaLista, setPrimeraCargaLista] = useState(false)
+  const [actualizando, setActualizando] = useState(false)
+  const [sinConexion, setSinConexion] = useState(false)
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null)
-  const [intervaloActualizacion, setIntervaloActualizacion] = useState(null)
-  const [mostrarAyudaPantallaBloqueo, setMostrarAyudaPantallaBloqueo] = useState(false)
   const [vistaActiva, setVistaActiva] = useState('lista')
   const [solicitudesCalendario, setSolicitudesCalendario] = useState([])
-  // En iOS Safari, Notification puede no existir o fallar; usar helper seguro
-  const permisoNotificaciones = typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  const [enCurso, setEnCurso] = useState(null) // id de la solicitud con una acción en vuelo
+  const [, setTic] = useState(0) // refresca los "hace X min"
+  const idsConocidos = useRef(null)
 
-  const cargarSolicitudes = useCallback(async (mostrarNotificacionNueva = false) => {
+  const cerrarSesion = useCallback(() => {
+    desvincularDispositivo() // captura el token antes de que se borre
+    removeItem('token')
+    idsConocidos.current = null
+    setUsuario(null)
+    setSolicitudes([])
+    setSolicitudesAsignadas([])
+    setPrimeraCargaLista(false)
+    setAutenticado(false)
+    setCargando(false)
+  }, [])
+
+  const cargarSolicitudes = useCallback(async ({ avisarNuevas = false, manual = false } = {}) => {
+    if (manual) setActualizando(true)
     try {
       const [resPendientes, resAsignadas] = await Promise.all([
         api.get('/api/solicitudes/pendientes'),
         api.get('/api/solicitudes/mis-asignadas')
       ])
-      
-      const nuevasSolicitudes = resPendientes.data || []
-      const nuevasAsignadas = resAsignadas.data || []
-      
-      console.log('📋 Solicitudes cargadas:', {
-        pendientes: nuevasSolicitudes.length,
-        asignadas: nuevasAsignadas.length
-      })
-      
-      setSolicitudes(prevSolicitudes => {
-        // Detectar nuevas solicitudes solo si se solicita explícitamente
-        if (mostrarNotificacionNueva && prevSolicitudes.length > 0) {
-          // Comparar IDs para detectar nuevas solicitudes
-          const idsAnteriores = new Set(prevSolicitudes.map(s => s.id || s._id))
-          const nuevas = nuevasSolicitudes.filter(s => !idsAnteriores.has(s.id || s._id))
-          
-          if (nuevas.length > 0) {
-            const nuevaSolicitud = nuevas[0]
-            if (notificacionesActivas) {
-              mostrarNotificacion(
-                `Nueva solicitud - ${nuevaSolicitud.servicio?.nombre || ''}`,
-                {
-                  cuerpo: `${nuevaSolicitud.tipoRequerimiento.toUpperCase()} - ${nuevaSolicitud.servicio?.nombre}`,
-                  urgente: nuevaSolicitud.prioridad === 'urgente' || nuevaSolicitud.prioridad === 'alta',
-                  data: { solicitudId: nuevaSolicitud.id || nuevaSolicitud._id },
-                  onClick: () => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  }
-                }
-              )
-            }
-            toast.success('¡Nueva solicitud disponible!', {
-              icon: '🔔',
-              duration: 4000
-            })
-          }
+      const pendientes = resPendientes.data || []
+      const asignadas = resAsignadas.data || []
+
+      // Aviso dentro de la app cuando aparece una solicitud que no estaba
+      const anteriores = idsConocidos.current
+      if (avisarNuevas && anteriores) {
+        const nuevas = pendientes.filter((s) => !anteriores.has(s.id))
+        if (nuevas.length > 0) {
+          const s = nuevas[0]
+          const ubicacion = [textoCama(s) ? `Cama ${textoCama(s)}` : '', textoPiso(s)].filter(Boolean).join(', ')
+          toast(
+            nuevas.length === 1
+              ? `Nueva solicitud${ubicacion ? `: ${ubicacion}` : ''}`
+              : `${nuevas.length} solicitudes nuevas`,
+            { duration: 5000 }
+          )
+          try { navigator.vibrate?.(200) } catch (_) { /* sin vibración */ }
         }
-        
-        return nuevasSolicitudes
-      })
-      
-      setSolicitudesAsignadas(nuevasAsignadas)
+      }
+      idsConocidos.current = new Set(pendientes.map((s) => s.id))
+
+      setSolicitudes(pendientes)
+      setSolicitudesAsignadas(asignadas)
       setUltimaActualizacion(new Date())
+      setSinConexion(false)
+      setPrimeraCargaLista(true)
     } catch (error) {
-      console.error('❌ Error cargando solicitudes:', error)
-      toast.error('Error cargando solicitudes: ' + (error.response?.data?.mensaje || error.message))
+      if (error.response?.status === 401) {
+        toast.error('Tu sesión expiró. Inicia sesión de nuevo.')
+        cerrarSesion()
+        return
+      }
+      setSinConexion(true)
+      if (manual) toast.error(error.response?.data?.mensaje || 'No se pudo actualizar. Revisa tu conexión.')
+    } finally {
+      if (manual) setActualizando(false)
     }
-  }, [notificacionesActivas])
+  }, [cerrarSesion])
 
   const cargarCalendario = useCallback(async () => {
     try {
@@ -229,706 +347,305 @@ const AuxiliarAcceso = () => {
     }
   }, [])
 
+  // Verificar sesión guardada al abrir
   useEffect(() => {
-    if (vistaActiva === 'calendario' && autenticado) {
-      cargarCalendario()
+    let vivo = true
+    const verificar = async () => {
+      if (!getItem('token')) {
+        setCargando(false)
+        return
+      }
+      try {
+        const res = await api.get('/api/auth/me')
+        if (!vivo) return
+        if (res.data.rol === 'auxiliar') {
+          setUsuario(res.data)
+          setAutenticado(true)
+        } else {
+          // Sesión de otro rol: va a su propia pantalla, no se borra
+          window.location.hash = '#/'
+          window.location.reload()
+          return
+        }
+      } catch (error) {
+        if (!vivo) return
+        if (error.response?.status === 401) removeItem('token')
+      }
+      setCargando(false)
     }
+    verificar()
+    return () => { vivo = false }
+  }, [])
+
+  // Carga inicial + respaldo periódico
+  useEffect(() => {
+    if (!autenticado) return undefined
+    cargarSolicitudes()
+    const intervalo = setInterval(() => {
+      if (!document.hidden) cargarSolicitudes({ avisarNuevas: true })
+      setTic((t) => t + 1)
+    }, INTERVALO_RESPALDO_MS)
+    return () => clearInterval(intervalo)
+  }, [autenticado, cargarSolicitudes])
+
+  // Tiempo real: se recarga apenas cambia una solicitud o llega un push
+  useSolicitudesEnVivo(() => {
+    cargarSolicitudes({ avisarNuevas: true })
+    if (vistaActiva === 'calendario') cargarCalendario()
+  }, autenticado)
+
+  useEffect(() => {
+    if (vistaActiva === 'calendario' && autenticado) cargarCalendario()
   }, [vistaActiva, autenticado, cargarCalendario])
 
-  useEffect(() => {
-    // Asegurarse de que estamos en la ruta correcta (por si acaso)
-    const currentHash = window.location.hash || ''
-    if (!currentHash.includes('/auxiliar/acceso') && window.location.pathname !== '/auxiliar/acceso') {
-      // Si no estamos en la ruta correcta, redirigir
-      if (!currentHash) {
-        window.location.hash = '/auxiliar/acceso'
-        return
-      }
-    }
-    
-    const tokenGuardado = getItem('token')
-    if (tokenGuardado) {
-      setToken(tokenGuardado)
-      // Verificar autenticación inmediatamente
-      verificarAuth()
-    } else {
-      setCargando(false)
-      setAutenticado(false)
-    }
-  }, [])
-  
-  // Remover el segundo useEffect que causaba verificaciones duplicadas
-
-  useEffect(() => {
-    if (!autenticado || cargando) return
-
-    let limpiarListener = null
-    let intervalo = null
-
-    // Configurar notificaciones (Firebase se carga solo aquí para no romper iPhone/Safari al abrir la página)
-    const configurarNotificaciones = async () => {
-      let usarFirebase = false
-      try {
-        const firebaseMod = await import('../utils/firebase')
-        usarFirebase = firebaseMod.estaFirebaseConfigurado && firebaseMod.estaFirebaseConfigurado()
-      } catch (_) {
-        // En iPhone/Safari el módulo Firebase puede fallar al cargar; usar solo notificaciones web
-      }
-
-      if (usarFirebase) {
-        try {
-          const firebaseMod = await import('../utils/firebase')
-          const token = await firebaseMod.solicitarPermisoNotificaciones?.()
-          if (token) {
-            setNotificacionesActivas(true)
-            toast.success('Notificaciones push activadas', { icon: '🔔' })
-          }
-          limpiarListener = firebaseMod.escucharNotificaciones?.((payload) => {
-            toast.success(`Nueva solicitud: ${payload.notification?.title || 'Nueva solicitud'}`, {
-              icon: '🔔',
-              duration: 5000
-            })
-            cargarSolicitudes(false)
-          }) || null
-        } catch (error) {
-          console.warn('Firebase no disponible, usando notificaciones web:', error?.message)
-          usarFirebase = false
-        }
-      }
-
-      if (!usarFirebase) {
-        try {
-          const resultado = await solicitarWeb()
-          setNotificacionesActivas(resultado.activo)
-          if (resultado.activo) {
-            toast.success('Notificaciones web activadas', { icon: '🔔' })
-          } else if (resultado.denegado) {
-            console.log('Permiso de notificaciones denegado, el usuario puede activarlo manualmente')
-          }
-        } catch (error) {
-          console.error('Error configurando notificaciones web:', error)
-        }
-      }
-    }
-
-    // Cargar solicitudes iniciales (sin mostrar notificación de nueva)
-    cargarSolicitudes(false).catch(() => {})
-    
-    // Configurar notificaciones (nunca dejar rechazo sin capturar; en iPhone puede fallar)
-    configurarNotificaciones().catch(() => {})
-
-    // Configurar actualización automática cada 3 segundos para actualizaciones casi instantáneas
-    // Solo actualizar si la pestaña está visible
-    intervalo = setInterval(() => {
-      if (!document.hidden) {
-        cargarSolicitudes(true) // Permitir notificaciones en actualizaciones automáticas
-      }
-    }, 3000) // Actualizar cada 3 segundos
-    
-    setIntervaloActualizacion(intervalo)
-    
-    // Limpiar al desmontar
-    return () => {
-      if (intervalo) clearInterval(intervalo)
-      if (limpiarListener) limpiarListener()
-    }
-  }, [autenticado, cargarSolicitudes]) // Incluir cargarSolicitudes pero ahora es estable
-
-  const verificarAuth = async () => {
+  const ejecutar = async (solicitudId, accion, exito, errorPorDefecto) => {
+    if (!solicitudId || enCurso) return
+    setEnCurso(solicitudId)
     try {
-      const res = await api.get('/api/auth/me')
-      if (res.data.rol === 'auxiliar') {
-        setAutenticado(true)
-        setCargando(false)
-        // Asegurarse de que no se redirija al dashboard
-        // El usuario debe permanecer en /auxiliar/acceso
-        // No actualizar el AuthContext global para evitar redirecciones
-      } else {
-        // Si el usuario no es auxiliar, limpiar token y mostrar login
-        // pero NO redirigir para evitar cerrar otras pestañas
-        console.log('⚠️ Usuario no es auxiliar, limpiando sesión local')
-        removeItem('token')
-        setToken(null)
-        setAutenticado(false)
-        setCargando(false)
-        toast.error('Solo los auxiliares pueden acceder aquí')
-        // NO redirigir, solo mostrar el formulario de login en esta pestaña
-      }
+      await accion()
+      toast.success(exito)
     } catch (error) {
-      console.error('Error verificando autenticación:', error)
-      removeItem('token')
-      setToken(null)
-      setAutenticado(false)
-      setCargando(false)
-      // NO redirigir, solo mostrar el formulario de login en esta pestaña
-    }
-  }
-
-  const handleAsignar = async (solicitudId) => {
-    try {
-      if (!solicitudId) {
-        toast.error('ID de solicitud inválido')
-        return
-      }
-      await api.put(`/api/solicitudes/${solicitudId}/asignar`)
-      toast.success('Solicitud asignada exitosamente', { icon: '✅' })
-      await cargarSolicitudes(false)
+      toast.error(error.response?.data?.mensaje || errorPorDefecto)
+    } finally {
+      await cargarSolicitudes()
       if (vistaActiva === 'calendario') await cargarCalendario()
-    } catch (error) {
-      toast.error(error.response?.data?.mensaje || 'Error asignando solicitud')
+      setEnCurso(null)
     }
   }
 
-    const handleDevolver = async (solicitudId) => {
+  const handleAsignar = (id) =>
+    ejecutar(id, () => api.put(`/api/solicitudes/${id}/asignar`), 'Solicitud tomada', 'No se pudo tomar la solicitud')
+
+  const handleDevolver = (id) =>
+    ejecutar(id, () => api.put(`/api/solicitudes/${id}/desasignar`), 'Solicitud devuelta a pendientes', 'No se pudo devolver la solicitud')
+
+  const handleFinalizar = (id) =>
+    ejecutar(id, () => api.put(`/api/solicitudes/${id}/estado`, { estado: 'completada' }), 'Solicitud finalizada', 'No se pudo finalizar la solicitud')
+
+  const iniciarSesion = async (email, password) => {
+    let res
     try {
-      if (!solicitudId) return
-      await api.put(`/api/solicitudes/${solicitudId}/desasignar`)
-      toast.success('Solicitud devuelta a pendientes', { icon: '↩️' })
-      await cargarSolicitudes(false)
-      if (vistaActiva === 'calendario') await cargarCalendario()
+      res = await api.post('/api/auth/login', { email, password })
     } catch (error) {
-      toast.error(error.response?.data?.mensaje || 'Error al devolver la solicitud')
+      throw new Error(mensajeErrorLogin(error))
     }
-  }
-
-  const handleFinalizar = async (solicitudId) => {
-    try {
-      if (!solicitudId) {
-        toast.error('ID de solicitud inválido')
-        return
-      }
-      await api.put(`/api/solicitudes/${solicitudId}/estado`, { estado: 'completada' })
-      toast.success('Solicitud finalizada exitosamente', { icon: '✅' })
-      await cargarSolicitudes(false)
-      if (vistaActiva === 'calendario') await cargarCalendario()
-    } catch (error) {
-      toast.error(error.response?.data?.mensaje || 'Error finalizando solicitud')
+    const { token, usuario: u } = res.data
+    if (u.rol !== 'auxiliar') {
+      throw new Error('Este acceso es solo para auxiliares. Usa el inicio de sesión general.')
     }
-  }
-
-  const handleActivarNotificaciones = async () => {
-    let usarFirebase = false
-    try {
-      const mod = await import('../utils/firebase')
-      usarFirebase = mod.estaFirebaseConfigurado?.() ?? false
-    } catch (_) {}
-
-    if (usarFirebase) {
-      try {
-        const mod = await import('../utils/firebase')
-        const token = await mod.solicitarPermisoNotificaciones?.()
-        setNotificacionesActivas(!!token)
-        if (token) {
-          toast.success('Notificaciones push activadas', { icon: '🔔' })
-        } else {
-          // Verificar si el permiso está denegado
-          if (permisoNotificaciones === 'denied') {
-            toast.error(
-              'Permiso denegado. Ve a Configuración del navegador > Notificaciones para habilitarlo.',
-              { 
-                icon: '⚠️',
-                duration: 6000
-              }
-            )
-          } else {
-            toast.error('No se pudo activar las notificaciones', { icon: '⚠️' })
-          }
-        }
-      } catch (error) {
-        console.error('Error activando notificaciones:', error)
-        toast.error('Error al activar notificaciones', { icon: '⚠️' })
-      }
-    } else {
-      try {
-        const resultado = await solicitarWeb()
-        setNotificacionesActivas(resultado.activo)
-        
-        if (resultado.activo) {
-          toast.success('Notificaciones web activadas', { icon: '🔔' })
-        } else {
-          if (resultado.denegado) {
-            toast.error(
-              resultado.mensaje || 'Permiso denegado. Ve a Configuración del navegador > Notificaciones para habilitarlo.',
-              { 
-                icon: '⚠️',
-                duration: 6000
-              }
-            )
-          } else {
-            toast.error(resultado.mensaje || 'No se pudo activar las notificaciones', { icon: '⚠️' })
-          }
-        }
-      } catch (error) {
-        console.error('Error activando notificaciones:', error)
-        toast.error('Error al activar notificaciones', { icon: '⚠️' })
-      }
-    }
-  }
-
-  const formatearTiempo = (fecha) => {
-    if (!fecha) return 'N/A'
-    const ahora = new Date()
-    const fechaObj = new Date(fecha)
-    const diffMs = ahora - fechaObj
-    const diffMins = Math.floor(diffMs / 60000)
-    
-    if (diffMins < 1) return 'Hace un momento'
-    if (diffMins < 60) return `Hace ${diffMins} min`
-    const diffHoras = Math.floor(diffMins / 60)
-    if (diffHoras < 24) return `Hace ${diffHoras}h`
-    return fechaObj.toLocaleDateString('es-ES')
-  }
-
-  const getPrioridadColor = (prioridad) => {
-    const colores = {
-      baja: 'bg-gray-100 text-gray-700 border-gray-300',
-      media: 'bg-blue-100 text-blue-700 border-blue-300',
-      alta: 'bg-orange-100 text-orange-700 border-orange-300',
-      urgente: 'bg-red-100 text-red-700 border-red-300 animate-pulse'
-    }
-    return colores[prioridad] || colores.media
-  }
-
-  const getTipoIcon = (tipo) => {
-    const iconos = {
-      alta: '🏥',
-      traslado: '🚑',
-      pabellon: '⚕️',
-      gescas: '🛏️',
-      otro: '📋'
-    }
-    return iconos[tipo] || '📋'
-  }
-
-  /** Texto de cama que envía el solicitante (camelCase o snake_case por compatibilidad). */
-  const textoCama = (s) => {
-    const v = s?.cama ?? s?.cama_numero
-    if (v == null || v === '') return ''
-    const t = String(v).trim()
-    return t
+    setItem('token', token)
+    setUsuario(u)
+    setAutenticado(true)
+    toast.success(`Bienvenido, ${u.nombre}`)
   }
 
   if (cargando) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
+      <div className="flex min-h-screen items-center justify-center bg-primary-50 dark:bg-gray-900">
         <div className="text-center">
-          <Loader className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-primary-700 font-medium">Cargando...</p>
+          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" aria-hidden />
+          <p className="font-medium text-primary-700 dark:text-primary-300">Cargando…</p>
         </div>
       </div>
     )
   }
 
   if (!autenticado) {
-    return <LoginAuxiliar onLoginSuccess={(t) => { 
-      setToken(t)
-      setItem('token', t)
-      setCargando(false)
-      setAutenticado(true)
-      setTimeout(() => {
-        cargarSolicitudes(false).catch(() => {})
-      }, 100)
-    }} />
+    return (
+      <TarjetaLogin
+        titulo="Acceso Auxiliares"
+        subtitulo="Inicia sesión para ver y tomar solicitudes"
+        nota="Acceso exclusivo para auxiliares de servicio"
+        onSubmit={iniciarSesion}
+      />
+    )
   }
 
-  const cerrarSesion = () => {
-    removeItem('token')
-    setToken(null)
-    setAutenticado(false)
-    setCargando(false)
-  }
+  const total = solicitudes.length
+  const urgentes = solicitudes.filter(esUrgente).length
 
   return (
     <AuxiliarVistaErrorBoundary onCerrarSesion={cerrarSesion}>
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 pb-8">
-      {/* Header mejorado */}
-      <header className="bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-xl sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-            <div>
-              <h1 className="text-2xl font-bold">Solicitudes Disponibles</h1>
-              <p className="text-sm text-primary-100">Asigna y gestiona solicitudes en tiempo real</p>
-            </div>
-            <button
-              onClick={() => {
-                removeItem('token')
-                setToken(null)
-                setAutenticado(false)
-                setCargando(false)
-              }}
-              className="p-2 hover:bg-primary-700 rounded-lg transition"
-              title="Cerrar sesión"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          
-          {/* Barra de estado */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-primary-500">
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <button
-                onClick={() => cargarSolicitudes(false)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Actualizar
-              </button>
-              {ultimaActualizacion && (
-                <span className="text-primary-100 flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {formatearTiempo(ultimaActualizacion)}
-                </span>
-              )}
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-2">
-              {permisoNotificaciones === 'denied' && (
-                <div className="text-xs text-primary-100 bg-red-500/20 px-2 py-1 rounded max-w-xs">
-                  Ve a Configuración del navegador para habilitar notificaciones
-                </div>
-              )}
-              {notificacionesActivas && typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
-                <button
-                  type="button"
-                  onClick={() => setMostrarAyudaPantallaBloqueo(true)}
-                  className="flex items-center gap-1.5 text-xs text-primary-100 bg-white/15 hover:bg-white/25 px-2 py-1.5 rounded transition"
-                  title="Cómo ver notificaciones con el móvil bloqueado"
-                >
-                  <HelpCircle className="w-3.5 h-3.5" />
-                  <span>¿No ves notificaciones al bloquear?</span>
-                </button>
-              )}
-              <button
-                onClick={handleActivarNotificaciones}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${
-                  notificacionesActivas 
-                    ? 'bg-green-500/20 hover:bg-green-500/30' 
-                    : permisoNotificaciones === 'denied'
-                    ? 'bg-red-500/20 hover:bg-red-500/30'
-                    : 'bg-white/20 hover:bg-white/30'
-                }`}
-                title={
-                  permisoNotificaciones === 'denied' 
-                    ? 'Permiso denegado. Ve a Configuración del navegador para habilitarlo.'
-                    : notificacionesActivas
-                    ? 'Notificaciones activadas'
-                    : 'Activar notificaciones'
-                }
-              >
-                {notificacionesActivas ? (
-                  <>
-                    <Bell className="w-4 h-4" />
-                    <span className="text-xs">Notificaciones ON</span>
-                  </>
-                ) : permisoNotificaciones === 'denied' ? (
-                  <>
-                    <BellOff className="w-4 h-4" />
-                    <span className="text-xs">Permiso Denegado</span>
-                  </>
-                ) : (
-                  <>
-                    <BellOff className="w-4 h-4" />
-                    <span className="text-xs">Activar Notificaciones</span>
-                  </>
+      <div
+        className="min-h-screen bg-gray-100 transition-colors dark:bg-gray-900"
+        style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+      >
+        <header
+          className="sticky top-0 z-20 bg-gradient-to-r from-primary-700 to-primary-600 text-white shadow-lg"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold leading-tight sm:text-xl">Solicitudes de auxiliar</h1>
+              <p className="truncate text-xs text-primary-100 sm:text-sm">
+                {usuario?.nombre || 'Auxiliar'}
+                {ultimaActualizacion && !sinConexion && (
+                  <span className="ml-2 opacity-80">
+                    · Actualizado {ultimaActualizacion.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 )}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => cargarSolicitudes({ manual: true })}
+                disabled={actualizando}
+                className="rounded-xl p-2.5 transition hover:bg-white/15 disabled:opacity-60"
+                aria-label="Actualizar solicitudes"
+              >
+                <RefreshCw className={`h-5 w-5 ${actualizando ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="rounded-xl p-2.5 transition hover:bg-white/15"
+                aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              >
+                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('¿Cerrar sesión? Este teléfono dejará de recibir avisos de solicitudes.')) cerrarSesion()
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-white/15 px-3 py-2 text-sm font-semibold transition hover:bg-white/25"
+              >
+                <LogOut className="h-4 w-4" aria-hidden />
+                Salir
               </button>
             </div>
           </div>
-        </div>
-      </header>
+          {sinConexion && (
+            <div className="flex items-center justify-center gap-2 bg-red-600 px-4 py-1.5 text-center text-xs font-semibold" role="status">
+              <WifiOff className="h-4 w-4" aria-hidden />
+              Sin conexión con el servidor. Reintentando…
+            </div>
+          )}
+        </header>
 
-      {/* Modal: Cómo ver notificaciones en pantalla de bloqueo */}
-      {mostrarAyudaPantallaBloqueo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setMostrarAyudaPantallaBloqueo(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ver notificaciones con el móvil bloqueado</h3>
-              <button type="button" onClick={() => setMostrarAyudaPantallaBloqueo(false)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-                <X className="w-5 h-5" />
+        <main className="mx-auto max-w-3xl space-y-5 px-4 py-5">
+          <NotificacionesPush ejemplo="Cama 12, piso 3 · Traslado con camilla" />
+
+          {/* Resumen */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-white p-3 text-center shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700">
+              <p className="text-2xl font-extrabold text-primary-700 dark:text-primary-300">{total}</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Pendientes</p>
+            </div>
+            <div className="rounded-2xl bg-white p-3 text-center shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700">
+              <p className={`text-2xl font-extrabold ${urgentes ? 'text-red-600' : 'text-gray-400 dark:text-gray-500'}`}>{urgentes}</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Urgentes</p>
+            </div>
+            <div className="rounded-2xl bg-white p-3 text-center shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700">
+              <p className={`text-2xl font-extrabold ${solicitudesAsignadas.length ? 'text-orange-600' : 'text-gray-400 dark:text-gray-500'}`}>
+                {solicitudesAsignadas.length}
+              </p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Mías en proceso</p>
+            </div>
+          </div>
+
+          {/* Lista / Calendario */}
+          <div className="flex rounded-xl bg-gray-200 p-1 dark:bg-gray-800" role="tablist">
+            {[
+              { id: 'lista', etiqueta: 'Lista', Icono: List },
+              { id: 'calendario', etiqueta: 'Calendario', Icono: Calendar }
+            ].map(({ id, etiqueta, Icono }) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={vistaActiva === id}
+                onClick={() => setVistaActiva(id)}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition ${
+                  vistaActiva === id
+                    ? 'bg-white text-primary-700 shadow dark:bg-gray-700 dark:text-white'
+                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                }`}
+              >
+                <Icono className="h-4 w-4" aria-hidden />
+                {etiqueta}
               </button>
+            ))}
+          </div>
+
+          {vistaActiva === 'calendario' ? (
+            <CalendarioAuxiliar
+              solicitudesPendientes={solicitudesCalendario}
+              solicitudesAsignadas={solicitudesAsignadas}
+              onAsignar={handleAsignar}
+              onCompletar={handleFinalizar}
+              onDevolver={handleDevolver}
+              getTipoIcon={getTipoIcon}
+              getPrioridadColor={getPrioridadColor}
+            />
+          ) : !primeraCargaLista ? (
+            <div className="flex items-center justify-center gap-3 rounded-2xl bg-white p-10 text-gray-600 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700">
+              {sinConexion ? (
+                <>
+                  <AlertTriangle className="h-6 w-6 text-red-500" aria-hidden />
+                  No se pudieron cargar las solicitudes. Reintentando…
+                </>
+              ) : (
+                <>
+                  <Loader2 className="h-6 w-6 animate-spin text-primary-600" aria-hidden />
+                  Cargando solicitudes…
+                </>
+              )}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              El sistema no puede forzar que aparezcan en la pantalla de bloqueo; depende de los ajustes del teléfono. Sigue estos pasos:
-            </p>
-            {typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent) ? (
-              <ol className="text-sm text-gray-700 dark:text-gray-200 space-y-2 list-decimal list-inside">
-                <li><strong>Añade la app a Inicio</strong>: en Safari, toca el botón compartir (cuadrado con flecha) → &quot;Añadir a la pantalla de inicio&quot;. Abre la app desde ese icono.</li>
-                <li><strong>Ajustes del iPhone</strong> → Notificaciones → busca <strong>&quot;Auxiliares&quot;</strong> (o el nombre de la app).</li>
-                <li>Activa <strong>&quot;Permitir notificaciones&quot;</strong> y <strong>&quot;Pantalla de bloqueo&quot;</strong> (y Centro de notificaciones si quieres).</li>
-                <li>Opcional: activa sonido y avisos para no perderlas.</li>
-              </ol>
-            ) : (
-              <ol className="text-sm text-gray-700 dark:text-gray-200 space-y-2 list-decimal list-inside">
-                <li><strong>Instala la app</strong>: en Chrome, menú (⋮) → &quot;Añadir a la pantalla de inicio&quot; (o &quot;Instalar app&quot;). Abre la app desde el icono. Así las notificaciones suelen mostrarse mejor con pantalla bloqueada.</li>
-                <li><strong>Ajustes del móvil</strong> → Aplicaciones → <strong>Chrome</strong> (o la app &quot;Auxiliares&quot; si la instalaste).</li>
-                <li>Entra en <strong>Notificaciones</strong> y asegúrate de que estén activadas.</li>
-                <li>Activa <strong>&quot;Mostrar en pantalla de bloqueo&quot;</strong> (o &quot;En pantalla de bloqueo&quot;). En algunos móviles: Ajustes → Notificaciones → Notificaciones en pantalla de bloqueo → activar para Chrome o para esta app.</li>
-                <li><strong>Importancia alta</strong>: dentro de Notificaciones de Chrome (o de la app), toca el canal o &quot;Comportamiento&quot; y elige <strong>Urgente</strong> o <strong>Alta</strong> (y &quot;Mostrar en pantalla de bloqueo&quot; + sonido). Si no hay opción de canal, activa &quot;Sonido&quot; y &quot;Pantalla de bloqueo&quot;.</li>
-              </ol>
-            )}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Si ya lo tienes activado y no ves la notificación al bloquear, revisa que no tengas activado &quot;No molestar&quot; o modo concentración. En Android, las PWA a veces reciben la notificación con retraso cuando el móvil lleva mucho tiempo en reposo.
-            </p>
-            <button type="button" onClick={() => setMostrarAyudaPantallaBloqueo(false)} className="w-full py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
-              Entendido
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Tabs Lista / Calendario */}
-        <div className="flex gap-2 mb-6">
-          <button
-            type="button"
-            onClick={() => setVistaActiva('lista')}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              vistaActiva === 'lista'
-                ? 'bg-primary-600 text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            Lista
-          </button>
-          <button
-            type="button"
-            onClick={() => setVistaActiva('calendario')}
-            className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
-              vistaActiva === 'calendario'
-                ? 'bg-primary-600 text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            Calendario
-          </button>
-        </div>
-
-        {vistaActiva === 'calendario' ? (
-          <CalendarioAuxiliar
-            solicitudesPendientes={solicitudesCalendario}
-            solicitudesAsignadas={solicitudesAsignadas}
-            onAsignar={handleAsignar}
-            onCompletar={handleFinalizar}
-            onDevolver={handleDevolver}
-            getTipoIcon={getTipoIcon}
-            getPrioridadColor={getPrioridadColor}
-          />
-        ) : (
-          <>
-        {/* Solicitudes Asignadas (En Proceso) */}
-        {solicitudesAsignadas.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <AlertCircle className="w-6 h-6 text-orange-600" />
-              Mis Solicitudes en Proceso ({solicitudesAsignadas.length})
-            </h2>
-            <div className="space-y-4">
-              {solicitudesAsignadas.map((solicitud) => (
-                <div
-                  key={solicitud.id || solicitud._id}
-                  className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-orange-500"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="text-3xl">{getTipoIcon(solicitud.tipoRequerimiento)}</span>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900">
-                            {solicitud.servicio?.nombre}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <MapPin className="w-4 h-4 text-orange-600" />
-                            <span className="text-sm text-gray-600">
-                              {solicitud.servicio?.nombre || 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-2 mb-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPrioridadColor(solicitud.prioridad)}`}>
-                          {solicitud.prioridad.toUpperCase()}
-                        </span>
-                        <span className="px-3 py-1 bg-orange-200 text-orange-800 rounded-full text-xs font-medium">
-                          EN PROCESO
-                        </span>
-                      </div>
-
-                      {textoCama(solicitud) && (
-                        <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100">
-                          <Bed className="h-5 w-5 shrink-0" aria-hidden />
-                          <span>Cama: {textoCama(solicitud)}</span>
-                        </div>
-                      )}
-
-                      {solicitud.descripcion && (
-                        <p className="text-gray-700 dark:text-gray-300 mb-3 bg-white dark:bg-gray-800 p-3 rounded-lg">{solicitud.descripcion}</p>
-                      )}
-
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          <span>{solicitud.solicitadoPor?.nombre || 'N/A'}</span>
-                        </div>
-                        {solicitud.fechaAsignacion && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>Asignada {formatearTiempo(solicitud.fechaAsignacion)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+          ) : (
+            <>
+              {solicitudesAsignadas.length > 0 && (
+                <section aria-label="Mis solicitudes en proceso">
+                  <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
+                    <span className="h-2.5 w-2.5 rounded-full bg-orange-500" aria-hidden />
+                    Mis solicitudes en proceso ({solicitudesAsignadas.length})
+                  </h2>
+                  <div className="space-y-4">
+                    {solicitudesAsignadas.map((s) => (
+                      <TarjetaSolicitud
+                        key={s.id || s._id}
+                        solicitud={s}
+                        mia
+                        ocupada={enCurso === (s.id || s._id)}
+                        onFinalizar={handleFinalizar}
+                        onDevolver={handleDevolver}
+                      />
+                    ))}
                   </div>
+                </section>
+              )}
 
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleFinalizar(solicitud.id || solicitud._id)}
-                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition font-semibold shadow-md"
-                    >
-                      <CheckCircle className="w-5 h-5" />
-                      Finalizar Solicitud
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDevolver(solicitud.id || solicitud._id)}
-                      className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition font-medium"
-                      title="Devolver solicitud (por error o si no puedes realizarla)"
-                    >
-                      <RotateCcw className="w-5 h-5" />
-                      Devolver
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Solicitudes Pendientes */}
-        {solicitudes.length === 0 && solicitudesAsignadas.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 sm:p-12 text-center transition-colors duration-300">
-            <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              No hay solicitudes disponibles
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Todas las solicitudes han sido asignadas o completadas
-            </p>
-            <button
-              onClick={() => cargarSolicitudes(false)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
-            >
-              <RefreshCw className="w-5 h-5" />
-              Actualizar
-            </button>
-          </div>
-        ) : solicitudes.length > 0 ? (
-          <>
-            {/* Contador */}
-            <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 transition-colors duration-300">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Solicitudes pendientes</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{solicitudes.length}</p>
-                  </div>
-                </div>
-                {ultimaActualizacion && (
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Última actualización</p>
-                    <p className="text-sm font-medium text-gray-700">
-                      {formatearTiempo(ultimaActualizacion)}
+              <section aria-label="Solicitudes pendientes">
+                <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
+                  <span className="h-2.5 w-2.5 rounded-full bg-primary-500" aria-hidden />
+                  Pendientes por tomar ({total})
+                </h2>
+                {total === 0 ? (
+                  <div className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700">
+                    <CheckCircle className="mx-auto mb-3 h-14 w-14 text-green-500" aria-hidden />
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">No hay solicitudes pendientes</p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Cuando enfermería pida un auxiliar, aparecerá aquí y te llegará una notificación.
                     </p>
                   </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {solicitudes.map((solicitud) => (
-                <div
-                  key={solicitud.id || solicitud._id}
-                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-primary-500 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="text-3xl">{getTipoIcon(solicitud.tipoRequerimiento)}</span>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900">
-                            {solicitud.servicio?.nombre}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <MapPin className="w-4 h-4 text-primary-600" />
-                            <span className="text-sm text-gray-600">
-                              {solicitud.servicio?.nombre || 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-2 mb-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPrioridadColor(solicitud.prioridad)}`}>
-                          {solicitud.prioridad.toUpperCase()}
-                        </span>
-                        <span className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-xs font-medium">
-                          {solicitud.tipoRequerimiento.toUpperCase()}
-                        </span>
-                      </div>
-
-                      {textoCama(solicitud) && (
-                        <div className="mb-3 flex items-center gap-2 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-900 dark:border-primary-600 dark:bg-primary-900/40 dark:text-primary-100">
-                          <Bed className="h-5 w-5 shrink-0" aria-hidden />
-                          <span>Cama: {textoCama(solicitud)}</span>
-                        </div>
-                      )}
-
-                      {solicitud.descripcion && (
-                        <p className="text-gray-700 mb-3 bg-gray-50 p-3 rounded-lg">{solicitud.descripcion}</p>
-                      )}
-
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          <span>{solicitud.solicitadoPor?.nombre || 'N/A'}</span>
-                        </div>
-                        {solicitud.fechaProgramada ? (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4 text-primary-600" />
-                            <span className="text-primary-600 font-semibold">
-                              Programada: {formatearFechaProgramadaDisplay(solicitud.fechaProgramada)}
-                            </span>
-                          </div>
-                        ) : solicitud.createdAt && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>{formatearTiempo(solicitud.createdAt)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                ) : (
+                  <div className="space-y-4">
+                    {solicitudes.map((s) => (
+                      <TarjetaSolicitud
+                        key={s.id || s._id}
+                        solicitud={s}
+                        ocupada={enCurso === (s.id || s._id)}
+                        onAsignar={handleAsignar}
+                      />
+                    ))}
                   </div>
-
-                  <button
-                    onClick={() => handleAsignar(solicitud.id || solicitud._id)}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    Asignarme a esta solicitud
-                  </button>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : null}
-          </>
-        )}
+                )}
+              </section>
+            </>
+          )}
+        </main>
       </div>
-    </div>
     </AuxiliarVistaErrorBoundary>
   )
 }
