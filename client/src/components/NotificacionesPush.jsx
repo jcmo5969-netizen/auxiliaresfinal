@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Bell, BellOff, BellRing, CheckCircle2, Loader2, Send, Share, PlusSquare, Smartphone, X } from 'lucide-react'
+import { Bell, BellOff, BellRing, CheckCircle2, Info, Loader2, MoreVertical, Send, Share, PlusSquare, Smartphone, X } from 'lucide-react'
 import {
   activarNotificaciones,
   enviarNotificacionDePrueba,
@@ -80,6 +80,33 @@ const NotificacionesPush = ({ ejemplo = 'Solicitud de auxiliar · Cama 12, piso 
       toast.error(resultado.mensaje, { duration: 6000 })
     }
   }
+
+  // Tarjeta de "permiso bloqueado": si la persona ya lo desbloqueó en los ajustes,
+  // se suscribe de inmediato; si no, se le avisa que sigue bloqueado.
+  const recomprobar = async () => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+      toast.error('El permiso sigue bloqueado. Revisa los pasos y vuelve a intentarlo.', { duration: 6000 })
+      return
+    }
+    await activar()
+  }
+
+  // Al volver desde los ajustes del teléfono se vuelve a comprobar sola
+  useEffect(() => {
+    if (estado !== 'denegado') return undefined
+    const alVolver = () => {
+      if (document.hidden) return
+      if (typeof Notification !== 'undefined' && Notification.permission !== 'denied') {
+        sincronizarNotificaciones().then(setEstado)
+      }
+    }
+    document.addEventListener('visibilitychange', alVolver)
+    window.addEventListener('focus', alVolver)
+    return () => {
+      document.removeEventListener('visibilitychange', alVolver)
+      window.removeEventListener('focus', alVolver)
+    }
+  }, [estado])
 
   const instalarApp = async () => {
     if (!instalador) return
@@ -185,19 +212,54 @@ const NotificacionesPush = ({ ejemplo = 'Solicitud de auxiliar · Cama 12, piso 
             <p className="mt-1 text-sm text-red-900 dark:text-red-100">
               Este dispositivo tiene el permiso denegado, por eso no llegan los avisos. Para habilitarlo:
             </p>
-            <p className="mt-2 text-sm font-medium text-red-950 dark:text-red-50">
-              {esIOS()
-                ? 'Ajustes del iPhone → Notificaciones → Auxiliares → activa «Permitir notificaciones» y «Pantalla bloqueada».'
-                : esAndroid()
-                  ? 'Mantén presionado el ícono de la app (o de Chrome) → Información de la app → Notificaciones → actívalas. Luego vuelve y recarga.'
-                  : 'Haz clic en el candado junto a la dirección de la página → Notificaciones → Permitir. Luego recarga la página.'}
-            </p>
+            {esIOS() ? (
+              <p className="mt-2 text-sm font-medium text-red-950 dark:text-red-50">
+                Ajustes del iPhone → Notificaciones → Auxiliares → activa «Permitir notificaciones» y «Pantalla bloqueada».
+              </p>
+            ) : esAndroid() ? (
+              <>
+                <ol className="mt-3 space-y-2 text-sm font-medium text-red-950 dark:text-red-50">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-800 text-xs font-bold text-white">1</span>
+                    <span>
+                      Toca los tres puntos <MoreVertical className="inline h-4 w-4 align-text-bottom" aria-label="menú" /> de Chrome, arriba a la derecha.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-800 text-xs font-bold text-white">2</span>
+                    <span>
+                      Toca el ícono de información <Info className="inline h-4 w-4 align-text-bottom" aria-label="información" /> en la fila de arriba del menú.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-800 text-xs font-bold text-white">3</span>
+                    <span>
+                      Entra a <strong>Permisos</strong> → <strong>Notificaciones</strong> y déjalo en <strong>Permitir</strong>.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-800 text-xs font-bold text-white">4</span>
+                    <span>Vuelve a esta pantalla y toca el botón rojo de abajo.</span>
+                  </li>
+                </ol>
+                <p className="mt-3 text-xs text-red-800 dark:text-red-200">
+                  Si no aparece «Notificaciones» en Permisos: Ajustes del teléfono → Aplicaciones → Chrome →
+                  Notificaciones → actívalas, y repite los pasos.
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm font-medium text-red-950 dark:text-red-50">
+                Haz clic en el ícono que está a la izquierda de la dirección de la página → Notificaciones → Permitir.
+              </p>
+            )}
             <button
               type="button"
-              onClick={() => obtenerEstadoNotificaciones().then(setEstado)}
-              className="mt-3 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+              onClick={recomprobar}
+              disabled={trabajando}
+              className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
             >
-              Ya lo habilité, volver a comprobar
+              {trabajando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+              Ya lo habilité, activar notificaciones
             </button>
           </div>
         </div>
